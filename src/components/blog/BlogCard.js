@@ -12,7 +12,7 @@ const BlogCard = ({ post, variant = 'default' }) => {
     content,
     coverImage,
     author,
-    publishedAt,
+    date,
     readTime,
     categories = [],
     tags = [],
@@ -32,7 +32,7 @@ const BlogCard = ({ post, variant = 'default' }) => {
 
   return (
     <Card className={cardClasses}>
-      <Link href={`/blog/${id}`} className="block h-full">
+      <Link href={`/blog/${post.slug || id}`} className="block h-full">
         {/* Cover Image */}
         {coverImage && (
           <div className="relative h-48 lg:h-64 overflow-hidden rounded-t-lg">
@@ -94,8 +94,8 @@ const BlogCard = ({ post, variant = 'default' }) => {
               
               {/* Author Info */}
                              <div className="text-sm">
-                 <p className="font-medium" style={{ color: 'var(--foreground)' }}>{author?.name || 'Anonymous'}</p>
-                 <p style={{ color: 'var(--muted-foreground)' }}>{formatDate(publishedAt)}</p>
+                 <p className="font-medium" style={{ color: 'var(--foreground)' }}>{author?.name || author || 'Anonymous'}</p>
+                 <p style={{ color: 'var(--muted-foreground)' }}>{formatDate(date)}</p>
                </div>
             </div>
 

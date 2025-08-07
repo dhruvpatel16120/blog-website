@@ -1,4 +1,3 @@
-import { useParams } from 'next/navigation';
 import Layout from '@/components/layout/Layout';
 import MarkdownRenderer from '@/components/blog/MarkdownRenderer';
 import { getPostBySlug } from '@/lib/posts';
@@ -11,8 +10,7 @@ import TableOfContents from '@/components/blog/TableOfContents';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import Link from 'next/link';
 
-export default function PostPage() {
-  const params = useParams();
+export default function PostPage({ params }) {
   const slug = params.slug;
   let post;
   try {

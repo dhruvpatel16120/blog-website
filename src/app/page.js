@@ -8,45 +8,90 @@ import {
   CpuChipIcon
 } from '@heroicons/react/24/outline'
 
-// Mock data for demonstration
+// Comprehensive fake data for demonstration
 const featuredPosts = [
   {
     id: 1,
+    slug: 'getting-started-nextjs-15',
     title: 'Getting Started with Next.js 15: A Complete Guide',
-    excerpt: 'Learn how to build modern web applications with Next.js 15, including the new App Router, Server Components, and advanced features.',
+    excerpt: 'Learn how to build modern web applications with Next.js 15, including the new App Router, Server Components, and advanced features that will revolutionize your development workflow.',
     content: 'Full content here...',
-    coverImage: '/api/placeholder/600/400',
-    author: { name: 'John Doe' },
-    publishedAt: '2024-01-15',
+    coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80',
+    author: 'John Doe',
+    date: '2024-06-15',
     readTime: 8,
     categories: ['Next.js', 'React'],
-    tags: ['JavaScript', 'Web Development', 'Tutorial'],
+    tags: ['JavaScript', 'Web Development', 'Tutorial', 'Frontend'],
     featured: true
   },
   {
     id: 2,
+    slug: 'mastering-tailwind-css',
     title: 'Mastering Tailwind CSS: From Basics to Advanced',
-    excerpt: 'A comprehensive guide to building beautiful, responsive user interfaces with Tailwind CSS.',
+    excerpt: 'A comprehensive guide to building beautiful, responsive user interfaces with Tailwind CSS. Learn utility-first CSS and create stunning designs efficiently.',
     content: 'Full content here...',
-    coverImage: '/api/placeholder/600/400',
-    author: { name: 'Jane Smith' },
-    publishedAt: '2024-01-10',
+    coverImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+    author: 'Jane Smith',
+    date: '2024-06-10',
     readTime: 12,
     categories: ['CSS', 'Design'],
-    tags: ['Tailwind', 'Styling', 'UI/UX'],
+    tags: ['Tailwind', 'Styling', 'UI/UX', 'CSS'],
     featured: false
   },
   {
     id: 3,
+    slug: 'typescript-react-best-practices',
     title: 'TypeScript Best Practices for React Developers',
-    excerpt: 'Discover the best practices for using TypeScript with React to build more robust and maintainable applications.',
+    excerpt: 'Discover the best practices for using TypeScript with React to build more robust and maintainable applications. Learn type safety and advanced patterns.',
     content: 'Full content here...',
-    coverImage: '/api/placeholder/600/400',
-    author: { name: 'Mike Johnson' },
-    publishedAt: '2024-01-08',
+    coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=600&q=80',
+    author: 'Mike Johnson',
+    date: '2024-06-08',
     readTime: 10,
     categories: ['TypeScript', 'React'],
-    tags: ['JavaScript', 'Programming', 'Best Practices'],
+    tags: ['JavaScript', 'Programming', 'Best Practices', 'TypeScript'],
+    featured: false
+  },
+  {
+    id: 4,
+    slug: 'modern-javascript-features',
+    title: 'Modern JavaScript Features You Should Know',
+    excerpt: 'Explore the latest JavaScript features including ES2023 updates, async/await patterns, and modern syntax that will make your code cleaner and more efficient.',
+    content: 'Full content here...',
+    coverImage: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?auto=format&fit=crop&w=600&q=80',
+    author: 'Sarah Wilson',
+    date: '2024-06-05',
+    readTime: 15,
+    categories: ['JavaScript', 'Programming'],
+    tags: ['JavaScript', 'ES6', 'Modern Features', 'Programming'],
+    featured: true
+  },
+  {
+    id: 5,
+    slug: 'web-performance-optimization',
+    title: 'Web Performance Optimization: A Complete Guide',
+    excerpt: 'Learn how to optimize your web applications for speed and performance. From Core Web Vitals to advanced caching strategies.',
+    content: 'Full content here...',
+    coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
+    author: 'Alex Chen',
+    date: '2024-06-03',
+    readTime: 18,
+    categories: ['Performance', 'Web Development'],
+    tags: ['Performance', 'Optimization', 'Core Web Vitals', 'Speed'],
+    featured: false
+  },
+  {
+    id: 6,
+    slug: 'docker-for-developers',
+    title: 'Docker for Developers: Containerization Made Simple',
+    excerpt: 'Master Docker containerization for your development workflow. Learn how to containerize applications and streamline your deployment process.',
+    content: 'Full content here...',
+    coverImage: 'https://images.unsplash.com/photo-1605745341112-85968b19335b?auto=format&fit=crop&w=600&q=80',
+    author: 'David Brown',
+    date: '2024-06-01',
+    readTime: 14,
+    categories: ['DevOps', 'Docker'],
+    tags: ['Docker', 'Containerization', 'DevOps', 'Deployment'],
     featured: false
   }
 ]
@@ -142,10 +187,7 @@ export default function Home() {
           </Button>
           </div>
         
-        <BlogGrid posts={featuredPosts.map(post => ({
-          ...post,
-          slug: post.slug || `featured-${post.id || post.title}`
-        }))} featured={true} />
+        <BlogGrid posts={featuredPosts} featured={true} />
         </section>
 
       {/* CTA Section */}

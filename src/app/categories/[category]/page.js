@@ -1,11 +1,9 @@
-import { useParams } from 'next/navigation';
 import Layout from '@/components/layout/Layout';
 import BlogGrid from '@/components/blog/BlogGrid';
 import { Badge } from '@/components/ui';
 import { getPostsByCategory } from '@/lib/posts';
 
-export default function CategoryPage() {
-  const params = useParams();
+export default function CategoryPage({ params }) {
   const categorySlug = params.category;
   const categoryName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, ' ');
 
