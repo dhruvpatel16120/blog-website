@@ -1,16 +1,12 @@
-"use client"
-
-import { useState } from 'react'
 import Layout from '@/components/layout/Layout'
-import { Button, Input, Textarea, Badge } from '@/components/ui'
+import { Button, Badge } from '@/components/ui'
 import { 
-  EnvelopeIcon, 
-  PhoneIcon, 
   MapPinIcon,
   ClockIcon,
-  ChatBubbleLeftRightIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline'
+import ContactForm from '@/components/contact/ContactForm'
+import ContactMethods from '@/components/contact/ContactMethods'
 
 // Mock FAQ data
 const faqs = [
@@ -40,55 +36,7 @@ const faqs = [
   }
 ]
 
-// Mock contact methods
-const contactMethods = [
-  {
-    icon: EnvelopeIcon,
-    title: 'Email Us',
-    description: 'Send us an email and we\'ll get back to you within 24 hours.',
-    contact: 'hello@techblog.com',
-    action: 'mailto:hello@techblog.com'
-  },
-  {
-    icon: ChatBubbleLeftRightIcon,
-    title: 'Live Chat',
-    description: 'Chat with our team in real-time during business hours.',
-    contact: 'Available 9AM-6PM EST',
-    action: '#'
-  },
-  {
-    icon: PhoneIcon,
-    title: 'Call Us',
-    description: 'Speak directly with our team for urgent matters.',
-    contact: '+1 (555) 123-4567',
-    action: 'tel:+15551234567'
-  }
-]
-
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Here you would typically send the form data to your backend
-    alert('Thank you for your message! We\'ll get back to you soon.')
-    setFormData({ name: '', email: '', subject: '', message: '' })
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
   return (
     <Layout showSidebar={false}>
       {/* Hero Section */}
@@ -108,45 +56,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Methods */}
-      <section className="mb-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-              How Can We Help?
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-              Choose the best way to reach us based on your needs
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {contactMethods.map((method, index) => (
-              <div
-                key={index}
-                className="card p-6 text-center hover:shadow-lg transition-all duration-300 cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--card)',
-                  borderColor: 'var(--border)'
-                }}
-                onClick={() => method.action !== '#' && window.open(method.action)}
-              >
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <method.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-                  {method.title}
-                </h3>
-                <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>
-                  {method.description}
-                </p>
-                <div className="text-primary font-medium">
-                  {method.contact}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ContactMethods />
 
       {/* Contact Form & Info */}
       <section className="mb-16">
@@ -157,80 +67,13 @@ export default function ContactPage() {
               <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
                 Send Us a Message
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-                      Name *
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-                      Email *
-                    </label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="your.email@example.com"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-                    Subject *
-                  </label>
-                  <Input
-                    id="subject"
-                    name="subject"
-                    type="text"
-                    required
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="What's this about?"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-                    Message *
-                  </label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    required
-                    rows={6}
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Tell us more about your inquiry..."
-                  />
-                </div>
-                
-                <Button type="submit" size="lg" className="w-full">
-                  Send Message
-                </Button>
-              </form>
+              <ContactForm />
             </div>
-
             {/* Contact Information */}
             <div>
               <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
                 Get in Touch
               </h2>
-              
               <div className="space-y-8">
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -247,7 +90,6 @@ export default function ContactPage() {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                     <ClockIcon className="w-6 h-6 text-primary" />
@@ -263,7 +105,6 @@ export default function ContactPage() {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                     <DocumentTextIcon className="w-6 h-6 text-primary" />
@@ -296,7 +137,6 @@ export default function ContactPage() {
               Find quick answers to common questions about our services and community
             </p>
           </div>
-
           <div className="space-y-6">
             {faqs.map((faq, index) => (
               <div

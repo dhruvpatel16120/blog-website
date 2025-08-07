@@ -1,5 +1,3 @@
-"use client"
-
 import Layout from '@/components/layout/Layout'
 import { Button, Badge } from '@/components/ui'
 import { 

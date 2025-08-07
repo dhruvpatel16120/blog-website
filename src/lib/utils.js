@@ -13,11 +13,14 @@ export function cn(...inputs) {
  * Format date to readable string
  */
 export function formatDate(date) {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(new Date(date))
+  }).format(d);
 }
 
 /**

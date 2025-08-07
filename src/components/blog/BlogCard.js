@@ -41,7 +41,6 @@ const BlogCard = ({ post, variant = 'default' }) => {
               alt={title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
-              unoptimized
             />
             {featured && (
               <div className="absolute top-4 left-4">

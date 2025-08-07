@@ -4,9 +4,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button, Input, Badge } from '@/components/ui'
 import { formatDate, calculateReadingTime } from '@/lib/utils'
+import { useRouter } from 'next/navigation';
 
-const Sidebar = () => {
+const Sidebar = ({ allPosts = [] }) => {
   const [email, setEmail] = useState('')
+  const router = useRouter();
+
+  // Real data for widgets
+  const recentPosts = [...allPosts].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+  const popularPosts = [...allPosts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3);
 
   // Mock data - replace with real data
   const author = {
@@ -20,33 +26,6 @@ const Sidebar = () => {
     }
   }
 
-  const popularPosts = [
-    {
-      id: 1,
-      title: 'Getting Started with Next.js 15',
-      excerpt: 'Learn the basics of Next.js 15 and build your first application...',
-      date: '2024-01-15',
-      readTime: 5,
-      views: 1250
-    },
-    {
-      id: 2,
-      title: 'Mastering Tailwind CSS',
-      excerpt: 'A comprehensive guide to building beautiful UIs with Tailwind CSS...',
-      date: '2024-01-10',
-      readTime: 8,
-      views: 980
-    },
-    {
-      id: 3,
-      title: 'React Performance Optimization',
-      excerpt: 'Tips and tricks to optimize your React applications...',
-      date: '2024-01-05',
-      readTime: 6,
-      views: 750
-    }
-  ]
-
   const categories = [
     { name: 'React', count: 15, color: 'blue' },
     { name: 'Next.js', count: 12, color: 'green' },
@@ -59,6 +38,16 @@ const Sidebar = () => {
   const tags = [
     'React', 'Next.js', 'TypeScript', 'Tailwind', 'JavaScript', 'CSS', 'HTML', 'Node.js'
   ]
+
+  // Category/Tag Cloud
+  const categorySet = new Set();
+  const tagSet = new Set();
+  allPosts.forEach(post => {
+    (post.categories || []).forEach(c => categorySet.add(c));
+    (post.tags || []).forEach(t => tagSet.add(t));
+  });
+  const allCategories = Array.from(categorySet);
+  const allTags = Array.from(tagSet);
 
   const handleNewsletterSignup = (e) => {
     e.preventDefault()
@@ -121,34 +110,44 @@ const Sidebar = () => {
         </form>
       </div>
 
-             {/* Popular Posts */}
+             {/* Popular Posts Widget */}
        <div className="card p-6" style={{
          backgroundColor: 'var(--card)',
          borderColor: 'var(--border)'
        }}>
-         <h3 className="text-lg font-semibold mb-4 text-foreground">Popular Posts</h3>
-        <div className="space-y-4">
-          {popularPosts.map((post) => (
-            <article key={post.id} className="group">
-                             <Link href={`/blog/${post.id}`} className="block">
-                 <h4 className="font-medium group-hover:text-primary transition-colors overflow-hidden mb-2" style={{ color: 'var(--foreground)' }}>
-                   <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                     {post.title}
-                   </span>
-                 </h4>
-                 <p className="text-sm overflow-hidden mb-2" style={{ color: 'var(--muted-foreground)' }}>
-                   <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                     {post.excerpt}
-                   </span>
-                 </p>
-                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                   <span>{formatDate(post.date)}</span>
-                   <span>{post.readTime} min read</span>
-                 </div>
-               </Link>
-            </article>
+         <h3 className="text-lg font-semibold mb-2">Popular Posts</h3>
+        <ul className="space-y-2">
+          {popularPosts.map(post => (
+            <li key={post.slug}>
+              <Link href={`/blog/${post.slug}`} className="hover:underline">
+                {post.title}
+              </Link>
+              <div className="text-xs text-muted-foreground">
+                {formatDate(post.date)}
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
+      </div>
+
+             {/* Recent Posts Widget */}
+       <div className="card p-6" style={{
+         backgroundColor: 'var(--card)',
+         borderColor: 'var(--border)'
+       }}>
+         <h3 className="text-lg font-semibold mb-2">Recent Posts</h3>
+        <ul className="space-y-2">
+          {recentPosts.map(post => (
+            <li key={post.slug}>
+              <Link href={`/blog/${post.slug}`} className="hover:underline">
+                {post.title}
+              </Link>
+              <div className="text-xs text-muted-foreground">
+                {formatDate(post.date)}
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
 
              {/* Categories */}
@@ -194,6 +193,39 @@ const Sidebar = () => {
                </Badge>
              </Link>
            ))}
+        </div>
+      </div>
+
+             {/* Category Cloud */}
+      <div>
+        <h3 className="font-semibold mb-2">Categories</h3>
+        <div className="flex flex-wrap gap-2">
+          {allCategories.map(cat => (
+            <Badge
+              key={cat}
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => router.push(`/categories/${cat.toLowerCase()}`)}
+            >
+              {cat}
+            </Badge>
+          ))}
+        </div>
+      </div>
+      {/* Tag Cloud */}
+      <div>
+        <h3 className="font-semibold mb-2 mt-4">Tags</h3>
+        <div className="flex flex-wrap gap-2">
+          {allTags.map(tag => (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={() => router.push(`/tags/${tag.toLowerCase()}`)}
+            >
+              #{tag}
+            </Badge>
+          ))}
         </div>
       </div>
 

@@ -142,7 +142,10 @@ export default function Home() {
           </Button>
           </div>
         
-        <BlogGrid posts={featuredPosts} featured={true} />
+        <BlogGrid posts={featuredPosts.map(post => ({
+          ...post,
+          slug: post.slug || `featured-${post.id || post.title}`
+        }))} featured={true} />
         </section>
 
       {/* CTA Section */}

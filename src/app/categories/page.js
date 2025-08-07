@@ -1,5 +1,3 @@
-"use client"
-
 import Layout from '@/components/layout/Layout'
 import BlogGrid from '@/components/blog/BlogGrid'
 import { Badge } from '@/components/ui'
@@ -291,7 +289,10 @@ export default function CategoriesPage() {
           </Badge>
         </div>
         
-        <BlogGrid posts={categories.find(c => c.id === 'react')?.featuredPosts || []} />
+        <BlogGrid posts={(categories.find(c => c.id === 'react')?.featuredPosts || []).map(post => ({
+          ...post,
+          slug: `react-${post.id || post.title}`
+        }))} />
       </div>
 
       {/* All Categories Summary */}

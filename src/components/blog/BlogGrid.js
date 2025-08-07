@@ -25,7 +25,7 @@ const BlogGrid = ({ posts = [], loading = false, featured = false }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {posts.map((post, index) => (
         <BlogCard
-          key={post.id}
+          key={post.slug}
           post={post}
           variant={featured && index === 0 ? 'featured' : 'default'}
         />
