@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button, Badge } from '@/components/ui';
 import { 
@@ -12,6 +12,8 @@ import {
   TrashIcon,
   EyeSlashIcon
 } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 export default function PostsManagement() {
   const [posts, setPosts] = useState([]);
@@ -33,11 +35,7 @@ export default function PostsManagement() {
   const [tags, setTags] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [filters, pagination.page]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -63,7 +61,11 @@ export default function PostsManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.limit, pagination.page]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -279,10 +281,12 @@ export default function PostsManagement() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
                           {post.coverImage ? (
-                            <img
-                              className="h-12 w-12 rounded-lg object-cover"
+                            <Image
+                              className="rounded-lg object-cover"
                               src={post.coverImage}
                               alt={post.title}
+                              width={48}
+                              height={48}
                             />
                           ) : (
                             <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">

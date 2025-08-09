@@ -107,7 +107,7 @@ export default function AboutPage() {
             <span className="text-primary block">Web Development</span>
           </h1>
           <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-            We're a passionate team of developers, designers, and tech enthusiasts dedicated to sharing knowledge, 
+            We&apos;re a passionate team of developers, designers, and tech enthusiasts dedicated to sharing knowledge, 
             exploring new technologies, and helping developers build amazing web applications.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -177,7 +177,7 @@ export default function AboutPage() {
               Meet Our Team
             </h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-              We're a diverse team of passionate developers and tech enthusiasts committed to sharing knowledge and building amazing things.
+              We&apos;re a diverse team of passionate developers and tech enthusiasts committed to sharing knowledge and building amazing things.
             </p>
           </div>
 
@@ -255,7 +255,7 @@ export default function AboutPage() {
                   tackling the challenges we face in our own projects and sharing the solutions we discover.
                 </p>
                 <p>
-                  Today, we're proud to serve a global community of developers, from beginners taking their first steps 
+                  Today, we&apos;re proud to serve a global community of developers, from beginners taking their first steps 
                   in web development to experienced professionals looking to stay current with the latest trends and tools.
                 </p>
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button, Badge } from '@/components/ui';
 import { 
@@ -34,11 +34,7 @@ export default function CommentsModeration() {
     total: 0
   });
 
-  useEffect(() => {
-    fetchComments();
-  }, [filters, pagination.page]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -62,7 +58,11 @@ export default function CommentsModeration() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.limit, pagination.page]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

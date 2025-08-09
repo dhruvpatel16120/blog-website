@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card } from '@/components/ui';
 import { 
@@ -18,11 +18,7 @@ export default function AnalyticsDashboard() {
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('7d');
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [period]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/admin/analytics?period=${period}`);
@@ -39,7 +35,11 @@ export default function AnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -98,7 +98,7 @@ export default function AnalyticsDashboard() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Track your blog's performance and engagement metrics.
+              Track your blog&apos;s performance and engagement metrics.
             </p>
           </div>
           
