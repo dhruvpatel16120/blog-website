@@ -10,8 +10,8 @@ import TableOfContents from '@/components/blog/TableOfContents';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import Link from 'next/link';
 
-export default function PostPage({ params }) {
-  const slug = params.slug;
+export default async function PostPage({ params }) {
+  const slug = await params.slug;
   let post;
   try {
     post = getPostBySlug(slug);
@@ -20,8 +20,9 @@ export default function PostPage({ params }) {
   }
 
   if (!post) {
+    const { posts: sidebarPosts } = getAllPosts({ page: 1, limit: 100 });
     return (
-      <Layout showSidebar={true}>
+      <Layout showSidebar={true} sidebarPosts={sidebarPosts}>
         <div className="text-center py-24 text-2xl text-muted-foreground">Post not found.</div>
       </Layout>
     );
@@ -35,7 +36,7 @@ export default function PostPage({ params }) {
   const nextPost = idx > 0 ? allPosts[idx - 1] : null;
 
   return (
-    <Layout showSidebar={true}>
+    <Layout showSidebar={true} sidebarPosts={allPosts}>
       {/* Breadcrumbs */}
       <nav className="text-sm mb-4">
         <Link href="/" className="text-muted-foreground hover:underline">Home</Link> /

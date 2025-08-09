@@ -3,14 +3,15 @@ import BlogGrid from '@/components/blog/BlogGrid';
 import { Button } from '@/components/ui';
 import { getAllPosts } from '@/lib/posts';
 
-export default function BlogPage({ searchParams }) {
+export default async function BlogPage({ searchParams }) {
   // Get current page from query params (default to 1)
   const page = parseInt(searchParams?.page || '1', 10);
   const limit = 5;
   const { posts, total, totalPages } = getAllPosts({ page, limit });
+  const { posts: sidebarPosts } = getAllPosts({ page: 1, limit: 100 });
 
   return (
-    <Layout showSidebar={true}>
+    <Layout showSidebar={true} sidebarPosts={sidebarPosts}>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>Blog</h1>

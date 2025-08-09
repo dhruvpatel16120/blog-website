@@ -1,6 +1,7 @@
 import Layout from '@/components/layout/Layout'
 import BlogGrid from '@/components/blog/BlogGrid'
 import { Button, Badge } from '@/components/ui'
+import { getAllPosts } from '@/lib/posts'
 import { 
   ArrowRightIcon, 
   RocketLaunchIcon,
@@ -114,9 +115,10 @@ const features = [
   }
 ]
 
-export default function Home() {
-  return (
-    <Layout showSidebar={true}>
+export default async function Home() {
+  const { posts: sidebarPosts } = getAllPosts({ page: 1, limit: 100 });
+      return (
+      <Layout showSidebar={true} sidebarPosts={sidebarPosts}>
       {/* Hero Section */}
       <section className="text-center py-16 lg:py-24 rounded-3xl mb-16" style={{
         background: 'linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%)'
