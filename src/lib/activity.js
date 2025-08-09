@@ -21,7 +21,6 @@ export async function trackActivity(activityData) {
       adminId,
       entity,
       entityId,
-      description,
       metadata = {}
     } = activityData;
 
@@ -44,6 +43,7 @@ export async function trackActivity(activityData) {
     });
   } catch (error) {
     console.error('Error tracking activity:', error);
+    throw new Error('Failed to track activity');
   }
 }
 
@@ -70,7 +70,7 @@ export async function getRecentActivity(limit = 10) {
 
     return activities.map(activity => ({
       id: activity.id,
-      action: formatActivityAction(activity.action),
+      action: activity.action,
       description: activity.entity,
       timestamp: activity.createdAt,
       user: activity.user || activity.admin,
@@ -78,24 +78,8 @@ export async function getRecentActivity(limit = 10) {
     }));
   } catch (error) {
     console.error('Error getting recent activity:', error);
-    return [];
+    throw new Error('Failed to get recent activity');
   }
-}
-
-function formatActivityAction(action) {
-  const actionMap = {
-    [IMPORTANT_ACTIVITIES.USER_REGISTRATION]: 'New user registered',
-    [IMPORTANT_ACTIVITIES.POST_PUBLISHED]: 'Post published',
-    [IMPORTANT_ACTIVITIES.POST_UPDATED]: 'Post updated',
-    [IMPORTANT_ACTIVITIES.POST_DELETED]: 'Post deleted',
-    [IMPORTANT_ACTIVITIES.COMMENT_APPROVED]: 'Comment approved',
-    [IMPORTANT_ACTIVITIES.COMMENT_REJECTED]: 'Comment rejected',
-    [IMPORTANT_ACTIVITIES.ADMIN_LOGIN]: 'Admin login',
-    [IMPORTANT_ACTIVITIES.USER_LOGIN]: 'User login',
-    [IMPORTANT_ACTIVITIES.SYSTEM_SETTING_CHANGED]: 'System setting changed'
-  };
-
-  return actionMap[action] || action;
 }
 
 export { IMPORTANT_ACTIVITIES };
