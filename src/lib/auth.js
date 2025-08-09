@@ -1,24 +1,16 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import GithubProvider from 'next-auth/providers/github';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from './db';
 import bcrypt from 'bcryptjs';
 
-export const authOptions = {
+// User Authentication
+export const userAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
-    }),
     CredentialsProvider({
-      name: 'credentials',
+      id: 'user-credentials',
+      name: 'user-credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' }
@@ -33,7 +25,7 @@ export const authOptions = {
             where: { email: credentials.email }
           });
 
-          if (!user || !user.password) {
+          if (!user || !user.password || !user.isActive) {
             return null;
           }
 
@@ -46,15 +38,22 @@ export const authOptions = {
             return null;
           }
 
+          // Update last login
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() }
+          });
+
           return {
             id: user.id,
             email: user.email,
-            name: user.name,
-            role: user.role,
-            image: user.image,
+            username: user.username,
+            fullName: user.fullName,
+            avatar: user.avatar,
+            type: 'user'
           };
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error('User auth error:', error);
           return null;
         }
       }
@@ -65,52 +64,36 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        token.type = user.type;
         token.id = user.id;
+        token.username = user.username;
+        token.fullName = user.fullName;
+        token.avatar = user.avatar;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user.role = token.role;
+        session.user.type = token.type;
         session.user.id = token.id;
+        session.user.username = token.username;
+        session.user.fullName = token.fullName;
+        session.user.avatar = token.avatar;
       }
       return session;
     },
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'google' || account?.provider === 'github') {
-        try {
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email }
-          });
-
-          if (!existingUser) {
-            // Create new user with default role
-            await prisma.user.create({
-              data: {
-                email: user.email,
-                name: user.name,
-                image: user.image,
-                role: 'USER',
-              }
-            });
-          }
-        } catch (error) {
-          console.error('Error creating user:', error);
-          return false;
-        }
-      }
-      return true;
-    }
   },
   pages: {
     signIn: '/auth/signin',
-    signUp: '/auth/signup',
-    error: '/auth/error',
+    error: '/auth/signin',
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-export default NextAuth(authOptions);
+
+
+// Export user configuration
+export { userAuthOptions };
+export default NextAuth(userAuthOptions);

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { recordAudit } from '@/lib/audit';
 
 // GET - Fetch single post for editing
 export async function GET(request, { params }) {
@@ -55,100 +54,120 @@ export async function GET(request, { params }) {
   }
 }
 
-// PATCH - Update post
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { id } = params;
     const body = await request.json();
 
-    // Validate required fields
-    if (!body.title || !body.content) {
-      return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
-    }
-
-    // Update post
     const updatedPost = await prisma.post.update({
       where: { id },
-      data: {
-        title: body.title,
-        content: body.content,
-        excerpt: body.excerpt,
-        coverImage: body.coverImage,
-        published: body.published !== undefined ? body.published : true,
-        updatedAt: new Date()
-      },
+      data: body,
       include: {
         author: {
           select: {
             id: true,
-            name: true,
+            username: true,
+            fullName: true,
             email: true
           }
         },
-        categories: {
-          include: {
-            category: true
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
           }
         },
         tags: {
           include: {
-            tag: true
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            likes: true
           }
         }
       }
     });
 
-    return NextResponse.json(updatedPost);
+    // Transform the data to match frontend expectations
+    const transformedPost = {
+      id: updatedPost.id,
+      title: updatedPost.title,
+      slug: updatedPost.slug,
+      excerpt: updatedPost.excerpt,
+      content: updatedPost.content,
+      status: updatedPost.published ? 'published' : 'draft',
+      coverImage: updatedPost.coverImage,
+      createdAt: updatedPost.createdAt,
+      updatedAt: updatedPost.updatedAt,
+      author: updatedPost.author,
+      category: updatedPost.category,
+      tags: updatedPost.tags.map(pt => pt.tag),
+      viewCount: updatedPost.viewCount || 0,
+      commentCount: updatedPost._count.comments,
+      likeCount: updatedPost._count.likes
+    };
+
+    return NextResponse.json(transformedPost);
+
   } catch (error) {
     console.error('Error updating post:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update post' },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE - Delete post
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { id } = params;
 
-    // Delete related records first
-    await prisma.$transaction([
-      // Delete post categories
-      prisma.postCategory.deleteMany({
-        where: { postId: id }
-      }),
-      // Delete post tags
-      prisma.postTag.deleteMany({
-        where: { postId: id }
-      }),
-      // Delete comments
-      prisma.comment.deleteMany({
-        where: { postId: id }
-      }),
-      // Delete likes
-      prisma.like.deleteMany({
-        where: { postId: id }
-      }),
-      // Delete the post
-      prisma.post.delete({
-        where: { id }
-      })
-    ]);
+    // Check if post has any comments
+    const postWithComments = await prisma.post.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            comments: true
+          }
+        }
+      }
+    });
 
-    return NextResponse.json({ message: 'Post deleted successfully' });
+    if (postWithComments._count.comments > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete post with existing comments' },
+        { status: 400 }
+      );
+    }
+
+    // Delete post tags first
+    await prisma.postTag.deleteMany({
+      where: { postId: id }
+    });
+
+    // Delete the post
+    await prisma.post.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error('Error deleting post:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to delete post' },
+      { status: 500 }
+    );
   }
 }

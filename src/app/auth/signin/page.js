@@ -1,6 +1,4 @@
 import SignInForm from '@/components/auth/SignInForm';
-import { Metadata } from 'next';
-
 export const metadata = {
   title: 'Sign In - Tech Blog',
   description: 'Sign in to your Tech Blog account',

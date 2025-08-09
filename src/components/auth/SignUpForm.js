@@ -4,64 +4,55 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input } from '@/components/ui';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { FcGoogle } from 'react-icons/fc';
-import { FaGithub } from 'react-icons/fa';
+import { EyeIcon, EyeSlashIcon, UserIcon, GlobeAltIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import AuthError from './AuthError';
 
 export default function SignUpForm() {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
+    fullName: '',
     password: '',
     confirmPassword: '',
+    bio: '',
+    website: '',
+    location: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
   const router = useRouter();
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    
-    // Clear error when user starts typing
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: '',
-      });
+  };
+
+  const validateForm = () => {
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return false;
     }
+
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return false;
+    }
+
+    if (formData.username.length < 3) {
+      toast.error('Username must be at least 3 characters long');
+      return false;
+    }
+
+    if (!formData.fullName.trim()) {
+      toast.error('Full name is required');
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -80,9 +71,13 @@ export default function SignUpForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
+          username: formData.username,
           email: formData.email,
+          fullName: formData.fullName,
           password: formData.password,
+          bio: formData.bio,
+          website: formData.website,
+          location: formData.location,
         }),
       });
 
@@ -101,50 +96,64 @@ export default function SignUpForm() {
     }
   };
 
-  const handleSocialSignUp = async (provider) => {
-    try {
-      // Redirect to NextAuth social sign-in
-      window.location.href = `/api/auth/signin/${provider}`;
-    } catch (error) {
-      toast.error('Social sign-up failed');
-    }
-  };
-
   return (
     <div className="w-full max-w-md mx-auto">
+      <AuthError />
       <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 border border-gray-200 dark:border-gray-700">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Create account
+            Create Account
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Join our community and start blogging
+            Join our community and start sharing your thoughts
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Username */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Full name
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Username *
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <UserIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                placeholder="Choose a username"
+                className="w-full pl-10"
+                minLength={3}
+              />
+            </div>
+          </div>
+
+          {/* Full Name */}
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Full Name *
             </label>
             <Input
-              id="name"
-              name="name"
+              id="fullName"
+              name="fullName"
               type="text"
-              value={formData.name}
+              value={formData.fullName}
               onChange={handleChange}
               required
               placeholder="Enter your full name"
-              className={`w-full ${errors.name ? 'border-red-500' : ''}`}
+              className="w-full"
             />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-            )}
           </div>
 
+          {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email address
+              Email Address *
             </label>
             <Input
               id="email"
@@ -154,16 +163,14 @@ export default function SignUpForm() {
               onChange={handleChange}
               required
               placeholder="Enter your email"
-              className={`w-full ${errors.email ? 'border-red-500' : ''}`}
+              className="w-full"
             />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-            )}
           </div>
 
+          {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Password
+              Password *
             </label>
             <div className="relative">
               <Input
@@ -174,7 +181,8 @@ export default function SignUpForm() {
                 onChange={handleChange}
                 required
                 placeholder="Create a password"
-                className={`w-full pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                className="w-full pr-10"
+                minLength={8}
               />
               <button
                 type="button"
@@ -188,14 +196,12 @@ export default function SignUpForm() {
                 )}
               </button>
             </div>
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-            )}
           </div>
 
+          {/* Confirm Password */}
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Confirm password
+              Confirm Password *
             </label>
             <div className="relative">
               <Input
@@ -206,7 +212,7 @@ export default function SignUpForm() {
                 onChange={handleChange}
                 required
                 placeholder="Confirm your password"
-                className={`w-full pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                className="w-full pr-10"
               />
               <button
                 type="button"
@@ -220,29 +226,64 @@ export default function SignUpForm() {
                 )}
               </button>
             </div>
-            {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-            )}
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              required
-              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-              I agree to the{' '}
-              <Link href="/terms" className="text-primary hover:text-primary-dark">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="/privacy" className="text-primary hover:text-primary-dark">
-                Privacy Policy
-              </Link>
+          {/* Bio */}
+          <div>
+            <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Bio
             </label>
+            <textarea
+              id="bio"
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Tell us about yourself..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          {/* Website */}
+          <div>
+            <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Website
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <GlobeAltIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <Input
+                id="website"
+                name="website"
+                type="url"
+                value={formData.website}
+                onChange={handleChange}
+                placeholder="https://yourwebsite.com"
+                className="w-full pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Location
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MapPinIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <Input
+                id="location"
+                name="location"
+                type="text"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="City, Country"
+                className="w-full pl-10"
+              />
+            </div>
           </div>
 
           <Button
@@ -251,41 +292,9 @@ export default function SignUpForm() {
             className="w-full"
             disabled={loading}
           >
-            {loading ? 'Creating account...' : 'Create account'}
+            {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              onClick={() => handleSocialSignUp('google')}
-              className="w-full"
-            >
-              <FcGoogle className="h-5 w-5 mr-2" />
-              Google
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSocialSignUp('github')}
-              className="w-full"
-            >
-              <FaGithub className="h-5 w-5 mr-2" />
-              GitHub
-            </Button>
-          </div>
-        </div>
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
           Already have an account?{' '}

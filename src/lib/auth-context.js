@@ -43,17 +43,16 @@ export const AuthProvider = ({ children }) => {
         throw new Error(result.error);
       }
 
-      return { success: true };
+      // Wait a moment for session to update, then return user data
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Get the updated session after login
+      const response = await fetch('/api/auth/session');
+      const sessionData = await response.json();
+      
+      return { success: true, user: sessionData.user };
     } catch (error) {
       return { success: false, error: error.message };
-    }
-  };
-
-  const loginWithProvider = async (provider) => {
-    try {
-      await signIn(provider, { callbackUrl: '/' });
-    } catch (error) {
-      console.error('Provider login error:', error);
     }
   };
 
@@ -91,7 +90,6 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
-    loginWithProvider,
     logout,
     isAdmin,
     isModerator,

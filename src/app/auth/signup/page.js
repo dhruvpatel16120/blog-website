@@ -2,7 +2,7 @@ import SignUpForm from '@/components/auth/SignUpForm';
 
 export const metadata = {
   title: 'Sign Up - Tech Blog',
-  description: 'Create a new Tech Blog account',
+  description: 'Create your account on Tech Blog',
 };
 
 export default function SignUpPage() {

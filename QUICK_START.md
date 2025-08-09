@@ -18,10 +18,8 @@ This will walk you through setting up all environment variables interactively!
 | Service | Free Tier | Setup Time |
 |---------|-----------|------------|
 | **Database** | Neon: 3 DBs, 500MB | 2 min |
-| **Auth** | Google + GitHub OAuth | 5 min |
-| **Email** | Resend: 3,000/month | 3 min |
-| **Storage** | Cloudinary: 25GB | 2 min |
-| **Analytics** | Google Analytics | 2 min |
+| **Auth** | Credentials (email/password) | 1 min |
+| **Email** | Gmail (with App Password) | 3 min |
 
 **Total Cost: $0** 🎉
 
@@ -50,23 +48,24 @@ npm run dev
 - **Admin Panel**: http://localhost:3000/admin
 - **Blog**: http://localhost:3000/blog
 - **Sign In**: http://localhost:3000/auth/signin
+- **Sign Up**: http://localhost:3000/auth/signup
 
 ## 🔑 Admin Access
 
 After first run, create an admin user:
 1. Go to http://localhost:3000/auth/signup
-2. Sign up with Google/GitHub
-3. Check your database and set `role: 'ADMIN'` for your user
+2. Sign up with email/password
+3. The first user will automatically be assigned admin role
 4. Access admin panel at /admin
 
 ## 📱 Features You Get
 
 - ✅ **Responsive Design** - Works on all devices
-- ✅ **Authentication** - Google + GitHub login
+- ✅ **Authentication** - Secure email/password login
 - ✅ **Admin Panel** - Manage posts, comments, analytics
 - ✅ **Blog System** - Markdown support, categories, tags
 - ✅ **Search** - Full-text search functionality
-- ✅ **Contact Form** - Email notifications
+- ✅ **Contact Form** - Email notifications via Gmail
 - ✅ **SEO Optimized** - Meta tags, sitemap
 - ✅ **Dark/Light Theme** - User preference
 - ✅ **Reading Progress** - Track reading position
@@ -83,9 +82,14 @@ npx prisma generate
 - Check your DATABASE_URL in .env
 - Make sure database is accessible
 
-**"OAuth redirect error"**
-- Verify redirect URIs in OAuth settings
-- Check NEXTAUTH_URL in .env
+**"Email not sending"**
+- Verify Gmail App Password is correct
+- Make sure 2FA is enabled on Gmail
+- Check EMAIL_SERVER_USER and EMAIL_SERVER_PASSWORD in .env
+
+**"Authentication failed"**
+- Make sure NEXTAUTH_SECRET is properly generated
+- Check that your .env file is in the root directory
 
 ## 🎉 You're Ready!
 
@@ -93,10 +97,16 @@ After following these steps, you'll have a fully functional tech blog with:
 - Modern Next.js 15 architecture
 - Professional admin panel
 - Responsive design
-- Authentication system
+- Secure authentication system
 - Database management
-- File uploads
-- Email notifications
-- Analytics tracking
+- Email notifications via Gmail
+- Auto-generated secure secrets
 
 **Total setup time: 5-10 minutes** ⚡
+
+## 🔒 Security Features
+
+- ✅ **Auto-generated secrets** - NEXTAUTH_SECRET and JWT_SECRET
+- ✅ **Secure authentication** - Credentials only (no OAuth complexity)
+- ✅ **Gmail App Passwords** - Secure email authentication
+- ✅ **Environment isolation** - Separate configs for dev/prod

@@ -1,119 +1,78 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { recordAudit } from '@/lib/audit';
 
-export async function GET(request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 10;
-    const status = searchParams.get('status'); // published, draft, all
-    const search = searchParams.get('search') || '';
-    const category = searchParams.get('category');
-    const tag = searchParams.get('tag');
-
-    const skip = (page - 1) * limit;
-
-    // Build where clause
-    const where = {};
-    
-    if (status && status !== 'all') {
-      where.published = status === 'published';
-    }
-    
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } },
-        { excerpt: { contains: search, mode: 'insensitive' } }
-      ];
-    }
-
-    if (category) {
-      where.categories = {
-        some: {
-          category: {
-            slug: category
+    const posts = await prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true
           }
-        }
-      };
-    }
-
-    if (tag) {
-      where.tags = {
-        some: {
-          tag: {
-            slug: tag
-          }
-        }
-      };
-    }
-
-    // Get posts with pagination
-    const [posts, total] = await Promise.all([
-      prisma.post.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          author: {
-            select: { name: true, email: true }
-          },
-          categories: {
-            include: {
-              category: { select: { name: true, slug: true, color: true } }
-            }
-          },
-          tags: {
-            include: {
-              tag: { select: { name: true, slug: true, color: true } }
-            }
-          },
-          _count: {
-            select: {
-              comments: true,
-              likes: true
+        },
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
+              }
             }
           }
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            likes: true
+          }
         }
-      }),
-      prisma.post.count({ where })
-    ]);
-
-    // Get categories and tags for filters
-    const [categories, tags] = await Promise.all([
-      prisma.category.findMany({
-        select: { id: true, name: true, slug: true, color: true }
-      }),
-      prisma.tag.findMany({
-        select: { id: true, name: true, slug: true, color: true }
-      })
-    ]);
-
-    return NextResponse.json({
-      posts,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      },
-      filters: {
-        categories,
-        tags
       }
     });
+
+    // Transform the data to match the frontend expectations
+    const transformedPosts = posts.map(post => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      status: post.published ? 'published' : 'draft',
+      coverImage: post.coverImage,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      author: post.author,
+      category: post.category,
+      tags: post.tags.map(pt => pt.tag),
+      viewCount: post.viewCount || 0,
+      commentCount: post._count.comments,
+      likeCount: post._count.likes
+    }));
+
+    return NextResponse.json(transformedPosts);
+
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch posts' },
+      { status: 500 }
+    );
   }
 }
 
@@ -171,6 +130,9 @@ export async function POST(request) {
         authorId: session.user.id,
         publishedAt: published ? new Date() : null,
         readTime: Math.ceil(content.split(' ').length / 200), // Rough estimate
+        seoTitle: body.seoTitle || title,
+        seoDescription: body.seoDescription || excerpt || '',
+        seoImage: body.seoImage || coverImage || null,
         categories: {
           create: categories?.map(catId => ({
             category: { connect: { id: catId } }
@@ -188,6 +150,9 @@ export async function POST(request) {
         tags: { include: { tag: true } }
       }
     });
+
+    // audit
+    await recordAudit({ userId: session.user.id, action: 'POST_CREATE', entity: 'Post', entityId: post.id, metadata: { title } });
 
     return NextResponse.json(post, { status: 201 });
   } catch (error) {

@@ -1,50 +1,49 @@
 "use client";
 
 import { useState } from 'react';
-import Image from 'next/image';
-import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAdminSession } from '@/lib/admin-session';
 import { 
-  Bars3Icon,
+  Bars3Icon, 
   XMarkIcon,
   HomeIcon,
   DocumentTextIcon,
   UsersIcon,
   FolderIcon,
   TagIcon,
-  ChartBarIcon,
-  ChatBubbleLeftIcon,
+  ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ChartBarIcon,
+  BellIcon,
+  ArrowRightOnRectangleIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
+import { Button } from '@/components/ui';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Posts', href: '/admin/posts', icon: DocumentTextIcon },
-  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
-  { name: 'Comments', href: '/admin/comments', icon: ChatBubbleLeftIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'Categories', href: '/admin/categories', icon: FolderIcon },
   { name: 'Tags', href: '/admin/tags', icon: TagIcon },
+  { name: 'Comments', href: '/admin/comments', icon: ChatBubbleLeftRightIcon },
+  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
   { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
 ];
 
-export default function AdminLayout({ children }) {
-  const { data: session } = useSession();
+export default function AdminLayout({ children, title = 'Admin Panel' }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { adminSession, adminSignOut } = useAdminSession();
+  const router = useRouter();
 
-  if (!session || session.user.role !== 'ADMIN') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Access Denied
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            You need admin privileges to access this area.
-          </p>
-        </div>
-      </div>
-    );
+  const handleSignOut = () => {
+    adminSignOut();
+    router.push('/admin/login');
+  };
+
+  if (!adminSession) {
+    return null;
   }
 
   return (
@@ -54,7 +53,7 @@ export default function AdminLayout({ children }) {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-gray-800">
           <div className="flex h-16 items-center justify-between px-4">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
             <button
               onClick={() => setSidebarOpen(false)}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -64,141 +63,84 @@ export default function AdminLayout({ children }) {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
               >
-                <item.icon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300" />
+                <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                {session.user.image ? (
-                  <Image
-                    className="h-8 w-8 rounded-full"
-                    src={session.user.image}
-                    alt={session.user.name}
-                    width={32}
-                    height={32}
-                  />
-                ) : (
-                  <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {session.user.name?.charAt(0) || 'U'}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {session.user.name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {session.user.email}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => signOut()}
-              className="mt-3 w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-            >
-              <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
-              Sign out
-            </button>
-          </div>
         </div>
       </div>
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white dark:bg-gray-800 pt-5 pb-4 overflow-y-auto">
-          <div className="flex items-center flex-shrink-0 px-4">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin Panel</h1>
+        <div className="flex flex-col flex-grow bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+          <div className="flex h-16 items-center px-4">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
           </div>
-          <nav className="mt-8 flex-1 px-2 space-y-1">
+          <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
               >
-                <item.icon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300" />
+                <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                {session.user.image ? (
-                  <Image
-                    className="h-8 w-8 rounded-full"
-                    src={session.user.image}
-                    alt={session.user.name}
-                    width={32}
-                    height={32}
-                  />
-                ) : (
-                  <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {session.user.name?.charAt(0) || 'U'}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {session.user.name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {session.user.email}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => signOut()}
-              className="mt-3 w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-            >
-              <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
-              Sign out
-            </button>
-          </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white dark:bg-gray-800 shadow">
+      <div className="lg:pl-64">
+        {/* Top header */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
-            className="px-4 border-r border-gray-200 dark:border-gray-700 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary lg:hidden"
+            className="-m-2.5 p-2.5 text-gray-700 lg:hidden dark:text-gray-300"
             onClick={() => setSidebarOpen(true)}
           >
-            <span className="sr-only">Open sidebar</span>
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <div className="flex-1 px-4 flex justify-between">
-            <div className="flex-1 flex">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white lg:hidden">
-                Admin Panel
-              </h1>
-            </div>
-            <div className="ml-4 flex items-center md:ml-6">
-              <div className="ml-3 relative">
-                <div className="flex items-center">
-                  <div className="text-sm">
-                    <p className="text-gray-700 dark:text-gray-300 font-medium">
-                      {session.user.name}
-                    </p>
-                    <p className="text-gray-500 dark:text-gray-400">
-                      {session.user.role}
-                    </p>
+
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div className="flex flex-1"></div>
+            <div className="flex items-center gap-x-4 lg:gap-x-6">
+              {/* Notifications */}
+              <button className="relative p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                <BellIcon className="h-6 w-6" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-400"></span>
+              </button>
+
+              {/* Admin profile dropdown */}
+              <div className="relative">
+                <div className="flex items-center gap-x-3">
+                  <div className="flex items-center gap-x-3">
+                    <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                    <div className="hidden lg:block">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {adminSession.fullName || adminSession.username}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {adminSession.role}
+                      </p>
+                    </div>
                   </div>
+                  <Button
+                    onClick={handleSignOut}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-x-2"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                    <span className="hidden lg:block">Sign Out</span>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -206,11 +148,12 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {children}
+        <main className="py-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
             </div>
+            {children}
           </div>
         </main>
       </div>

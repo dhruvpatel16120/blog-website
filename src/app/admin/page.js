@@ -1,234 +1,261 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAdminSession } from '@/lib/admin-session';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card } from '@/components/ui';
 import { 
   DocumentTextIcon, 
   UsersIcon, 
-  FolderIcon, 
-  TagIcon,
+  ChatBubbleLeftRightIcon,
   EyeIcon,
-  HeartIcon,
-  ChatBubbleLeftIcon,
-  EnvelopeIcon
+  PlusIcon,
+  ArrowTrendingUpIcon,
+  ClockIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
-const iconMap = {
-  DocumentTextIcon,
-  UsersIcon,
-  FolderIcon,
-  TagIcon,
-  EyeIcon,
-  HeartIcon,
-  ChatBubbleLeftIcon,
-  EnvelopeIcon
-};
-
 export default function AdminDashboard() {
-  const [stats, setStats] = useState([]);
+  const { adminSession, loading } = useAdminSession();
+  const router = useRouter();
+  const [stats, setStats] = useState({
+    totalPosts: 0,
+    totalUsers: 0,
+    totalComments: 0,
+    totalViews: 0
+  });
   const [recentActivity, setRecentActivity] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!loading && !adminSession) {
+      router.push('/admin/login');
+    }
+  }, [adminSession, loading, router]);
+
+  useEffect(() => {
+    // Fetch dashboard data
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/admin/stats');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data');
+      // Fetch stats
+      const statsResponse = await fetch('/api/admin/stats');
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData);
       }
-      
-      const data = await response.json();
-      setStats(data.stats);
-      setRecentActivity(data.recentActivity);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+
+      // Fetch recent activity
+      const activityResponse = await fetch('/api/admin/activity');
+      if (activityResponse.ok) {
+        const activityData = await activityResponse.json();
+        setRecentActivity(activityData);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     }
   };
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="space-y-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-8 w-8 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </AdminLayout>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="space-y-6">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error loading dashboard</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-                <div className="mt-4">
-                  <button
-                    onClick={fetchDashboardData}
-                    className="bg-red-100 text-red-800 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-200"
-                  >
-                    Try again
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </AdminLayout>
-    );
+  if (!adminSession) {
+    return null;
   }
+
+  const statCards = [
+    {
+      name: 'Total Posts',
+      value: stats.totalPosts,
+      icon: DocumentTextIcon,
+      color: 'bg-blue-500',
+      href: '/admin/posts'
+    },
+    {
+      name: 'Total Users',
+      value: stats.totalUsers,
+      icon: UsersIcon,
+      color: 'bg-green-500',
+      href: '/admin/users'
+    },
+    {
+      name: 'Total Comments',
+      value: stats.totalComments,
+      icon: ChatBubbleLeftRightIcon,
+      color: 'bg-yellow-500',
+      href: '/admin/comments'
+    },
+    {
+      name: 'Total Views',
+      value: stats.totalViews,
+      icon: EyeIcon,
+      color: 'bg-purple-500',
+      href: '/admin/analytics'
+    }
+  ];
+
+  const quickActions = [
+    {
+      name: 'Create New Post',
+      href: '/admin/posts/new',
+      icon: PlusIcon,
+      color: 'bg-blue-600 hover:bg-blue-700'
+    },
+    {
+      name: 'Manage Users',
+      href: '/admin/users',
+      icon: UsersIcon,
+      color: 'bg-green-600 hover:bg-green-700'
+    },
+    {
+      name: 'View Analytics',
+      href: '/admin/analytics',
+      icon: ArrowTrendingUpIcon,
+      color: 'bg-purple-600 hover:bg-purple-700'
+    }
+  ];
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Welcome to your admin dashboard. Here&apos;s an overview of your blog&apos;s performance.
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((item) => {
-            const IconComponent = iconMap[item.icon];
-            return (
-              <Card key={item.name} className="p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    {IconComponent && <IconComponent className="h-8 w-8 text-gray-400" />}
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                        {item.name}
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-gray-900 dark:text-white">
-                          {item.value}
-                        </div>
-                        <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          item.changeType === 'positive' ? 'text-green-600' : 
-                          item.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
-                        }`}>
-                          {item.change}
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
+    <AdminLayout title="Dashboard">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        {statCards.map((stat) => (
+          <Card key={stat.name} className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className={`p-3 rounded-lg ${stat.color}`}>
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Recent Activity
-            </h3>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                      {activity.type === 'post' && <DocumentTextIcon className="h-4 w-4 text-blue-600" />}
-                      {activity.type === 'user' && <UsersIcon className="h-4 w-4 text-green-600" />}
-                      {activity.type === 'comment' && <ChatBubbleLeftIcon className="h-4 w-4 text-purple-600" />}
-                      {activity.type === 'contact' && <EnvelopeIcon className="h-4 w-4 text-orange-600" />}
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.action}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      by {activity.author} • {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    {stat.name}
+                  </dt>
+                  <dd className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {stat.value.toLocaleString()}
+                  </dd>
+                </dl>
+              </div>
             </div>
           </Card>
+        ))}
+      </div>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      {/* Welcome Section */}
+      <Card className="mb-8">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            Welcome back, {adminSession.fullName || adminSession.username}! 👋
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            You are logged in as an administrator with role: <strong>{adminSession.role}</strong>
+          </p>
+          <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <ClockIcon className="h-4 w-4 mr-2" />
+            Last login: {adminSession.lastLogin ? new Date(adminSession.lastLogin).toLocaleString() : 'Never'}
+          </div>
+        </div>
+      </Card>
+
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Quick Actions */}
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Quick Actions
             </h3>
             <div className="space-y-3">
-              <a
-                href="/admin/posts/new"
-                className="block w-full px-4 py-3 text-sm font-medium text-center text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors"
-              >
-                Create New Post
-              </a>
-              <a
-                href="/admin/categories/new"
-                className="block w-full px-4 py-3 text-sm font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Add Category
-              </a>
-              <a
-                href="/admin/users/new"
-                className="block w-full px-4 py-3 text-sm font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Invite User
-              </a>
-              <a
-                href="/admin/settings"
-                className="block w-full px-4 py-3 text-sm font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Site Settings
-              </a>
+              {quickActions.map((action) => (
+                <a
+                  key={action.name}
+                  href={action.href}
+                  className={`flex items-center justify-center w-full px-4 py-3 text-white font-medium rounded-lg transition-colors ${action.color}`}
+                >
+                  <action.icon className="h-5 w-5 mr-2" />
+                  {action.name}
+                </a>
+              ))}
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
-        {/* Performance Chart Placeholder */}
-        <Card className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Performance Overview
-          </h3>
-          <div className="h-64 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              Chart component will be implemented here
-            </p>
+        {/* Recent Activity */}
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Recent Activity
+            </h3>
+            <div className="space-y-4">
+                             {recentActivity.length > 0 ? (
+                 recentActivity.map((activity) => (
+                   <div key={activity.id} className="flex items-start space-x-3">
+                     <div className="flex-shrink-0">
+                       <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                         <CheckCircleIcon className="h-4 w-4 text-green-600" />
+                       </div>
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <p className="text-sm font-medium text-gray-900 dark:text-white">
+                         {activity.action}
+                       </p>
+                       <p className="text-sm text-gray-500 dark:text-gray-400">
+                         {activity.description}
+                       </p>
+                       {activity.user && (
+                         <p className="text-xs text-gray-400 dark:text-gray-500">
+                           by {activity.user.fullName || activity.user.username}
+                         </p>
+                       )}
+                       <p className="text-xs text-gray-400 dark:text-gray-500">
+                         {new Date(activity.timestamp).toLocaleString()}
+                       </p>
+                     </div>
+                   </div>
+                 ))
+               ) : (
+                <div className="text-center py-8">
+                  <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    No recent activity to display
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </Card>
       </div>
+
+      {/* System Status */}
+      <Card className="mt-8">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            System Status
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+              <span className="text-gray-600 dark:text-gray-300">System Online</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+              <span className="text-gray-600 dark:text-gray-300">Database Connected</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+              <span className="text-gray-600 dark:text-gray-300">Authentication Active</span>
+            </div>
+          </div>
+        </div>
+      </Card>
     </AdminLayout>
   );
 }

@@ -10,49 +10,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  username      String    @unique
   email         String    @unique
+  fullName      String
+  password      String
+  avatar        String?
+  bio           String?
+  website       String?
+  location      String?
   emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
   posts    Post[]
   comments Comment[]
   likes    Like[]
+  auditLogs AuditLog[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Admin {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  fullName      String
+  password      String
+  avatar        String?
+  role          AdminRole @default(ADMIN)
+  permissions   String    // JSON string of permissions
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  loginAttempts Int       @default(0)
+  lockedUntil   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+  notifications Notification[]
+
+  @@map("admins")
 }
 
 model VerificationToken {
@@ -61,6 +63,7 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model Post {
@@ -68,7 +71,7 @@ model Post {
   title       String
   slug        String    @unique
   excerpt     String?
-  content     String    @db.Text
+  content     String
   coverImage  String?
   published   Boolean   @default(false)
   featured    Boolean   @default(false)
@@ -78,18 +81,40 @@ model Post {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
+  seoTitle    String?
+  seoDescription String?
+  seoImage    String?
 
   author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categories PostCategory[]
   tags       PostTag[]
   comments   Comment[]
   likes      Like[]
+  versions   PostVersion[]
   relatedPosts Post[]       @relation("RelatedPosts")
   relatedTo  Post[]         @relation("RelatedPosts")
 
   @@index([published, publishedAt])
   @@index([featured])
   @@index([authorId])
+  @@map("posts")
+}
+
+model PostVersion {
+  id          String   @id @default(cuid())
+  postId      String
+  title       String
+  excerpt     String?
+  content     String
+  coverImage  String?
+  published   Boolean
+  featured    Boolean
+  createdAt   DateTime @default(now())
+  authorId    String?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_versions")
 }
 
 model Category {
@@ -102,6 +127,8 @@ model Category {
   updatedAt   DateTime  @updatedAt
 
   posts PostCategory[]
+
+  @@map("categories")
 }
 
 model Tag {
@@ -113,6 +140,8 @@ model Tag {
   updatedAt DateTime @updatedAt
 
   posts PostTag[]
+
+  @@map("tags")
 }
 
 model PostCategory {
@@ -124,6 +153,7 @@ model PostCategory {
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([postId, categoryId])
+  @@map("post_categories")
 }
 
 model PostTag {
@@ -135,11 +165,12 @@ model PostTag {
   tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([postId, tagId])
+  @@map("post_tags")
 }
 
 model Comment {
   id        String   @id @default(cuid())
-  content   String   @db.Text
+  content   String
   authorId  String
   postId    String
   parentId  String?
@@ -155,6 +186,7 @@ model Comment {
 
   @@index([postId])
   @@index([approved])
+  @@map("comments")
 }
 
 model Like {
@@ -169,6 +201,7 @@ model Like {
   comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId, commentId])
+  @@map("likes")
 }
 
 model Contact {
@@ -176,16 +209,17 @@ model Contact {
   name      String
   email     String
   subject   String?
-  message   String   @db.Text
+  message   String
   status    ContactStatus @default(PENDING)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   respondedAt DateTime?
-  response  String? @db.Text
+  response  String?
   respondedBy String?
 
   @@index([status])
   @@index([createdAt])
+  @@map("contacts")
 }
 
 model SystemSetting {
@@ -194,11 +228,63 @@ model SystemSetting {
   value       String
   description String?
   updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
 }
 
-enum UserRole {
-  USER
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  adminId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  adminId   String?
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  pagePath  String
+  date      DateTime @db.Date
+  viewCount Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pagePath, date])
+  @@index([pagePath])
+  @@index([date])
+  @@map("page_views")
+}
+
+enum AdminRole {
   ADMIN
+  SUPER_ADMIN
   MODERATOR
 }
 

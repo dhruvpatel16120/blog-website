@@ -1,278 +1,260 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAdminSession } from '@/lib/admin-session';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, Button, Badge } from '@/components/ui';
+import { Card, Button } from '@/components/ui';
 import { 
+  TrashIcon,
+  ChatBubbleLeftRightIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  CheckIcon,
-  XMarkIcon,
-  PencilIcon,
-  TrashIcon,
-  ChatBubbleLeftIcon
+  CheckCircleIcon,
+  XCircleIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 
-export default function CommentsModeration() {
+export default function AdminComments() {
+  const { adminSession, loading } = useAdminSession();
+  const router = useRouter();
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    status: 'all',
-    search: '',
-    postId: ''
-  });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 20,
-    total: 0,
-    pages: 0
-  });
-  const [statistics, setStatistics] = useState({
-    pending: 0,
-    approved: 0,
-    spam: 0,
-    total: 0
-  });
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  const fetchComments = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...filters
-      });
-
-      const response = await fetch(`/api/admin/comments?${params}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      
-      const data = await response.json();
-      setComments(data.comments);
-      setPagination(data.pagination);
-      setStatistics(data.statistics);
-    } catch (err) {
-      console.error('Error fetching comments:', err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!loading && !adminSession) {
+      router.push('/admin/login');
     }
-  }, [filters, pagination.limit, pagination.page]);
+  }, [adminSession, loading, router]);
 
   useEffect(() => {
     fetchComments();
-  }, [fetchComments]);
+  }, []);
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  const handleCommentAction = async (commentId, action) => {
+  const fetchComments = async () => {
     try {
-      const response = await fetch('/api/admin/comments', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId, action })
-      });
-
+      setLoadingComments(true);
+      const response = await fetch('/api/admin/comments');
       if (response.ok) {
-        fetchComments();
+        const data = await response.json();
+        setComments(data);
       }
-    } catch (err) {
-      console.error('Error performing action:', err);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setLoadingComments(false);
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setComments(comments.filter(comment => comment.id !== commentId));
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const handleToggleCommentStatus = async (commentId, currentStatus) => {
+    try {
+      const response = await fetch(`/api/admin/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isApproved: !currentStatus
+        }),
+      });
+
+      if (response.ok) {
+        setComments(comments.map(comment => 
+          comment.id === commentId 
+            ? { ...comment, isApproved: !currentStatus }
+            : comment
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating comment status:', error);
+    }
+  };
+
+  const filteredComments = comments.filter(comment => {
+    const matchesSearch = comment.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         comment.author?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         comment.author?.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         comment.post?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = filterStatus === 'all' || 
+                         (filterStatus === 'approved' && comment.isApproved) ||
+                         (filterStatus === 'pending' && !comment.isApproved);
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!adminSession) {
+    return null;
+  }
+
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <AdminLayout title="Comments Management">
+      {/* Header */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Comment Moderation</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Review, approve, and manage comments on your blog posts.
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Comments ({filteredComments.length})
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Manage user comments and moderation
           </p>
         </div>
+      </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <ChatBubbleLeftIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-5">
-                <div className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {statistics.total}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Total Comments</div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <ChatBubbleLeftIcon className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div className="ml-5">
-                <div className="text-2xl font-semibold text-yellow-600">
-                  {statistics.pending}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Pending</div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckIcon className="h-5 w-5 text-green-600" />
-              </div>
-              <div className="ml-5">
-                <div className="text-2xl font-semibold text-green-600">
-                  {statistics.approved}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Approved</div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                <XMarkIcon className="h-5 w-5 text-red-600" />
-              </div>
-              <div className="ml-5">
-                <div className="text-2xl font-semibold text-red-600">
-                  {statistics.spam}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Spam</div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="p-6">
+      {/* Filters */}
+      <Card className="mb-6">
+        <div className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search comments..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
                 />
               </div>
             </div>
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            >
-              <option value="all">All Comments</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-            </select>
-          </div>
-        </Card>
 
-        {/* Comments List */}
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Comment
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Author
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Post
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {comments.map((comment) => (
-                  <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-6 py-4">
-                      <div className="max-w-md text-sm text-gray-900 dark:text-white">
-                        {comment.content}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {comment.author.name || 'Anonymous'}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {comment.author.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {comment.post.title}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={comment.approved ? "success" : "warning"}>
-                        {comment.approved ? 'Approved' : 'Pending'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        {!comment.approved && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCommentAction(comment.id, 'approve')}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            <CheckIcon className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {comment.approved && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCommentAction(comment.id, 'reject')}
-                            className="text-yellow-600 hover:text-yellow-800"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCommentAction(comment.id, 'delete')}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Status Filter */}
+            <div className="sm:w-48">
+              <div className="relative">
+                <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white appearance-none"
+                >
+                  <option value="all">All Comments</option>
+                  <option value="approved">Approved</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Comments List */}
+      {loadingComments ? (
+        <Card>
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Loading comments...</p>
           </div>
         </Card>
-      </div>
+      ) : filteredComments.length === 0 ? (
+        <Card>
+          <div className="p-8 text-center">
+            <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No comments found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {searchTerm || filterStatus !== 'all' 
+                ? 'Try adjusting your search or filters'
+                : 'No comments have been posted yet'
+              }
+            </p>
+          </div>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredComments.map((comment) => (
+            <Card key={comment.id}>
+              <div className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <UserIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {comment.author?.fullName || comment.author?.username || 'Anonymous'}
+                          </h3>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            comment.isApproved 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          }`}>
+                            {comment.isApproved ? 'Approved' : 'Pending'}
+                          </span>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          {comment.content}
+                        </p>
+                        
+                        <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                          <span>On: {comment.post?.title || 'Unknown Post'}</span>
+                          <span>•</span>
+                          <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="ml-4 flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleCommentStatus(comment.id, comment.isApproved)}
+                      className={comment.isApproved ? 'text-yellow-600 hover:text-yellow-700' : 'text-green-600 hover:text-green-700'}
+                    >
+                      {comment.isApproved ? (
+                        <XCircleIcon className="h-4 w-4" />
+                      ) : (
+                        <CheckCircleIcon className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteComment(comment.id)}
+                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </AdminLayout>
   );
 }

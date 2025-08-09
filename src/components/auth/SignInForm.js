@@ -3,12 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
+import { signIn } from 'next-auth/react';
 import { Button, Input } from '@/components/ui';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { FcGoogle } from 'react-icons/fc';
-import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import AuthError from './AuthError';
 
 export default function SignInForm() {
   const [formData, setFormData] = useState({
@@ -17,7 +16,6 @@ export default function SignInForm() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, loginWithProvider } = useAuth();
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -32,13 +30,23 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
-      const result = await login(formData);
-      
-      if (result.success) {
-        toast.success('Successfully signed in!');
-        router.push('/');
+      const result = await signIn('user-credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast.error('Invalid email or password');
       } else {
-        toast.error(result.error || 'Sign in failed');
+        toast.success('Successfully signed in!');
+        const urlParams = new URLSearchParams(window.location.search);
+        const callbackUrl = urlParams.get('callbackUrl');
+        if (callbackUrl) {
+          window.location.href = callbackUrl;
+        } else {
+          router.push('/');
+        }
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
@@ -47,16 +55,9 @@ export default function SignInForm() {
     }
   };
 
-  const handleSocialLogin = async (provider) => {
-    try {
-      await loginWithProvider(provider);
-    } catch (error) {
-      toast.error('Social login failed');
-    }
-  };
-
   return (
     <div className="w-full max-w-md mx-auto">
+      <AuthError />
       <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 border border-gray-200 dark:border-gray-700">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -142,38 +143,6 @@ export default function SignInForm() {
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              onClick={() => handleSocialLogin('google')}
-              className="w-full"
-            >
-              <FcGoogle className="h-5 w-5 mr-2" />
-              Google
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSocialLogin('github')}
-              className="w-full"
-            >
-              <FaGithub className="h-5 w-5 mr-2" />
-              GitHub
-            </Button>
-          </div>
-        </div>
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
           Don&#39;t have an account?{' '}

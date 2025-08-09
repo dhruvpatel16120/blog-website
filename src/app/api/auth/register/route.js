@@ -4,16 +4,26 @@ import { prisma } from '@/lib/db';
 
 export async function POST(request) {
   try {
-    const { name, email, password } = await request.json();
+    const body = await request.json();
+    const { username, email, fullName, password, bio, website, location } = body;
 
-    // Validation
-    if (!name || !email || !password) {
+    // Validate required fields
+    if (!username || !email || !fullName || !password) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
+    // Validate username length
+    if (username.length < 3) {
+      return NextResponse.json(
+        { error: 'Username must be at least 3 characters long' },
+        { status: 400 }
+      );
+    }
+
+    // Validate password length
     if (password.length < 8) {
       return NextResponse.json(
         { error: 'Password must be at least 8 characters long' },
@@ -21,15 +31,27 @@ export async function POST(request) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
+    // Check if username already exists
+    const existingUsername = await prisma.user.findUnique({
+      where: { username }
     });
 
-    if (existingUser) {
+    if (existingUsername) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
+        { error: 'Username already exists' },
+        { status: 400 }
+      );
+    }
+
+    // Check if email already exists
+    const existingEmail = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: 'Email already exists' },
+        { status: 400 }
       );
     }
 
@@ -39,27 +61,31 @@ export async function POST(request) {
     // Create user
     const user = await prisma.user.create({
       data: {
-        name: name.trim(),
-        email: email.toLowerCase(),
+        username,
+        email,
+        fullName,
         password: hashedPassword,
-        role: 'USER',
+        bio: bio || '',
+        website: website || '',
+        location: location || '',
+        isActive: true,
       },
       select: {
         id: true,
-        name: true,
+        username: true,
         email: true,
-        role: true,
+        fullName: true,
+        bio: true,
+        website: true,
+        location: true,
         createdAt: true,
       }
     });
 
-    return NextResponse.json(
-      { 
-        message: 'User created successfully',
-        user 
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      message: 'User created successfully',
+      user
+    });
 
   } catch (error) {
     console.error('Registration error:', error);
