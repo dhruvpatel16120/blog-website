@@ -92,8 +92,4 @@ export const userAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-
-
-// Export user configuration
-export { userAuthOptions };
 export default NextAuth(userAuthOptions);
