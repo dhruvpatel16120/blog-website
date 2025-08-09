@@ -124,7 +124,7 @@ export default function AdminLoginPage() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [isLocked, lockTime, getRemainingTime]);
+  }, [isLocked, lockTime]);  // Removed getRemainingTime from dependencies as it causes the lint error
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">

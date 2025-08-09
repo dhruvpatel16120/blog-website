@@ -16,6 +16,10 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  // Production settings
+  productionBrowserSourceMaps: false,
+  poweredByHeader: false,
+  reactStrictMode: true,
 };
 
 export default nextConfig;

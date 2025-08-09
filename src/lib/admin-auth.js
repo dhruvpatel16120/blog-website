@@ -122,4 +122,5 @@ export const adminAuthOptions = {
 
 const handler = NextAuth(adminAuthOptions);
 
-export { handler as GET, handler as POST };
+export const GET = handler;
+export const POST = handler;
