@@ -9,6 +9,7 @@ import SocialShare from '@/components/blog/SocialShare';
 import TableOfContents from '@/components/blog/TableOfContents';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default async function PostPage({ params }) {
   const slug = await params.slug;
@@ -57,7 +58,14 @@ export default async function PostPage({ params }) {
             ))}
           </div>
           <div className="mb-8">
-            <img src={post.coverImage} alt={post.title} className="rounded-lg w-full max-h-96 object-cover" />
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              width={1200}
+              height={600}
+              className="rounded-lg w-full max-h-96 object-cover"
+              priority
+            />
           </div>
           <MarkdownRenderer content={post.content} />
           <SocialShare title={post.title} slug={post.slug} />

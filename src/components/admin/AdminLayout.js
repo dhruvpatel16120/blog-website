@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { 
   Bars3Icon,
@@ -77,10 +78,12 @@ export default function AdminLayout({ children }) {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 {session.user.image ? (
-                  <img
+                  <Image
                     className="h-8 w-8 rounded-full"
                     src={session.user.image}
                     alt={session.user.name}
+                    width={32}
+                    height={32}
                   />
                 ) : (
                   <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
@@ -132,10 +135,12 @@ export default function AdminLayout({ children }) {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 {session.user.image ? (
-                  <img
+                  <Image
                     className="h-8 w-8 rounded-full"
                     src={session.user.image}
                     alt={session.user.name}
+                    width={32}
+                    height={32}
                   />
                 ) : (
                   <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">

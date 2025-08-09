@@ -298,7 +298,7 @@ export default function CategoriesPage() {
       {/* All Categories Summary */}
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-          Can't find what you're looking for?
+          Can&#39;t find what you&#39;re looking for?
         </h2>
         <p className="mb-6" style={{ color: 'var(--muted-foreground)' }}>
           Browse all our categories or use the search function to find specific content

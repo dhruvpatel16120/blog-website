@@ -123,7 +123,7 @@ export default function SearchPageClient({ allPosts = [], categories = [], tags 
       </div>
       {search && posts.length === 0 ? (
         <div className="text-center text-lg text-muted-foreground py-12">
-          No posts found for "{search}".
+          No posts found for &quot;{search}&quot;.
         </div>
       ) : (
         <BlogGrid posts={posts} />

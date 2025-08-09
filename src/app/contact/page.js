@@ -46,11 +46,11 @@ export default function ContactPage() {
         <div className="max-w-4xl mx-auto px-4">
           <Badge className="mb-6">Get In Touch</Badge>
           <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight" style={{ color: 'var(--foreground)' }}>
-            Let's Build Something
+            Let&#39;s Build Something
             <span className="text-primary block">Amazing Together</span>
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-            Have a question, suggestion, or want to collaborate? We'd love to hear from you.
+            Have a question, suggestion, or want to collaborate? We&#39;d love to hear from you.
           </p>
         </div>
       </section>
@@ -168,7 +168,7 @@ export default function ContactPage() {
           Ready to Get Started?
         </h2>
         <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-          Whether you have a question, want to collaborate, or just want to say hello, we're here to help.
+           Whether you have a question, want to collaborate, or just want to say hello, we&#39;re here to help.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg">
