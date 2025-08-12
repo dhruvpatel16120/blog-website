@@ -261,13 +261,10 @@ model Notification {
 
 enum AdminRole {
   ADMIN
-  SUPER_ADMIN
-  MODERATOR
 }
 
 enum UserRole {
   USER
-  MODERATOR
   ADMIN
 }
 

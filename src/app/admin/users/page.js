@@ -219,7 +219,6 @@ export default function AdminUsers() {
                 >
                   <option value="all">All Roles</option>
                   <option value="USER">User</option>
-                  <option value="MODERATOR">Moderator</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>

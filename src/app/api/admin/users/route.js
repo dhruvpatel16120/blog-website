@@ -13,7 +13,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.trim() || '';
     const status = searchParams.get('status') || 'all'; // all | active | inactive
-    const role = searchParams.get('role') || 'all'; // all | USER | MODERATOR | ADMIN
+    const role = searchParams.get('role') || 'all'; // all | USER | ADMIN
     const sortBy = searchParams.get('sortBy') || 'createdAt'; // createdAt | lastLogin | fullName | role
     const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
@@ -108,15 +108,12 @@ export async function GET(request) {
 export async function PATCH(request) {
   const session = await getServerSession(authOptions);
   if (!session || session.user?.type !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.user.role === 'MODERATOR') return NextResponse.json({ error: 'Insufficient privileges' }, { status: 403 });
   const { id, role } = await request.json();
   if (!id || !role) return NextResponse.json({ error: 'id and role required' }, { status: 400 });
-  const allowed = ['USER', 'MODERATOR', 'ADMIN'];
+  const allowed = ['USER', 'ADMIN'];
   if (!allowed.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
   // Only SUPER_ADMIN can elevate to ADMIN role for users
-  if (role === 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
-    return NextResponse.json({ error: 'Insufficient privileges' }, { status: 403 });
-  }
+  // no SUPER_ADMIN distinction anymore
   await prisma.user.update({ where: { id }, data: { role } });
   return NextResponse.json({ message: 'Updated' });
 }
@@ -156,13 +153,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Password must be at least 8 characters long' }, { status: 400 });
     }
 
-    const allowedRoles = ['USER', 'MODERATOR', 'ADMIN'];
+    const allowedRoles = ['USER', 'ADMIN'];
     if (!allowedRoles.includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
-    if (role === 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Insufficient privileges to assign ADMIN role' }, { status: 403 });
-    }
+    // admins can assign admin
 
     const [existingUsername, existingEmail] = await Promise.all([
       prisma.user.findUnique({ where: { username } }),

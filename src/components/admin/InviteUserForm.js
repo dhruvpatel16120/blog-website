@@ -23,8 +23,8 @@ export default function InviteUserForm() {
   if (loading) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading…</div>;
   if (!adminSession) return null;
 
-  const canAssignAdmin = adminSession?.role === 'SUPER_ADMIN';
-  const isModerator = adminSession?.role === 'MODERATOR';
+  const canAssignAdmin = adminSession?.role === 'ADMIN';
+  const isModerator = false;
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -77,9 +77,8 @@ export default function InviteUserForm() {
   };
 
   const roleOptions = [
-    { value: 'USER', label: 'User', description: 'Can read posts and comment' },
-    { value: 'MODERATOR', label: 'Moderator', description: 'Can moderate content and manage users' },
-    ...(canAssignAdmin ? [{ value: 'ADMIN', label: 'Admin', description: 'Full administrative access' }] : [])
+    { value: 'USER', label: 'User', description: 'Basic user' },
+    ...(canAssignAdmin ? [{ value: 'ADMIN', label: 'Admin', description: 'Administrative access' }] : [])
   ];
 
   return (
