@@ -10,10 +10,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     // Get recent notifications for admins (last 50)
+    // Include global notifications (adminId NULL) and admin-specific if any
     const notifications = await prisma.notification.findMany({
-      where: {
-        adminId: { not: null }
-      },
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: {

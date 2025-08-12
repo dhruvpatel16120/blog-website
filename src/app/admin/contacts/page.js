@@ -32,6 +32,7 @@ export default function ContactsPage() {
   const adminSession = session?.user;
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
+  const [summary, setSummary] = useState({ total: 0, pending: 0, responded: 0, spam: 0, archived: 0, respondedToday: 0 });
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [selectedContact, setSelectedContact] = useState(null);
   const [showResponseModal, setShowResponseModal] = useState(false);
@@ -68,6 +69,7 @@ export default function ContactsPage() {
         const data = await response.json();
         setContacts(data.contacts);
         setPagination(prev => ({ ...prev, total: data.total }));
+        if (data.summary) setSummary(data.summary);
       }
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -95,6 +97,10 @@ export default function ContactsPage() {
       dateTo: ''
     });
     setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const onSort = (key) => {
+    setFilters(prev => ({ ...prev, sortBy: key, order: prev.order === 'asc' && prev.sortBy === key ? 'desc' : 'asc' }));
   };
 
   const updateContactStatus = async (contactId, status) => {
@@ -157,19 +163,20 @@ export default function ContactsPage() {
     }
   };
 
-  const deleteContact = async (contactId) => {
-    if (!confirm('Are you sure you want to delete this contact?')) return;
-
+  // Delete confirm modal
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmError, setConfirmError] = useState('');
+  const doDelete = async () => {
+    if (!confirmDeleteId) return;
+    setConfirmError('');
     try {
-      const response = await fetch(`/api/admin/contacts/${contactId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setContacts(prev => prev.filter(contact => contact.id !== contactId));
-      }
-    } catch (error) {
-      console.error('Error deleting contact:', error);
+      const res = await fetch(`/api/admin/contacts/${confirmDeleteId}`, { method: 'DELETE' });
+      const payload = await res.json().catch(()=>({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to delete');
+      setContacts(prev => prev.filter(c => c.id !== confirmDeleteId));
+      setConfirmDeleteId(null);
+    } catch (e) {
+      setConfirmError(e.message);
     }
   };
 
@@ -195,6 +202,22 @@ export default function ContactsPage() {
 
   return (
     <AdminLayout title="Contact Management" adminSession={adminSession}>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        {[
+          { label: 'Total', value: summary.total, color: 'bg-gray-100 dark:bg-gray-800' },
+          { label: 'Pending', value: summary.pending, color: 'bg-yellow-100 dark:bg-yellow-900/20' },
+          { label: 'Responded', value: summary.responded, color: 'bg-green-100 dark:bg-green-900/20' },
+          { label: 'Spam', value: summary.spam, color: 'bg-red-100 dark:bg-red-900/20' },
+          { label: 'Responded Today', value: summary.respondedToday, color: 'bg-blue-100 dark:bg-blue-900/20' },
+        ].map((card, idx) => (
+          <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-200 dark:border-gray-700`}>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{card.label}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Filters */}
       <Card className="mb-6">
         <div className="p-6">
@@ -256,6 +279,31 @@ export default function ContactsPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort</label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={filters.sortBy || 'createdAt'}
+                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="createdAt">Created</option>
+                  <option value="respondedAt">Responded</option>
+                  <option value="status">Status</option>
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                </select>
+                <select
+                  value={filters.order || 'desc'}
+                  onChange={(e) => handleFilterChange('order', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="desc">Desc</option>
+                  <option value="asc">Asc</option>
+                </select>
+              </div>
+            </div>
+
             <div className="flex items-end">
               <Button
                 onClick={clearFilters}
@@ -272,11 +320,11 @@ export default function ContactsPage() {
       {/* Contacts List */}
       <Card>
         <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Contact Messages ({pagination.total} total)
             </h3>
-            <Button
+              <Button
               onClick={fetchContacts}
               variant="outline"
               disabled={loadingContacts}
@@ -359,10 +407,7 @@ export default function ContactsPage() {
 
                       <div className="flex items-center gap-2 ml-4">
                         <Button
-                          onClick={() => {
-                            setSelectedContact(contact);
-                            setShowResponseModal(true);
-                          }}
+                          onClick={() => router.push(`/admin/contacts/${contact.id}/reply`)}
                           variant="outline"
                           size="sm"
                           disabled={contact.status === 'RESPONDED'}
@@ -371,7 +416,7 @@ export default function ContactsPage() {
                           Reply
                         </Button>
                         <Button
-                          onClick={() => deleteContact(contact.id)}
+                          onClick={() => setConfirmDeleteId(contact.id)}
                           variant="outline"
                           size="sm"
                           className="text-red-600 hover:text-red-700"
@@ -479,6 +524,20 @@ export default function ContactsPage() {
               >
                 Send Response
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Contact</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">Only contacts marked as SPAM or ARCHIVED can be deleted. This action cannot be undone.</p>
+            {confirmError && <p className="text-sm text-red-600 mt-2">{confirmError}</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={()=>{ setConfirmDeleteId(null); setConfirmError(''); }}>Cancel</Button>
+              <Button onClick={doDelete} className="bg-red-600 hover:bg-red-700">Delete</Button>
             </div>
           </div>
         </div>

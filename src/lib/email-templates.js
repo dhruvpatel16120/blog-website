@@ -1,54 +1,142 @@
 // Email templates for the blog platform
 
 export const emailTemplates = {
-  // Contact acknowledgement template
-  contactAcknowledgement: (data) => ({
-    subject: `We received your message — ${data.platformName || 'Our Blog'}`,
-    html: `
-      <!doctype html>
-      <html>
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color:#111827; margin:0; background:#f9fafb; }
-          .container { max-width:640px; margin:0 auto; padding:24px; }
-          .card { background:#ffffff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
-          .header { background:linear-gradient(135deg,#2563eb,#7c3aed); color:#fff; padding:28px 24px; }
-          h1 { font-size:20px; margin:0; }
-          .content { padding:24px; }
-          .muted { color:#6b7280; }
-          .box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }
-          .footer { text-align:center; color:#9ca3af; font-size:12px; padding:16px 24px 24px; }
-          a.btn { display:inline-block; background:#2563eb; color:#ffffff!important; text-decoration:none; padding:10px 16px; border-radius:8px; font-weight:600; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="card">
-            <div class="header">
-              <h1>Thanks for contacting ${data.platformName || 'our team'}!</h1>
-              <p style="margin:8px 0 0; opacity:.9">We've received your message and will get back to you shortly.</p>
+  // Contact acknowledgement template (refined design)
+  contactAcknowledgement: (data) => {
+    const platform = data.platformName || 'Our Blog';
+    const url = data.platformUrl || 'https://example.com';
+    const logoUrl = process.env.BRAND_LOGO_URL || '';
+    const brandPrimary = process.env.BRAND_PRIMARY_COLOR || '#2563eb';
+    const brandPrimaryDark = process.env.BRAND_PRIMARY_DARK || '#1e40af';
+    const preheader = `Thanks ${data.name?.split(' ')[0] || ''}, we received your message and will reply soon.`;
+    const safe = (s) => String(s || '').replace(/[<>&]/g, (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${platform} – Message received</title>
+    <style>
+      body{margin:0;padding:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+      a{color:${brandPrimary};text-decoration:none}
+      .container{width:100%;background:#f3f4f6;padding:24px 12px}
+      .table{max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb}
+      .header{padding:20px 24px;background:${brandPrimary};color:#fff}
+      .brand{font-weight:700;font-size:18px;margin:0}
+      .content{padding:24px}
+      .h1{font-size:20px;line-height:1.4;margin:0 0 8px 0}
+      .muted{color:#6b7280}
+      .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px}
+      .cta{display:inline-block;background:${brandPrimary};color:#fff;border-radius:8px;padding:12px 16px;font-weight:600}
+      .cta:hover{background:${brandPrimaryDark}}
+      .footer{padding:16px 24px;color:#9ca3af;text-align:center;font-size:12px}
+      .preheader{display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all}
+    </style>
+  </head>
+  <body>
+    <span class="preheader">${safe(preheader)}</span>
+    <div class="container">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="table">
+        <tr>
+          <td class="header">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${platform}" height="28"/>` : `<h1 class="brand">${platform}</h1>`}
+          </td>
+        </tr>
+        <tr>
+          <td class="content">
+            <h2 class="h1">Thanks for reaching out${data.name ? `, ${safe(data.name.split(' ')[0])}` : ''}! 🎉</h2>
+            <p class="muted">We've received your message and our team will respond as soon as possible. A copy of your submission is included below for your records.</p>
+            <div class="box" style="margin:16px 0 20px;">
+              <p style="margin:0 0 8px"><strong>Subject:</strong> ${safe(data.subject || 'General inquiry')}</p>
+              <p style="margin:0 0 4px"><strong>Message:</strong></p>
+              <p class="muted" style="white-space:pre-wrap;margin:0">${safe(data.message)}</p>
             </div>
-            <div class="content">
-              <p>Hi ${data.name?.split(' ')[0] || 'there'},</p>
-              <p class="muted">Below is a copy of your submission for your records.</p>
-              <div class="box" style="margin:16px 0">
-                <p><strong>Subject:</strong> ${data.subject || 'General inquiry'}</p>
-                <p><strong>Message:</strong></p>
-                <p class="muted" style="white-space:pre-wrap">${(data.message || '').replace(/</g,'&lt;')}</p>
-              </div>
-              ${data.platformUrl ? `<p><a class="btn" href="${data.platformUrl}">Visit ${data.platformName || 'our site'}</a></p>` : ''}
-              ${data.supportEmail ? `<p class="muted">Need to update anything? Reply to this email or write us at ${data.supportEmail}.</p>` : ''}
+            <p style="margin:0 0 20px">You can browse our latest posts and updates here:</p>
+            <p><a class="cta" href="${url}">Visit ${platform}</a></p>
+            ${data.supportEmail ? `<p class="muted" style="margin:16px 0 0">Need to update your request? Reply to this email or write to <a href="mailto:${data.supportEmail}">${data.supportEmail}</a>.</p>` : ''}
+          </td>
+        </tr>
+        <tr>
+          <td class="footer">This is an automated acknowledgement from ${platform}. If you didn't submit this request, you can safely ignore this email.</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>`;
+
+    const text = `Thanks for contacting ${platform}!\n\nSubject: ${data.subject || 'General inquiry'}\n\n${data.message}\n\n${url}`;
+    return { subject: `We received your message — ${platform}`, html, text };
+  },
+
+  // Contact reply template (admin response to user)
+  contactReply: (data) => {
+    const platform = data.platformName || 'Our Blog';
+    const url = data.platformUrl || 'https://example.com';
+    const logoUrl = process.env.BRAND_LOGO_URL || '';
+    const brandPrimary = process.env.BRAND_PRIMARY_COLOR || '#2563eb';
+    const brandPrimaryDark = process.env.BRAND_PRIMARY_DARK || '#1e40af';
+    const preheader = `A response from ${platform} regarding: ${data.subject || 'your inquiry'}`;
+    const safe = (s) => String(s || '').replace(/[<>&]/g, (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${platform} – Our reply</title>
+    <style>
+      body{margin:0;padding:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+      a{color:${brandPrimary};text-decoration:none}
+      .container{width:100%;background:#f3f4f6;padding:24px 12px}
+      .table{max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb}
+      .header{padding:20px 24px;background:${brandPrimary};color:#fff}
+      .brand{font-weight:700;font-size:18px;margin:0}
+      .content{padding:24px}
+      .h1{font-size:20px;line-height:1.4;margin:0 0 10px 0}
+      .muted{color:#6b7280}
+      .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px}
+      .reply{background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:16px}
+      .cta{display:inline-block;background:${brandPrimary};color:#fff;border-radius:8px;padding:12px 16px;font-weight:600}
+      .cta:hover{background:${brandPrimaryDark}}
+      .footer{padding:16px 24px;color:#9ca3af;text-align:center;font-size:12px}
+      .preheader{display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all}
+    </style>
+  </head>
+  <body>
+    <span class="preheader">${safe(preheader)}</span>
+    <div class="container">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="table">
+        <tr>
+          <td class="header">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${platform}" height="28"/>` : `<h1 class="brand">${platform}</h1>`}
+          </td>
+        </tr>
+        <tr>
+          <td class="content">
+            <h2 class="h1">Our reply regarding: ${safe(data.subject || 'your inquiry')}</h2>
+            ${data.greeting ? `<p>${safe(data.greeting)}</p>` : ''}
+            <div class="reply" style="margin:12px 0 16px;white-space:pre-wrap">${safe(data.reply)}</div>
+            ${data.signature ? `<p class="muted" style="margin:12px 0 0">${safe(data.signature)}</p>` : ''}
+            <p style="margin:16px 0 12px" class="muted">For reference, your original message:</p>
+            <div class="box" style="margin:0 0 20px">
+              <p style="margin:0 0 6px"><strong>Subject:</strong> ${safe(data.originalSubject || 'General inquiry')}</p>
+              <p class="muted" style="white-space:pre-wrap;margin:0">${safe(data.originalMessage || '')}</p>
             </div>
-            <div class="footer">This is an automated acknowledgement from ${data.platformName || 'our blog'}.</div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-    text: `Thanks for contacting ${data.platformName || 'our team'}!\n\nSubject: ${data.subject || 'General inquiry'}\n\n${data.message}\n\n${data.platformUrl || ''}`
-  }),
+            <p><a class="cta" href="${url}">Visit ${platform}</a></p>
+          </td>
+        </tr>
+        <tr>
+          <td class="footer">This message was sent by ${platform}. If you need more help, reply to this email.</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>`;
+
+    const text = `Our reply regarding: ${data.subject || 'your inquiry'}\n\n${data.reply}\n\nOriginal message:\n${data.originalMessage || ''}\n\n${url}`;
+    return { subject: `Re: ${data.subject || 'your inquiry'} — ${platform}`, html, text };
+  },
   // User invitation template
   userInvitation: (data) => ({
     subject: `Welcome to ${data.platformName || 'Our Blog Platform'} - Set Your Password`,

@@ -18,6 +18,8 @@ export async function GET(request) {
     const search = searchParams.get('search') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
+    const sortBy = searchParams.get('sortBy') || 'createdAt'; // createdAt | respondedAt | status | name | email
+    const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
 
     // Build where clause
     const where = {};
@@ -51,20 +53,48 @@ export async function GET(request) {
     // Get total count
     const total = await prisma.contact.count({ where });
 
+    // Sorting
+    const orderBy = (() => {
+      if (sortBy === 'respondedAt') return [{ respondedAt: order }, { createdAt: 'desc' }];
+      if (sortBy === 'status') return [{ status: order }, { createdAt: 'desc' }];
+      if (sortBy === 'name') return [{ name: order }];
+      if (sortBy === 'email') return [{ email: order }];
+      return [{ createdAt: order }];
+    })();
+
     // Get contacts with pagination
     const contacts = await prisma.contact.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' }
+      orderBy
     });
+
+    // Summary cards data
+    const startOfToday = new Date();
+    startOfToday.setHours(0,0,0,0);
+    const [pendingCount, respondedCount, spamCount, archivedCount, respondedToday] = await Promise.all([
+      prisma.contact.count({ where: { status: 'PENDING' } }),
+      prisma.contact.count({ where: { status: 'RESPONDED' } }),
+      prisma.contact.count({ where: { status: 'SPAM' } }),
+      prisma.contact.count({ where: { status: 'ARCHIVED' } }),
+      prisma.contact.count({ where: { status: 'RESPONDED', respondedAt: { gte: startOfToday } } })
+    ]);
 
     return NextResponse.json({
       contacts,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
+      summary: {
+        total,
+        pending: pendingCount,
+        responded: respondedCount,
+        spam: spamCount,
+        archived: archivedCount,
+        respondedToday
+      }
     });
 
   } catch (error) {
