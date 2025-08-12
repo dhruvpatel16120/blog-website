@@ -1,0 +1,279 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  fullName      String
+  password      String
+  avatar        String?
+  bio           String?
+  website       String?
+  location      String?
+  emailVerified DateTime?
+  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
+  // auditLogs removed
+  notifications Notification[]
+
+  @@map("users")
+  @@index([createdAt])
+}
+
+model Admin {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  fullName      String
+  password      String
+  avatar        String?
+  role          AdminRole @default(ADMIN)
+  permissions   String    // JSON string of permissions
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  loginAttempts Int       @default(0)
+  lockedUntil   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // auditLogs removed
+  notifications Notification[]
+
+  @@map("admins")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  coverImage  String?
+  published   Boolean   @default(false)
+  featured    Boolean   @default(false)
+  viewCount   Int       @default(0)
+  readTime    Int?
+  wordCount   Int?
+  charCount   Int?
+  authorId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  seoTitle    String?
+  seoDescription String?
+  seoImage    String?
+  metaKeywords String?
+
+  author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categories PostCategory[]
+  tags       PostTag[]
+  comments   Comment[]
+  likes      Like[]
+  versions   PostVersion[]
+  relatedPosts Post[]       @relation("RelatedPosts")
+  relatedTo  Post[]         @relation("RelatedPosts")
+
+  @@index([published, publishedAt])
+  @@index([featured])
+  @@index([authorId])
+  @@map("posts")
+}
+
+model PostVersion {
+  id          String   @id @default(cuid())
+  postId      String
+  title       String
+  excerpt     String?
+  content     String
+  coverImage  String?
+  published   Boolean
+  featured    Boolean
+  createdAt   DateTime @default(now())
+  authorId    String?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_versions")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  posts PostCategory[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model PostCategory {
+  id         String @id @default(cuid())
+  postId     String
+  categoryId String
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
+  @@map("post_categories")
+}
+
+model PostTag {
+  id     String @id @default(cuid())
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("post_tags")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  postId    String
+  parentId  String?
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent   Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+  likes    Like[]
+
+  @@index([postId])
+  @@index([approved])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, commentId])
+  @@map("likes")
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  status    ContactStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  respondedAt DateTime?
+  response  String?
+  respondedBy String?
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contacts")
+}
+
+model SystemSetting {
+  id          String @id @default(cuid())
+  key         String @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// AuditLog model removed
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  adminId   String?
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// PageView model removed
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+  MODERATOR
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum ContactStatus {
+  PENDING
+  RESPONDED
+  SPAM
+  ARCHIVED
+}
