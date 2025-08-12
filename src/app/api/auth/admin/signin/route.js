@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { createAdminCookie, COOKIE_NAME } from '@/lib/admin-guard';
+// Legacy cookie guard removed. Use NextAuth instead; keep compatibility header no-op.
 
 export async function POST(request) {
   try {
@@ -64,8 +64,7 @@ export async function POST(request) {
       }
     });
 
-    // Set fallback signed cookie for server-side admin auth
-    res.headers.append('Set-Cookie', `${COOKIE_NAME}=${createAdminCookie(admin.id)}`);
+    // No legacy cookie; NextAuth session is the source of truth.
 
     return res;
   } catch (error) {
