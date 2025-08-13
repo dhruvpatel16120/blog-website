@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button, Input } from '@/components/ui';
+import { useSession } from 'next-auth/react';
 import { iconOptions, getIconComponent } from '@/lib/icons';
 export default function EditCategoryPage() {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function EditCategoryPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
   return (
     <AdminLayout title="Edit Category" adminSession={adminSession}>

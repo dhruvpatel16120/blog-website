@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/nextauth-combined';
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,7 +18,7 @@ export async function GET(request) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const order = (searchParams.get('order') === 'asc' ? 'asc' : 'desc');
     const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
-    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '10', 10), 1), 50);
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '5', 10), 1), 50);
     const skip = (page - 1) * limit;
 
     const where = q
@@ -57,7 +57,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.id || session.user.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { name, description, color, icon } = await request.json();
     if (!name || !name.trim()) return NextResponse.json({ error: 'name required' }, { status: 400 });
@@ -79,7 +79,7 @@ export async function POST(request) {
 export async function DELETE(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.id || session.user.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });

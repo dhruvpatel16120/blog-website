@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import { 
@@ -36,10 +36,29 @@ const navigation = [
 export default function AdminLayout({ children, title = 'Admin Panel', adminSession: adminSessionProp }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, status } = useSession();
 
   // Prefer explicitly passed session from server components if present
   const adminSession = adminSessionProp ?? session?.user;
+
+  // Function to check if a navigation item is active
+  const isActive = (href) => {
+    if (href === '/admin') {
+      return pathname === '/admin';
+    }
+    return pathname.startsWith(href);
+  };
+
+  // Function to get navigation item classes
+  const getNavItemClasses = (href) => {
+    const active = isActive(href);
+    return `group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+      active
+        ? 'bg-blue-100 text-blue-900 border-r-2 border-blue-600 dark:bg-blue-900/20 dark:text-blue-100 dark:border-blue-400 shadow-sm transform translate-x-1'
+        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white hover:translate-x-1'
+    }`;
+  };
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -78,9 +97,14 @@ export default function AdminLayout({ children, title = 'Admin Panel', adminSess
               <Link
                 key={item.name}
                 href={item.href}
-                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                className={getNavItemClasses(item.href)}
+                onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="mr-3 h-5 w-5" />
+                <item.icon className={`mr-3 h-5 w-5 ${
+                  isActive(item.href) 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300'
+                }`} />
                 {item.name}
               </Link>
             ))}
@@ -99,9 +123,13 @@ export default function AdminLayout({ children, title = 'Admin Panel', adminSess
               <Link
                 key={item.name}
                 href={item.href}
-                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                className={getNavItemClasses(item.href)}
               >
-                <item.icon className="mr-3 h-5 w-5" />
+                <item.icon className={`mr-3 h-5 w-5 ${
+                  isActive(item.href) 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300'
+                }`} />
                 {item.name}
               </Link>
             ))}
@@ -120,9 +148,24 @@ export default function AdminLayout({ children, title = 'Admin Panel', adminSess
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
+          
+          {/* Mobile current page indicator */}
+          <div className="lg:hidden flex items-center ml-2">
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              {navigation.find(item => isActive(item.href))?.name || 'Dashboard'}
+            </span>
+          </div>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1"></div>
+            <div className="flex flex-1">
+              {/* Current page indicator */}
+              <div className="hidden sm:flex items-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Current:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {navigation.find(item => isActive(item.href))?.name || 'Dashboard'}
+                </span>
+              </div>
+            </div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               {/* Admin profile dropdown */}
               <div className="relative">
@@ -156,6 +199,30 @@ export default function AdminLayout({ children, title = 'Admin Panel', adminSess
         {/* Page content */}
         <main className="py-6">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {/* Breadcrumb */}
+            <nav className="mb-4">
+              <ol className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                <li>
+                  <Link 
+                    href="/admin" 
+                    className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Admin
+                  </Link>
+                </li>
+                {pathname !== '/admin' && (
+                  <>
+                    <li>
+                      <span className="mx-2">/</span>
+                    </li>
+                    <li className="text-gray-700 dark:text-gray-300 font-medium">
+                      {navigation.find(item => isActive(item.href))?.name || title}
+                    </li>
+                  </>
+                )}
+              </ol>
+            </nav>
+            
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
             </div>

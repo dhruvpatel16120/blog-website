@@ -17,10 +17,10 @@ export default function NewCategoryPage() {
 
   useEffect(() => {
     // Only admins in this panel; extra guard
-    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
+    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.role !== 'ADMIN')) {
       router.push('/admin/login');
     }
-  }, [session?.user?.type, status, router]);
+  }, [session?.user?.role, status, router]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -54,7 +54,7 @@ export default function NewCategoryPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
   return (
     <AdminLayout title="New Category" adminSession={adminSession}>

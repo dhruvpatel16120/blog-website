@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button, Input } from '@/components/ui';
+import { useSession } from 'next-auth/react';
 export default function EditTagPage() {
   const router = useRouter();
   const params = useParams();
@@ -60,12 +61,11 @@ export default function EditTagPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
   return (
     <AdminLayout title="Edit Tag" adminSession={adminSession}>
       <div className="max-w-xl">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Edit Tag</h1>
         <Card className="p-6">
           {!loaded ? (
             <div>Loading tag…</div>

@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/nextauth-combined';
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -20,7 +20,7 @@ export async function GET(request) {
     const hasPostsParam = searchParams.get('hasPosts');
     const filterHasPosts = hasPostsParam === 'true' ? true : hasPostsParam === 'false' ? false : null;
     const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
-    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '10', 10), 1), 50);
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '5', 10), 1), 50);
     const skip = (page - 1) * limit;
 
     const where = {
@@ -40,7 +40,7 @@ export async function GET(request) {
     };
 
     // Total count and paginated fetch
-    const [total, items] = await Promise.all([
+    const [total, items, usedCount, unusedCount] = await Promise.all([
       prisma.tag.count({ where }),
       prisma.tag.findMany({
         where,
@@ -56,9 +56,18 @@ export async function GET(request) {
         skip,
         take: limit,
       }),
+      prisma.tag.count({ where: { posts: { some: {} } } }),
+      prisma.tag.count({ where: { posts: { none: {} } } }),
     ]);
 
-    return NextResponse.json({ data: items, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return NextResponse.json({ 
+      data: items, 
+      total, 
+      page, 
+      limit, 
+      totalPages: Math.ceil(total / limit),
+      summary: { total, used: usedCount, unused: unusedCount }
+    });
   } catch (error) {
     console.error('Error fetching tags:', error);
     return NextResponse.json({ error: 'Failed to fetch tags' }, { status: 500 });
@@ -69,7 +78,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { name, color } = await request.json();
@@ -93,7 +102,7 @@ export async function POST(request) {
 export async function DELETE(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { searchParams } = new URL(request.url);

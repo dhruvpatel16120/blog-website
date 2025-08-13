@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button } from '@/components/ui';
+import { useSession } from 'next-auth/react';
 export default function DeleteTagPage() {
   const router = useRouter();
   const params = useParams();
@@ -46,12 +47,11 @@ export default function DeleteTagPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
   return (
     <AdminLayout title="Delete Tag" adminSession={adminSession}>
       <div className="max-w-xl">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Delete Tag</h1>
         <Card className="p-6 space-y-4">
           {error && (
             <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>

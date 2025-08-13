@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/nextauth-combined';
 export async function GET(_request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,7 +29,7 @@ export async function GET(_request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -66,7 +66,7 @@ export async function PATCH(request, { params }) {
 export async function DELETE(_request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

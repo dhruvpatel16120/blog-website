@@ -8,13 +8,13 @@ export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.id || session.user.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 20;
+    const limit = parseInt(searchParams.get('limit')) || 5;
     const status = searchParams.get('status');
     const search = searchParams.get('search');
     const dateFrom = searchParams.get('dateFrom');
@@ -159,6 +159,10 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
+    // Return clearer message when DB cannot be reached (P1001)
+    if (error?.code === 'P1001') {
+      return NextResponse.json({ error: 'Database is unreachable. Please verify your DATABASE_URL and that the DB server is running.' }, { status: 503 });
+    }
     return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
   }
 }
@@ -166,7 +170,7 @@ export async function GET(request) {
 export async function PATCH(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const body = await request.json();
@@ -219,7 +223,7 @@ export async function PATCH(request) {
 export async function DELETE(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { searchParams } = new URL(request.url);

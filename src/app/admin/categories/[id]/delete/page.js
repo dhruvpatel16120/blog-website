@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button } from '@/components/ui';
+import { useSession } from 'next-auth/react';
 export default function DeleteCategoryPage() {
   const router = useRouter();
   const params = useParams();
@@ -46,7 +47,7 @@ export default function DeleteCategoryPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
   return (
     <AdminLayout title="Delete Category" adminSession={adminSession}>

@@ -52,7 +52,6 @@ export default function NewTagPage() {
   return (
     <AdminLayout title="New Tag" adminSession={adminSession}>
       <div className="max-w-xl">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Create Tag</h1>
         <Card className="p-6">
           {error && (
             <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>
