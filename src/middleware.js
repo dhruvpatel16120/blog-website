@@ -4,6 +4,11 @@ import { getToken } from 'next-auth/jwt';
 // Use the same fallback as nextauth-combined.js to avoid secret mismatch in dev
 const AUTH_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development-only';
 
+// Maintenance mode bypass list (public paths that still work)
+const MAINTENANCE_ALLOW = [
+  '/', '/favicon.ico', '/_next', '/api/maintenance', '/api/auth', '/admin/login'
+];
+
 // Protected admin routes that require authentication
 const PROTECTED_ADMIN_ROUTES = [
   '/admin',
@@ -25,6 +30,19 @@ const PROTECTED_ADMIN_API_ROUTES = [
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  // Maintenance Mode: if enabled, block all non-allowed paths
+  try {
+    const url = new URL('/api/maintenance', request.url);
+    const res = await fetch(url, { headers: { 'x-mw': '1' } });
+    const data = await res.json();
+    const allow = MAINTENANCE_ALLOW.some((p) => pathname === p || pathname.startsWith(p));
+    if (data?.maintenance && !allow) {
+      const resp = NextResponse.json({ message: 'Maintenance in progress' }, { status: 503 });
+      resp.headers.set('Retry-After', '600');
+      return resp;
+    }
+  } catch {}
 
   // Allow access to public pages and API routes (except admin)
   if (pathname === '/' || 
