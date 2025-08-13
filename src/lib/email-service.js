@@ -6,7 +6,6 @@ import crypto from 'crypto';
 class EmailService {
   constructor() {
     this.transporter = null;
-    this.initializeTransporter();
   }
 
   initializeTransporter() {
@@ -16,7 +15,7 @@ class EmailService {
     }
     
     try {
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         host: process.env.EMAIL_SERVER_HOST || 'smtp.gmail.com',
         port: parseInt(process.env.EMAIL_SERVER_PORT) || 587,
         secure: false, // true for 465, false for other ports
@@ -34,6 +33,10 @@ class EmailService {
   }
 
   async sendEmail(to, subject, html, text) {
+    if (!this.transporter) {
+      this.initializeTransporter();
+    }
+
     if (!this.transporter) {
       console.error('Email transporter not initialized');
       return false;
