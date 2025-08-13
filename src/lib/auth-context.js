@@ -70,15 +70,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isModerator = () => {
-    return user?.role === 'MODERATOR' || user?.role === 'ADMIN';
+    return user?.role === 'ADMIN';
   };
 
   const hasPermission = (permission) => {
     switch (permission) {
       case 'admin':
         return isAdmin();
-      case 'moderator':
-        return isModerator();
+
       case 'user':
         return !!user;
       default:

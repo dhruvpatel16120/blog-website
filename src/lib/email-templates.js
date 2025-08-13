@@ -673,8 +673,8 @@ If you no longer need assistance, please let us know`;
             <div class="info-box">
               <h3>What you can do as a ${data.role}:</h3>
               ${data.role === 'USER' ? '<p>• Read and comment on blog posts<br>• Like and interact with content<br>• Update your profile</p>' : ''}
-              ${data.role === 'MODERATOR' ? '<p>• All user permissions<br>• Moderate comments and content<br>• Manage user accounts</p>' : ''}
-              ${data.role === 'ADMIN' ? '<p>• All moderator permissions<br>• Full administrative access<br>• Manage the entire platform</p>' : ''}
+
+              ${data.role === 'ADMIN' ? '<p>• Full administrative access<br>• Manage the entire platform</p>' : ''}
             </div>
             
             <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
@@ -711,8 +711,8 @@ Important: This link will expire in 24 hours for security reasons.
 
 What you can do as a ${data.role}:
 ${data.role === 'USER' ? '- Read and comment on blog posts\n- Like and interact with content\n- Update your profile' : ''}
-${data.role === 'MODERATOR' ? '- All user permissions\n- Moderate comments and content\n- Manage user accounts' : ''}
-${data.role === 'ADMIN' ? '- All moderator permissions\n- Full administrative access\n- Manage the entire platform' : ''}
+
+${data.role === 'ADMIN' ? '- Full administrative access\n- Manage the entire platform' : ''}
 
 If you have any questions or need assistance, please contact our support team.
 

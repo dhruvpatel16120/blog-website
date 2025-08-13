@@ -24,7 +24,7 @@ export default function InviteUserForm() {
   if (!adminSession) return null;
 
   const canAssignAdmin = adminSession?.role === 'ADMIN';
-  const isModerator = false;
+  const isModerator = false; // Only USER and ADMIN roles exist
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +33,7 @@ export default function InviteUserForm() {
 
   const onInvite = async (e) => {
     e.preventDefault();
-    if (isModerator) return;
+
     
     setSending(true);
     setError('');
@@ -164,7 +164,7 @@ export default function InviteUserForm() {
               name="role"
               value={form.role}
               onChange={onChange}
-              disabled={isModerator}
+
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             >
               {roleOptions.map((option) => (
@@ -204,7 +204,7 @@ export default function InviteUserForm() {
             
             <Button
               type="submit"
-              disabled={sending || isModerator}
+              disabled={sending}
               className="min-w-[120px]"
             >
               {sending ? (

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { emailTemplates, getPlatformName, getPlatformUrl } from '@/lib/email-templates';
+import { generateCustomAvatarUrl } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 
@@ -13,14 +14,12 @@ export async function POST(request) {
     console.log('🔐 Invite user request received');
     
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
-      console.log('❌ Unauthorized request - no session');
+    if (!session || session.user?.role !== 'ADMIN') {
+      console.log('❌ Unauthorized request - no session or insufficient role');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     console.log(`👤 Session user: ${session.user?.email || session.user?.username}, Role: ${session.user?.role}`);
-
-    // No moderator role anymore
 
     const { fullName, email, role, customMessage } = await request.json();
     console.log(`📝 Invite request: ${fullName} (${email}) as ${role}`);
@@ -38,15 +37,18 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
-    // Validate role
+    // Validate role - only USER and ADMIN allowed
     const validRoles = ['USER', 'ADMIN'];
     if (!validRoles.includes(role)) {
       console.log('❌ Invalid role specified:', role);
       return NextResponse.json({ error: 'Invalid role specified' }, { status: 400 });
     }
 
-    // Role restrictions
-    // Allow admins to invite admins as well (no SUPER_ADMIN distinction)
+    // Role restrictions - only ADMIN users can invite ADMIN users
+    if (role === 'ADMIN' && session.user?.role !== 'ADMIN') {
+      console.log('❌ Insufficient privileges to invite admin user');
+      return NextResponse.json({ error: 'Insufficient privileges to invite admin user' }, { status: 403 });
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -89,6 +91,9 @@ export async function POST(request) {
     const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
+    // Generate automatic avatar URL
+    const avatarUrl = generateCustomAvatarUrl(fullName.trim(), finalUsername);
+
     const user = await prisma.user.create({
       data: {
         username: finalUsername,
@@ -97,7 +102,8 @@ export async function POST(request) {
         password: hashedPassword,
         role,
         isActive: true,
-        emailVerified: null
+        emailVerified: null,
+        avatar: avatarUrl
       }
     });
     
@@ -192,17 +198,6 @@ export async function POST(request) {
     }
 
     console.log('🎉 User invitation completed successfully');
-    // Optional: create admin notification
-    try {
-      await prisma.notification.create({
-        data: {
-          type: 'success',
-          message: `Invitation sent to ${fullName} (${email}) as ${role}`,
-          adminId: session.user.id,
-          read: false
-        }
-      });
-    } catch {}
 
     return NextResponse.json({ 
       message: 'User invited successfully',

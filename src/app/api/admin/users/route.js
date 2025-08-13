@@ -3,11 +3,12 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth-combined';
+import { generateCustomAvatarUrl } from '@/lib/utils';
 
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { searchParams } = new URL(request.url);
@@ -107,13 +108,12 @@ export async function GET(request) {
 
 export async function PATCH(request) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.type !== 'admin') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session || session.user?.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id, role } = await request.json();
   if (!id || !role) return NextResponse.json({ error: 'id and role required' }, { status: 400 });
   const allowed = ['USER', 'ADMIN'];
   if (!allowed.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-  // Only SUPER_ADMIN can elevate to ADMIN role for users
-  // no SUPER_ADMIN distinction anymore
+      // Only ADMIN users can assign ADMIN role to other users
   await prisma.user.update({ where: { id }, data: { role } });
   return NextResponse.json({ message: 'Updated' });
 }
@@ -121,11 +121,8 @@ export async function PATCH(request) {
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (session.user.role === 'MODERATOR') {
-      return NextResponse.json({ error: 'Insufficient privileges' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -167,6 +164,10 @@ export async function POST(request) {
     if (existingEmail) return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
 
     const hashedPassword = await bcrypt.hash(password, 12);
+    
+    // Generate automatic avatar URL
+    const avatarUrl = generateCustomAvatarUrl(fullName, username);
+    
     const user = await prisma.user.create({
       data: {
         username,
@@ -178,6 +179,7 @@ export async function POST(request) {
         website,
         location,
         isActive,
+        avatar: avatarUrl,
       },
       select: {
         id: true,
@@ -186,6 +188,7 @@ export async function POST(request) {
         fullName: true,
         role: true,
         isActive: true,
+        avatar: true,
         createdAt: true,
       },
     });

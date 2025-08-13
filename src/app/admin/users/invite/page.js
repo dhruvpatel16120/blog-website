@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui';
+
 export default function InviteUserPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -17,10 +18,9 @@ export default function InviteUserPage() {
   const [validationErrors, setValidationErrors] = useState({});
 
   if (loading) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
-  const canAssignAdmin = adminSession?.role === 'SUPER_ADMIN';
-  const isModerator = adminSession?.role === 'MODERATOR';
+  const canAssignAdmin = adminSession?.role === 'ADMIN';
 
   const validateForm = () => {
     const errors = {};
@@ -57,7 +57,6 @@ export default function InviteUserPage() {
 
   const onInvite = async (e) => {
     e.preventDefault();
-    if (isModerator) return;
     
     if (!validateForm()) {
       return;
@@ -74,7 +73,7 @@ export default function InviteUserPage() {
         body: JSON.stringify({
           fullName: form.fullName.trim(),
           email: form.email.trim(),
-          role: canAssignAdmin ? form.role : (form.role === 'ADMIN' ? 'USER' : form.role),
+          role: canAssignAdmin ? form.role : 'USER',
           customMessage: form.customMessage.trim(),
         }),
       });
@@ -192,21 +191,17 @@ export default function InviteUserPage() {
               value={form.role}
               onChange={onChange}
               className={getFieldClassName('role')}
-              disabled={isModerator}
             >
               <option value="USER">User</option>
-              <option value="MODERATOR">Moderator</option>
               {canAssignAdmin && <option value="ADMIN">Admin</option>}
             </select>
             {getFieldError('role') && (
               <p className="mt-1 text-sm text-red-600">{getFieldError('role')}</p>
             )}
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {isModerator 
-                ? 'Moderators cannot invite users' 
-                : canAssignAdmin 
-                  ? 'You can assign any role including Admin' 
-                  : 'You can assign User and Moderator roles only'
+              {canAssignAdmin 
+                ? 'You can assign any role including Admin' 
+                : 'You can assign User roles only'
               }
             </p>
           </div>
@@ -239,7 +234,7 @@ export default function InviteUserPage() {
             </Button>
             <Button
               type="submit"
-              disabled={sending || isModerator}
+              disabled={sending}
               className="min-w-[120px]"
             >
               {sending ? 'Sending Invite...' : 'Send Invite'}

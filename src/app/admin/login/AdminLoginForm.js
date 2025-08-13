@@ -26,7 +26,7 @@ export default function AdminLoginForm() {
     // Check if admin is already logged in
     const checkSession = async () => {
       const session = await getSession();
-      if (session?.user?.type === 'admin') {
+      if (session?.user?.role === 'ADMIN') {
         router.push('/admin');
       }
     };

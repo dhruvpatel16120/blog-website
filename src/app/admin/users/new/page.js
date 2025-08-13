@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui';
+
 export default function NewUserPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -22,10 +23,9 @@ export default function NewUserPage() {
   const [error, setError] = useState('');
 
   if (loading) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading…</div>;
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
 
-  const canAssignAdmin = adminSession?.role === 'SUPER_ADMIN';
-  const isModerator = adminSession?.role === 'MODERATOR';
+  const canAssignAdmin = adminSession?.role === 'ADMIN';
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -34,7 +34,6 @@ export default function NewUserPage() {
 
   const onSave = async (e) => {
     e.preventDefault();
-    if (isModerator) return;
     setSaving(true);
     setError('');
     try {
@@ -45,7 +44,7 @@ export default function NewUserPage() {
           username: form.username,
           email: form.email,
           fullName: form.fullName,
-          role: canAssignAdmin ? form.role : (form.role === 'ADMIN' ? 'USER' : form.role),
+          role: canAssignAdmin ? form.role : 'USER',
           password: form.password,
           isActive: form.isActive,
         }),
@@ -79,9 +78,8 @@ export default function NewUserPage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Role</label>
-            <select name="role" value={form.role} onChange={onChange} className="w-full px-3 py-2 rounded-md border dark:bg-gray-800" disabled={isModerator}>
+            <select name="role" value={form.role} onChange={onChange} className="w-full px-3 py-2 rounded-md border dark:bg-gray-800">
               <option value="USER">User</option>
-              <option value="MODERATOR">Moderator</option>
               {canAssignAdmin && <option value="ADMIN">Admin</option>}
             </select>
           </div>
@@ -93,12 +91,12 @@ export default function NewUserPage() {
 
         <div className="mt-6 flex items-center justify-between">
           <label className="inline-flex items-center space-x-2 text-sm">
-            <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} disabled={isModerator} />
+            <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
             <span>Active</span>
           </label>
           <div className="space-x-2">
             <Button type="button" variant="ghost" onClick={() => router.push('/admin/users')}>Cancel</Button>
-            <Button type="submit" disabled={saving || isModerator}>{saving ? 'Creating…' : 'Create user'}</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create user'}</Button>
           </div>
         </div>
       </form>

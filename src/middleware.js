@@ -99,7 +99,7 @@ export async function middleware(request) {
       });
 
       // Check if user is authenticated and is an admin
-      if (!token || token.type !== 'admin') {
+      if (!token || token.role !== 'ADMIN') {
         // For API routes, return 401
         if (isProtectedAdminApiRoute) {
           return new NextResponse(

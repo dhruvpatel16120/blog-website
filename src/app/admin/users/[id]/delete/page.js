@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui';
+
 export default function DeleteUserPage() {
   const router = useRouter();
   const params = useParams();
@@ -15,12 +17,6 @@ export default function DeleteUserPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  useEffect(() => {
-    if (params.id) {
-      fetchUser();
-    }
-  }, [params.id, fetchUser]);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -34,6 +30,12 @@ export default function DeleteUserPage() {
       setUserLoading(false);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchUser();
+    }
+  }, [params.id, fetchUser]);
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
@@ -71,7 +73,7 @@ export default function DeleteUserPage() {
     );
   }
 
-  if (session?.user?.type !== 'admin') return null;
+  if (session?.user?.role !== 'ADMIN') return null;
   if (!user) {
     return (
       <AdminLayout title="User Not Found" adminSession={adminSession}>
@@ -84,10 +86,9 @@ export default function DeleteUserPage() {
     );
   }
 
-  const canDelete = adminSession?.role !== 'MODERATOR' && 
+  const canDelete = adminSession?.role === 'ADMIN' && 
                    adminSession?.id !== user.id && 
-                   (adminSession?.role === 'SUPER_ADMIN' || 
-                    (adminSession?.role === 'ADMIN' && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN'));
+                   user.role !== 'ADMIN';
 
   const hasPosts = user.posts?.length > 0;
   const hasComments = user.comments?.length > 0;
@@ -99,32 +100,15 @@ export default function DeleteUserPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Delete User</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Review user information and confirm deletion. This action cannot be undone.
+            You are about to permanently delete this user account. This action cannot be undone.
           </p>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* User Information Card */}
+        {/* User Information */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">User Information</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">User Details</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
               <p className="text-gray-900 dark:text-white font-medium">{user.fullName}</p>
@@ -143,9 +127,7 @@ export default function DeleteUserPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                user.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
                 user.role === 'ADMIN' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                user.role === 'MODERATOR' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
               }`}>
                 {user.role}
@@ -262,9 +244,8 @@ export default function DeleteUserPage() {
           {!canDelete && (
             <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {adminSession?.role === 'MODERATOR' ? 'Moderators cannot delete users.' :
-                 adminSession?.id === user.id ? 'You cannot delete your own account.' :
-                 adminSession?.role === 'ADMIN' && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? 'You cannot delete users with ADMIN or SUPER_ADMIN roles.' :
+                {adminSession?.id === user.id ? 'You cannot delete your own account.' :
+                 adminSession?.role === 'ADMIN' && user.role === 'ADMIN' ? 'You cannot delete users with ADMIN roles.' :
                  'You do not have permission to delete this user.'}
               </p>
             </div>

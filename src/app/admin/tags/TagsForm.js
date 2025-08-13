@@ -11,7 +11,7 @@ export default function TagsForm() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const adminSession = session?.user;
-  const isModerator = adminSession?.role === 'MODERATOR';
+  const isModerator = false; // Only USER and ADMIN roles exist
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +64,7 @@ export default function TagsForm() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tags</h1>
-          <Button onClick={goNew} disabled={isModerator} title={isModerator ? 'Moderators cannot create tags' : undefined}>New Tag</Button>
+          <Button onClick={goNew}>New Tag</Button>
         </div>
 
         {success && (
@@ -113,7 +113,7 @@ export default function TagsForm() {
               <option value="false">Unused only</option>
             </select>
             <div className="flex justify-end">
-              <Button onClick={goNew} disabled={isModerator} title={isModerator ? 'Moderators cannot create tags' : undefined}>Add Tag</Button>
+              <Button onClick={goNew}>Add Tag</Button>
             </div>
           </div>
 
@@ -140,8 +140,8 @@ export default function TagsForm() {
                     <td className="px-6 py-4"><span className="inline-block w-4 h-4 rounded" style={{ backgroundColor: t.color || '#e5e7eb' }} /></td>
                     <td className="px-6 py-4 text-right text-sm text-gray-500">{t._count?.posts ?? 0}</td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={()=>goEdit(t.id)} disabled={isModerator} title={isModerator ? 'Moderators cannot edit tags' : undefined}>Edit</Button>
-                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" onClick={()=>goDelete(t.id)} disabled={isModerator} title={isModerator ? 'Moderators cannot delete tags' : undefined}>Delete</Button>
+                      <Button variant="outline" size="sm" onClick={()=>goEdit(t.id)}>Edit</Button>
+                                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" onClick={()=>goDelete(t.id)}>Delete</Button>
                     </td>
                   </tr>
                 ))}

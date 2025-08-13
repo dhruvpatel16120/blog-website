@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui';
 export default function EditUserPage() {
@@ -17,10 +18,10 @@ export default function EditUserPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
+    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.role !== 'ADMIN')) {
       router.push('/admin/login');
     }
-  }, [session?.user?.type, status, router]);
+  }, [session?.user?.role, status, router]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -54,8 +55,8 @@ export default function EditUserPage() {
     return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading…</div>;
   }
 
-  const canAssignAdmin = adminSession?.role === 'SUPER_ADMIN';
-  const isModerator = adminSession?.role === 'MODERATOR';
+  const canAssignAdmin = adminSession?.role === 'ADMIN';
+  const isModerator = false; // Only USER and ADMIN roles exist
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,7 +65,6 @@ export default function EditUserPage() {
 
   const onSave = async (e) => {
     e.preventDefault();
-    if (isModerator) return;
     setSaving(true);
     setError('');
     try {
@@ -75,7 +75,7 @@ export default function EditUserPage() {
           username: form.username,
           email: form.email,
           fullName: form.fullName,
-          role: canAssignAdmin ? form.role : (form.role === 'ADMIN' ? 'USER' : form.role),
+          role: canAssignAdmin ? form.role : 'USER',
           isActive: form.isActive,
           avatar: form.avatar,
           bio: form.bio,
@@ -112,9 +112,8 @@ export default function EditUserPage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Role</label>
-            <select name="role" value={form.role} onChange={onChange} className="w-full px-3 py-2 rounded-md border dark:bg-gray-800" disabled={isModerator}>
+            <select name="role" value={form.role} onChange={onChange} className="w-full px-3 py-2 rounded-md border dark:bg-gray-800" disabled={!canAssignAdmin}>
               <option value="USER">User</option>
-              <option value="MODERATOR">Moderator</option>
               {canAssignAdmin && <option value="ADMIN">Admin</option>}
             </select>
           </div>
@@ -141,12 +140,12 @@ export default function EditUserPage() {
 
         <div className="mt-6 flex items-center justify-between">
           <label className="inline-flex items-center space-x-2 text-sm">
-            <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} disabled={isModerator} />
+            <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} disabled={!canAssignAdmin} />
             <span>Active</span>
           </label>
           <div className="space-x-2">
             <Button type="button" variant="ghost" onClick={() => router.push('/admin/users')}>Cancel</Button>
-            <Button type="submit" disabled={saving || isModerator}>{saving ? 'Saving…' : 'Save changes'}</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
           </div>
         </div>
       </form>

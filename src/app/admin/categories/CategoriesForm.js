@@ -11,7 +11,7 @@ export default function CategoriesForm() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const adminSession = session?.user;
-  const isModerator = adminSession?.role === 'MODERATOR';
+  const isModerator = false; // Only USER and ADMIN roles exist
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function CategoriesForm() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
-          <Button onClick={goNew} disabled={isModerator} title={isModerator ? 'Moderators cannot create categories' : undefined}>New Category</Button>
+          <Button onClick={goNew}>New Category</Button>
         </div>
 
         {success && (
@@ -101,7 +101,7 @@ export default function CategoriesForm() {
               <option value={50}>50</option>
             </select>
             <div className="flex justify-end">
-              <Button onClick={goNew} disabled={isModerator} title={isModerator ? 'Moderators cannot create categories' : undefined}>Add Category</Button>
+              <Button onClick={goNew}>Add Category</Button>
             </div>
           </div>
 
@@ -128,8 +128,8 @@ export default function CategoriesForm() {
                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{c.description || '-'}</td>
                     <td className="px-6 py-4"><span className="inline-block w-4 h-4 rounded" style={{ backgroundColor: c.color || '#e5e7eb' }} /></td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={()=>goEdit(c.id)} disabled={isModerator} title={isModerator ? 'Moderators cannot edit categories' : undefined}>Edit</Button>
-                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" onClick={()=>goDelete(c.id)} disabled={isModerator} title={isModerator ? 'Moderators cannot delete categories' : undefined}>Delete</Button>
+                      <Button variant="outline" size="sm" onClick={()=>goEdit(c.id)}>Edit</Button>
+                                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" onClick={()=>goDelete(c.id)}>Delete</Button>
                     </td>
                   </tr>
                 ))}

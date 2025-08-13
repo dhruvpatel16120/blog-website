@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth-combined';
+import { generateCustomAvatarUrl } from '@/lib/utils';
 
 export async function GET(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = params;
+    const { id } = await params;
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -39,23 +40,20 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (session.user.role === 'MODERATOR') {
-      return NextResponse.json({ error: 'Insufficient privileges' }, { status: 403 });
-    }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
-    // Prevent privilege escalation unless SUPER_ADMIN
+    // Prevent privilege escalation - only ADMIN users can assign ADMIN role
     if (typeof body.role !== 'undefined') {
-      const allowed = ['USER', 'MODERATOR', 'ADMIN'];
+      const allowed = ['USER', 'ADMIN'];
       if (!allowed.includes(body.role)) {
         return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
       }
-      if (body.role === 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      if (body.role === 'ADMIN' && session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Insufficient privileges' }, { status: 403 });
       }
     }
@@ -82,6 +80,14 @@ export async function PATCH(request, { params }) {
     // Whitelist updatable fields
     const allowedFields = ['username', 'email', 'fullName', 'avatar', 'bio', 'website', 'location', 'role', 'isActive'];
     const data = Object.fromEntries(Object.entries(body).filter(([k]) => allowedFields.includes(k)));
+
+    // Generate avatar if updating name and no avatar exists
+    if ((body.fullName || body.username) && !data.avatar) {
+      const currentUser = await prisma.user.findUnique({ where: { id }, select: { fullName: true, username: true, avatar: true } });
+      if (!currentUser.avatar) {
+        data.avatar = generateCustomAvatarUrl(body.fullName || currentUser.fullName, body.username || currentUser.username);
+      }
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -117,14 +123,11 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (session.user.role === 'MODERATOR') {
-      return NextResponse.json({ error: 'Insufficient privileges' }, { status: 403 });
-    }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Prevent self-deletion of own user if mapped to a user account with same email
     if (session.user.email) {
