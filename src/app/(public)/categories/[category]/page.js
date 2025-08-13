@@ -1,18 +1,28 @@
 import React from 'react';
 import Link from 'next/link';
 import BlogGrid from '@/components/blog/BlogGrid';
-import { Badge } from '@/components/ui';
+import { Badge, Button } from '@/components/ui';
 import { prisma } from '@/lib/db';
 import { getIconComponent } from '@/lib/icons';
 
-export default async function CategoryPage({ params }) {
+export default async function CategoryPage({ params, searchParams }) {
   const categorySlug = params.category;
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   const categoryName = category?.name || categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, ' ');
 
+  const page = parseInt(searchParams?.page || '1', 10);
+  const limit = 5;
+
+  const total = await prisma.post.count({
+    where: { published: true, categories: { some: { category: { slug: categorySlug } } } }
+  });
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
   const postsRaw = await prisma.post.findMany({
     where: { published: true, categories: { some: { category: { slug: categorySlug } } } },
     orderBy: { publishedAt: 'desc' },
+    skip: (page - 1) * limit,
+    take: limit,
     select: {
       id: true, slug: true, title: true, excerpt: true, content: true, coverImage: true, readTime: true, publishedAt: true,
       categories: { include: { category: { select: { name: true } } } },
@@ -47,7 +57,7 @@ export default async function CategoryPage({ params }) {
               {categoryName}
             </h1>
             <Badge variant="secondary" className="text-xs">
-              {posts.length} posts
+              {total} posts
             </Badge>
           </div>
         </div>
@@ -58,7 +68,45 @@ export default async function CategoryPage({ params }) {
           No posts found for this category.
         </div>
       ) : (
-        <BlogGrid posts={posts} />
+        <>
+          <BlogGrid posts={posts} />
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex justify-center">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  as="a"
+                  href={`?page=${page - 1}`}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+                {[...Array(totalPages)].map((_, idx) => (
+                  <Button
+                    key={idx + 1}
+                    size="sm"
+                    as="a"
+                    href={`?page=${idx + 1}`}
+                    variant={page === idx + 1 ? undefined : 'outline'}
+                  >
+                    {idx + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  as="a"
+                  href={`?page=${page + 1}`}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   );

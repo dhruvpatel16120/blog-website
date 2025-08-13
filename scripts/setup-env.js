@@ -158,7 +158,7 @@ async function setupEnv() {
     
     const nextauthSecret = generateSecret();
     const jwtSecret = generateSecret();
-    
+
     logSuccess(`Generated NEXTAUTH_SECRET: ${nextauthSecret.substring(0, 16)}...`);
     logSuccess(`Generated JWT_SECRET: ${jwtSecret.substring(0, 16)}...`);
 

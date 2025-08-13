@@ -14,6 +14,50 @@ const rl = readline.createInterface({
 
 const question = (query) => new Promise((resolve) => rl.question(query, resolve));
 
+// Color codes for terminal output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m'
+};
+
+function log(message, color = 'white') {
+  console.log(`${colors[color]}${message}${colors.reset}`);
+}
+
+function logHeader(message) {
+  console.log(`\n${colors.cyan}${'='.repeat(70)}${colors.reset}`);
+  console.log(`${colors.bright}${colors.blue}${message}${colors.reset}`);
+  console.log(`${colors.cyan}${'='.repeat(70)}${colors.reset}`);
+}
+
+function logSection(message) {
+  console.log(`\n${colors.yellow}${colors.bright}${message}${colors.reset}`);
+  console.log(`${colors.yellow}${'-'.repeat(message.length)}${colors.reset}`);
+}
+
+function logSuccess(message) {
+  console.log(`${colors.green}✅ ${message}${colors.reset}`);
+}
+
+function logWarning(message) {
+  console.log(`${colors.yellow}⚠️  ${message}${colors.reset}`);
+}
+
+function logError(message) {
+  console.log(`${colors.red}❌ ${message}${colors.reset}`);
+}
+
+function logInfo(message) {
+  console.log(`${colors.blue}ℹ️  ${message}${colors.reset}`);
+}
+
 // Password strength checker
 function checkPasswordStrength(password) {
   const checks = {
@@ -68,33 +112,54 @@ function generateSecurePassword() {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
+// Validate email format
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 async function createAdmin() {
-  console.log('🔐 Admin User Creation Script\n');
-  console.log('This script will create a new admin user with full privileges.\n');
+  console.clear();
+  logHeader('🔐 Admin User Creation Script v2.0');
+  log('This script will create a new admin user with full privileges.', 'white');
+  log('Updated for the latest project structure and authentication system!', 'cyan');
 
   try {
+    // Check if database is accessible
+    logSection('🔍 Database Connection Test');
+    try {
+      await prisma.$connect();
+      logSuccess('Database connection successful');
+    } catch (error) {
+      logError('Failed to connect to database');
+      log('Please ensure your database is running and DATABASE_URL is correct', 'yellow');
+      throw new Error('Database connection failed');
+    }
+
+    logSection('👤 Admin User Details');
+    
     // Get admin details
-    const username = await question('Enter admin username: ');
+    const username = await question(`${colors.white}Enter admin username: ${colors.reset}`);
     if (!username || username.length < 3) {
       throw new Error('Username must be at least 3 characters long');
     }
 
     // Check if username already exists
-    const existingAdmin = await prisma.admin.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { username }
     });
 
-    if (existingAdmin) {
+    if (existingUser) {
       throw new Error('Username already exists');
     }
 
-    const email = await question('Enter admin email: ');
-    if (!email || !email.includes('@')) {
+    const email = await question(`${colors.white}Enter admin email: ${colors.reset}`);
+    if (!email || !validateEmail(email)) {
       throw new Error('Please enter a valid email address');
     }
 
     // Check if email already exists
-    const existingEmail = await prisma.admin.findUnique({
+    const existingEmail = await prisma.user.findUnique({
       where: { email }
     });
 
@@ -102,51 +167,53 @@ async function createAdmin() {
       throw new Error('Email already exists');
     }
 
-    const fullName = await question('Enter admin full name: ');
+    const fullName = await question(`${colors.white}Enter admin full name: ${colors.reset}`);
     if (!fullName || fullName.length < 2) {
       throw new Error('Full name must be at least 2 characters long');
     }
 
     // Password handling
-    console.log('\n🔒 Password Requirements:');
-    console.log('- At least 12 characters');
-    console.log('- Mix of uppercase and lowercase letters');
-    console.log('- At least one number');
-    console.log('- At least one special character');
-    console.log('- No common passwords or patterns\n');
+    logSection('🔒 Password Security');
+    log('Password Requirements:', 'white');
+    log('- At least 12 characters', 'white');
+    log('- Mix of uppercase and lowercase letters', 'white');
+    log('- At least one number', 'white');
+    log('- At least one special character', 'white');
+    log('- No common passwords or patterns', 'white');
 
     let password;
-    let passwordChoice = await question('Choose password option:\n1. Enter custom password\n2. Generate secure password\nEnter choice (1 or 2): ');
+    let passwordChoice = await question(`\n${colors.white}Choose password option:\n1. Enter custom password\n2. Generate secure password\nEnter choice (1 or 2): ${colors.reset}`);
 
     if (passwordChoice === '2') {
       password = generateSecurePassword();
-      console.log(`\nGenerated password: ${password}`);
-      console.log('⚠️  Please save this password securely!\n');
+      log(`\nGenerated password: ${password}`, 'green');
+      logWarning('Please save this password securely!');
     } else {
-      password = await question('Enter admin password: ');
+      password = await question(`${colors.white}Enter admin password: ${colors.reset}`);
     }
 
     // Check password strength
     const strength = checkPasswordStrength(password);
     
     if (!strength.strong) {
-      console.log('\n❌ Password is not strong enough:');
-      strength.issues.forEach(issue => console.log(`- ${issue}`));
-      console.log('\nPlease choose a stronger password.');
+      logError('Password is not strong enough:');
+      strength.issues.forEach(issue => log(`- ${issue}`, 'red'));
+      log('\nPlease choose a stronger password.', 'yellow');
       rl.close();
       return;
     }
 
-    console.log('\n✅ Password strength: EXCELLENT');
-    console.log(`Score: ${strength.score}/8`);
+    logSuccess('Password strength: EXCELLENT');
+    log(`Score: ${strength.score}/8`, 'green');
 
     // Role selection
-    console.log('\n👑 Admin Roles:');
-    console.log('1. ADMIN - Full access to admin panel');
-    console.log('2. SUPER_ADMIN - Full access + system settings');
-    console.log('3. MODERATOR - Limited access (content management only)');
+    logSection('👑 Admin Role Selection');
+    log('Available Roles:', 'white');
+    log('1. ADMIN - Full access to admin panel', 'white');
+    log('2. SUPER_ADMIN - Full access + system settings', 'white');
+    log('3. MODERATOR - Limited access (content management only)', 'white');
 
-    const roleChoice = await question('Select role (1, 2, or 3): ');
+    const roleChoice = await question(`\n${colors.white}Select role (1, 2, or 3): ${colors.reset}`);
     let role;
     switch (roleChoice) {
       case '1':
@@ -162,80 +229,113 @@ async function createAdmin() {
         role = 'ADMIN';
     }
 
-    // Permissions based on role
-    let permissions;
-    switch (role) {
-      case 'SUPER_ADMIN':
-        permissions = JSON.stringify([
-          'posts:read', 'posts:write', 'posts:delete',
-          'users:read', 'users:write', 'users:delete',
-          'admins:read', 'admins:write', 'admins:delete',
-          'categories:read', 'categories:write', 'categories:delete',
-          'tags:read', 'tags:write', 'tags:delete',
-          'comments:read', 'comments:write', 'comments:delete',
-          'contacts:read', 'contacts:write', 'contacts:delete',
-          'settings:read', 'settings:write',
-          'analytics:read', 'analytics:write',
-          'system:admin'
-        ]);
-        break;
-      case 'ADMIN':
-        permissions = JSON.stringify([
-          'posts:read', 'posts:write', 'posts:delete',
-          'users:read', 'users:write',
-          'categories:read', 'categories:write', 'categories:delete',
-          'tags:read', 'tags:write', 'tags:delete',
-          'comments:read', 'comments:write', 'comments:delete',
-          'contacts:read', 'contacts:write',
-          'analytics:read'
-        ]);
-        break;
-      case 'MODERATOR':
-        permissions = JSON.stringify([
-          'posts:read', 'posts:write',
-          'comments:read', 'comments:write', 'comments:delete',
-          'contacts:read', 'contacts:write'
-        ]);
-        break;
-    }
+    // Additional admin settings
+    logSection('⚙️ Additional Settings');
+    
+    const isActive = await question(`${colors.white}Set account as active? (y/N): ${colors.reset}`);
+    const emailVerified = await question(`${colors.white}Mark email as verified? (y/N): ${colors.reset}`);
+    
+    const bio = await question(`${colors.white}Bio (optional): ${colors.reset}`);
+    const website = await question(`${colors.white}Website (optional): ${colors.reset}`);
+    const location = await question(`${colors.white}Location (optional): ${colors.reset}`);
 
     // Create admin user
+    logSection('🚀 Creating Admin User');
+    
     const hashedPassword = await bcrypt.hash(password, 12);
     
-    const admin = await prisma.admin.create({
+    const adminUser = await prisma.user.create({
       data: {
         username,
         email,
         fullName,
         password: hashedPassword,
         role,
-        permissions,
-        isActive: true
+        type: 'admin', // This is the key field for admin authentication
+        isActive: isActive.toLowerCase() === 'y',
+        emailVerified: emailVerified.toLowerCase() === 'y' ? new Date() : null,
+        bio: bio || null,
+        website: website || null,
+        location: location || null,
+        avatar: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     });
 
-    console.log('\n✅ Admin user created successfully!');
-    console.log(`\n📋 Admin Details:`);
-    console.log(`Username: ${admin.username}`);
-    console.log(`Email: ${admin.email}`);
-    console.log(`Full Name: ${admin.fullName}`);
-    console.log(`Role: ${admin.role}`);
-    console.log(`ID: ${admin.id}`);
+    logHeader('🎉 Admin User Created Successfully!');
+    
+    logSection('📋 Admin Details');
+    log(`Username: ${adminUser.username}`, 'white');
+    log(`Email: ${adminUser.email}`, 'white');
+    log(`Full Name: ${adminUser.fullName}`, 'white');
+    log(`Role: ${adminUser.role}`, 'white');
+    log(`Type: ${adminUser.type}`, 'white');
+    log(`ID: ${adminUser.id}`, 'white');
+    log(`Active: ${adminUser.isActive ? 'Yes' : 'No'}`, 'white');
+    log(`Email Verified: ${adminUser.emailVerified ? 'Yes' : 'No'}`, 'white');
     
     if (passwordChoice === '2') {
-      console.log(`\n🔑 Generated Password: ${password}`);
-      console.log('⚠️  Please save this password securely!');
+      logSection('🔑 Generated Password');
+      log(`Password: ${password}`, 'green');
+      logWarning('Please save this password securely!');
     }
 
-    console.log('\n🚀 Admin can now login at: http://localhost:3000/admin/login');
+    logSection('🌐 Access Information');
+    log('Admin can now login at:', 'white');
+    log(`- Development: http://localhost:3000/admin/login`, 'cyan');
+    log(`- Production: ${process.env.NEXTAUTH_URL || 'your-domain'}/admin/login`, 'cyan');
+    
+    logSection('🔐 Login Credentials');
+    log(`Username: ${adminUser.username}`, 'white');
+    log(`Email: ${adminUser.email}`, 'white');
+    if (passwordChoice === '1') {
+      log(`Password: [Your entered password]`, 'white');
+    } else {
+      log(`Password: ${password}`, 'green');
+    }
+
+    logSection('⚠️  Important Notes');
+    log('• Keep your admin credentials secure', 'yellow');
+    log('• Change password after first login', 'yellow');
+    log('• Enable 2FA for additional security', 'yellow');
+    log('• Regular password rotation recommended', 'yellow');
+
+    logSection('🚀 Next Steps');
+    log('1. Test admin login', 'white');
+    log('2. Configure admin panel settings', 'white');
+    log('3. Create initial categories and tags', 'white');
+    log('4. Set up email templates', 'white');
+    log('5. Configure user roles and permissions', 'white');
 
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
+    logError(`Error: ${error.message}`);
+    logSection('🔧 Troubleshooting');
+    log('1. Ensure database is running', 'white');
+    log('2. Check DATABASE_URL in .env file', 'white');
+    log('3. Verify Prisma schema is up to date', 'white');
+    log('4. Run: npm run db:generate', 'white');
+    log('5. Run: npm run db:push', 'white');
   } finally {
     rl.close();
     await prisma.$disconnect();
   }
 }
 
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+  log('\n\n⚠️  Script interrupted by user', 'yellow');
+  log('No changes were made to your database.', 'white');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  log('\n\n⚠️  Script terminated', 'yellow');
+  process.exit(0);
+});
+
 // Run the script
-createAdmin().catch(console.error);
+createAdmin().catch((error) => {
+  logError(`Unexpected error: ${error.message}`);
+  process.exit(1);
+});
