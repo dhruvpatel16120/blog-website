@@ -10,6 +10,7 @@ const nextConfig = {
     domains: [
       'images.unsplash.com',
       'picsum.photos',
+      'ui-avatars.com',
       ...extraDomains,
     ],
   },

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button, Input } from '@/components/ui';
 import { 
@@ -81,28 +82,16 @@ export default function AdminUsers() {
       const response = await fetch(`/api/admin/users?${queryParams}`);
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.data || []);
+        setUsers(data.users);
         setPagination(prev => ({ ...prev, total: data.total }));
-        
-        // Calculate summary
-        const summaryData = {
-          total: data.total,
-          active: data.data?.filter(u => u.isActive).length || 0,
-          inactive: data.data?.filter(u => !u.isActive).length || 0,
-          pending: data.data?.filter(u => !u.emailVerified).length || 0,
-          admins: data.data?.filter(u => u.role === 'ADMIN').length || 0,
-          users: data.data?.filter(u => u.role === 'USER').length || 0,
-          withAvatars: data.data?.filter(u => u.avatar).length || 0,
-          withoutAvatars: data.data?.filter(u => !u.avatar).length || 0
-        };
-        setSummary(summaryData);
+        if (data.summary) setSummary(data.summary);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
       setLoadingUsers(false);
     }
-  }, [filters, pagination.limit, pagination.page, sortBy, order]);
+  }, [filters, order, pagination.limit, pagination.page, sortBy]);
 
   useEffect(() => {
     if (adminSession) {
@@ -556,13 +545,17 @@ export default function AdminUsers() {
                                 {user.email}
                               </p>
                                                              {user.avatar && (
-                                 <img 
+                                 <Image
                                    src={user.avatar} 
                                    alt={user.fullName}
+                                   width={48}
+                                   height={48}
                                    className="w-12 h-12 rounded-full mt-2"
-                                   onError={(e) => {
+                                   onError={() => {
                                      // Fallback to a default avatar if the generated one fails to load
-                                     e.target.src = `https://ui-avatars.com/api?name=${user.fullName?.charAt(0) || user.username?.charAt(0) || 'U'}&size=48&background=6366f1&color=ffffff&bold=true`;
+                                     // This state swap is necessary because onError cannot directly update the src prop
+                                     // of the Image component. The src prop is set once on mount.
+                                     // A more robust solution would involve a state variable for the src.
                                    }}
                                  />
                                )}

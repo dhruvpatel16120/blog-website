@@ -128,8 +128,6 @@ export default async function Home() {
             <span>·</span>
             <span>{commentCount} comments</span>
             <span>·</span>
-            <span>{userCount} authors</span>
-            <span>·</span>
             <span>{tagCount} tags</span>
           </div>
         </div>
