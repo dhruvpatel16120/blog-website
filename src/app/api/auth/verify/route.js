@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import emailService from '@/lib/email-service';
 
 export async function GET(request) {
   try {
@@ -7,16 +8,33 @@ export async function GET(request) {
     const token = searchParams.get('token');
     if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-    const vt = await prisma.verificationToken.findUnique({ where: { token } });
-    if (!vt || vt.expires < new Date()) {
+    // Use email service to verify token
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: {
+        token,
+        expires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!verificationToken) {
       return NextResponse.json({ error: 'Token invalid or expired' }, { status: 400 });
     }
 
+    // Update user to verified and active
     await prisma.user.update({
-      where: { email: vt.identifier },
-      data: { emailVerified: new Date() },
+      where: { email: verificationToken.identifier },
+      data: { 
+        emailVerified: new Date(),
+        isActive: true // Activate the user after email verification
+      },
     });
-    await prisma.verificationToken.delete({ where: { token } });
+
+    // Delete the used token
+    await prisma.verificationToken.delete({
+      where: { token }
+    });
 
     return NextResponse.json({ message: 'Email verified successfully' });
   } catch (error) {

@@ -1,6 +1,94 @@
 // Email templates for the blog platform
 
 export const emailTemplates = {
+  // Email verification template
+  verificationEmail: (data) => ({
+    subject: `Verify Your Email - ${data.platformName || 'Blog Platform'}`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #007bff; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+          .button:hover { background: #0056b3; }
+          .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
+          .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📧 Verify Your Email</h1>
+            <p>${data.platformName || 'Blog Platform'}</p>
+          </div>
+          
+          <div class="content">
+            <h2>Hello ${data.fullName},</h2>
+            
+            <p>Thank you for signing up for <strong>${data.platformName || 'our blog platform'}</strong>! To complete your registration, please verify your email address.</p>
+            
+            <div style="text-align: center;">
+              <a href="${data.verificationUrl}" class="button">Verify Email Address</a>
+            </div>
+            
+            <div class="warning">
+              <p><strong>Important:</strong></p>
+              <ul>
+                <li>This verification link will expire in 24 hours</li>
+                <li>If you didn't create this account, please ignore this email</li>
+                <li>For security reasons, never share this link with anyone</li>
+              </ul>
+            </div>
+            
+            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #007bff;">${data.verificationUrl}</p>
+            
+            <p>Once verified, you'll be able to access all features of our platform.</p>
+            
+            <p>Best regards,<br><strong>The ${data.platformName || 'Blog'} Team</strong></p>
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+Verify Your Email - ${data.platformName || 'Blog Platform'}
+
+Hello ${data.fullName},
+
+Thank you for signing up for ${data.platformName || 'our blog platform'}! To complete your registration, please verify your email address.
+
+To verify your email, visit this link:
+${data.verificationUrl}
+
+Important:
+- This verification link will expire in 24 hours
+- If you didn't create this account, please ignore this email
+- For security reasons, never share this link with anyone
+
+If the link above doesn't work, you can copy and paste it into your browser.
+
+Once verified, you'll be able to access all features of our platform.
+
+Best regards,
+The ${data.platformName || 'Blog'} Team
+
+---
+This is an automated message. Please do not reply to this email.
+    `
+  }),
+
   // Contact acknowledgement template (refined design)
   contactAcknowledgement: (data) => {
     const platform = data.platformName || 'Our Blog';

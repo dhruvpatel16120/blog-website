@@ -69,12 +69,12 @@ export default function PostEditor({ mode = 'create', postId }) {
     if (mode === 'edit' && postId) {
       fetchPost();
     }
-  }, [mode, postId]);
+  }, [mode, postId, fetchPost]);
 
   // Fetch categories and tags
   useEffect(() => {
     fetchCategoriesAndTags();
-  }, []);
+  }, [fetchCategoriesAndTags]);
 
   // Handle unsaved changes warning
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function PostEditor({ mode = 'create', postId }) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [mode, postId, hasUnsavedChanges]);
+  }, [mode, postId, hasUnsavedChanges, submit]);
 
   const fetchPost = useCallback(async () => {
     try {
@@ -163,7 +163,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       showToastMessage('Network error: Failed to fetch post', 'error');
       setLoading(false);
     }
-  }, [postId]);
+  }, [postId, showToastMessage]);
 
   const fetchCategoriesAndTags = useCallback(async () => {
     try {
@@ -189,7 +189,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       console.error('Fetch error:', error);
       showToastMessage('Failed to fetch categories and tags', 'error');
     }
-  }, []);
+  }, [showToastMessage]);
 
   // New advanced functions
   const calculateStats = (text) => {
@@ -234,12 +234,12 @@ export default function PostEditor({ mode = 'create', postId }) {
     }
   };
 
-  const showToastMessage = (message, type = 'success') => {
+  const showToastMessage = useCallback((message, type = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
-  };
+  }, []);
 
   const handleImageUpload = async (file) => {
     try {
@@ -394,7 +394,7 @@ export default function PostEditor({ mode = 'create', postId }) {
     setMetaKeywords(metaKeywords || title.split(' ').slice(0, 5).join(', '));
   };
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const errors = [];
     
     // Required fields
@@ -422,7 +422,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       return false;
     }
     return true;
-  };
+  }, [title, content, categories, tags, excerpt, seoTitle, seoDescription, coverImage, seoImage, showToastMessage]);
 
   const isValidUrl = (value) => {
     if (!value || typeof value !== 'string') return false;
@@ -501,7 +501,7 @@ export default function PostEditor({ mode = 'create', postId }) {
     } finally {
       setLoading(false);
     }
-  }, [mode, postId, title, content, markdownContent, excerpt, coverImage, published, featured, categories, tags, seoTitle, seoDescription, seoImage, customSlug, metaKeywords, readingTime, wordCount, charCount, scheduledDate, scheduledTime, editorMode]);
+  }, [mode, postId, title, content, markdownContent, excerpt, coverImage, published, featured, categories, tags, seoTitle, seoDescription, seoImage, customSlug, metaKeywords, readingTime, wordCount, charCount, scheduledDate, scheduledTime, editorMode, validateForm, showToastMessage]);
 
   const schedule = async () => {
     if (!scheduledDate || !scheduledTime) {

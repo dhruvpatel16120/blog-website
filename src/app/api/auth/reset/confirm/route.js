@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import emailService from '@/lib/email-service';
 
 export async function POST(request) {
   try {
@@ -8,13 +9,30 @@ export async function POST(request) {
     if (!token || !password) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     if (password.length < 8) return NextResponse.json({ error: 'Password too short' }, { status: 400 });
 
-    const vt = await prisma.verificationToken.findUnique({ where: { token } });
-    if (!vt || vt.expires < new Date()) {
+    // Verify the reset token
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: {
+        token,
+        expires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!verificationToken) {
       return NextResponse.json({ error: 'Token invalid or expired' }, { status: 400 });
     }
 
+    // Hash the new password
     const hashed = await bcrypt.hash(password, 12);
-    await prisma.user.update({ where: { email: vt.identifier }, data: { password: hashed } });
+    
+    // Update user password
+    await prisma.user.update({ 
+      where: { email: verificationToken.identifier }, 
+      data: { password: hashed } 
+    });
+    
+    // Delete the used token
     await prisma.verificationToken.delete({ where: { token } });
 
     return NextResponse.json({ message: 'Password updated' });

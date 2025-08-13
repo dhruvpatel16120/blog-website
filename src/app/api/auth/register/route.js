@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
+import emailService from '@/lib/email-service';
 
 export async function POST(request) {
   try {
@@ -58,7 +59,7 @@ export async function POST(request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Create user (initially inactive until email verification)
     const user = await prisma.user.create({
       data: {
         username,
@@ -68,7 +69,7 @@ export async function POST(request) {
         bio: bio || '',
         website: website || '',
         location: location || '',
-        isActive: true,
+        isActive: false, // User must verify email first
       },
       select: {
         id: true,
@@ -82,8 +83,23 @@ export async function POST(request) {
       }
     });
 
+    // Generate verification token and send verification email
+    try {
+      const verificationToken = emailService.generateVerificationToken();
+      await emailService.createVerificationToken(email, verificationToken);
+      await emailService.sendVerificationEmail(email, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Delete the user if email sending fails
+      await prisma.user.delete({ where: { id: user.id } });
+      return NextResponse.json(
+        { error: 'Failed to send verification email. Please try again.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
-      message: 'User created successfully',
+      message: 'User created successfully. Please check your email to verify your account.',
       user
     });
 

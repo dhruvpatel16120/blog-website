@@ -20,7 +20,7 @@ export default function EditUserPage() {
     if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
       router.push('/admin/login');
     }
-  }, [loading, adminSession, router]);
+  }, [session?.user?.type, status, router]);
 
   useEffect(() => {
     const fetchUser = async () => {

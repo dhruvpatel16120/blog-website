@@ -20,7 +20,7 @@ export default function DeleteUserPage() {
     if (params.id) {
       fetchUser();
     }
-  }, [params.id]);
+  }, [params.id, fetchUser]);
 
   const fetchUser = useCallback(async () => {
     try {

@@ -65,7 +65,7 @@ export default function NotificationCenter() {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, [fetchNotifications]);
 
     const fetchNotifications = useCallback(async () => {
     const controller = new AbortController();

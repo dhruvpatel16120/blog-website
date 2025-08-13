@@ -32,7 +32,7 @@ export default function AdminPosts() {
     if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
       router.push('/admin/login');
     }
-  }, [adminSession, loading, router]);
+  }, [session?.user?.type, status, router]);
 
   useEffect(() => {
     fetchPosts();
