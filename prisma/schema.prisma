@@ -209,20 +209,44 @@ model Like {
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String?
-  message   String
-  status    ContactStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  respondedAt DateTime?
-  response  String?
-  respondedBy String?
+  id            String        @id @default(cuid())
+  name          String
+  email         String
+  subject       String?
+  message       String
+  phone         String?       // Optional phone number
+  company       String?       // Optional company name
+  category      String?       // Inquiry category (General, Support, Business, etc.)
+  priority      Priority      @default(MEDIUM)
+  status        ContactStatus @default(PENDING)
+  source        String?       // How they found us (Google, Social Media, Referral, etc.)
+  ipAddress     String?       // IP address for spam detection
+  userAgent     String?       // User agent for analytics
+  tags          String[]      // Array of tags for categorization
+  notes         String?       // Internal admin notes
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  respondedAt   DateTime?
+  response      String?
+  respondedBy   String?
+  responseSubject String?     // Custom subject for admin response
+  responseGreeting String?    // Custom greeting for admin response
+  responseSignature String?   // Custom signature for admin response
+  emailSent     Boolean       @default(false)
+  emailSentAt   DateTime?
+  emailError    String?       // Error message if email failed
+  lastReminder DateTime?      // Last reminder sent
+  reminderCount Int           @default(0)
+  isSpam       Boolean       @default(false)
+  spamScore    Float?        // Spam detection score
+  verified      Boolean       @default(false) // Email verification status
 
   @@index([status])
   @@index([createdAt])
+  @@index([priority])
+  @@index([category])
+  @@index([email])
+  @@index([isSpam])
   @@map("contacts")
 }
 
@@ -236,9 +260,18 @@ enum UserRole {
   ADMIN
 }
 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 enum ContactStatus {
   PENDING
   RESPONDED
   SPAM
   ARCHIVED
+  IN_PROGRESS
+  CLOSED
 }

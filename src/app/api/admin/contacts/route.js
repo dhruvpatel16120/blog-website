@@ -15,11 +15,14 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 20;
     const status = searchParams.get('status') || '';
+    const category = searchParams.get('category') || '';
+    const priority = searchParams.get('priority') || '';
     const search = searchParams.get('search') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
-    const sortBy = searchParams.get('sortBy') || 'createdAt'; // createdAt | respondedAt | status | name | email
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
     const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
+    const showSpam = searchParams.get('showSpam') === 'true';
 
     // Build where clause
     const where = {};
@@ -28,12 +31,22 @@ export async function GET(request) {
       where.status = status;
     }
 
+    if (category) {
+      where.category = category;
+    }
+
+    if (priority) {
+      where.priority = priority;
+    }
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
         { subject: { contains: search, mode: 'insensitive' } },
-        { message: { contains: search, mode: 'insensitive' } }
+        { message: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } }
       ];
     }
 
@@ -47,6 +60,11 @@ export async function GET(request) {
       }
     }
 
+    // Filter out spam by default unless explicitly requested
+    if (!showSpam && !status) {
+      where.isSpam = false;
+    }
+
     // Calculate pagination
     const skip = (page - 1) * limit;
 
@@ -57,8 +75,11 @@ export async function GET(request) {
     const orderBy = (() => {
       if (sortBy === 'respondedAt') return [{ respondedAt: order }, { createdAt: 'desc' }];
       if (sortBy === 'status') return [{ status: order }, { createdAt: 'desc' }];
+      if (sortBy === 'priority') return [{ priority: order }, { createdAt: 'desc' }];
+      if (sortBy === 'category') return [{ category: order }, { createdAt: 'desc' }];
       if (sortBy === 'name') return [{ name: order }];
       if (sortBy === 'email') return [{ email: order }];
+      if (sortBy === 'spamScore') return [{ spamScore: order }, { createdAt: 'desc' }];
       return [{ createdAt: order }];
     })();
 
@@ -73,13 +94,31 @@ export async function GET(request) {
     // Summary cards data
     const startOfToday = new Date();
     startOfToday.setHours(0,0,0,0);
-    const [pendingCount, respondedCount, spamCount, archivedCount, respondedToday] = await Promise.all([
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - 7);
+    
+    const [pendingCount, respondedCount, spamCount, archivedCount, respondedToday, respondedThisWeek, highPriorityCount] = await Promise.all([
       prisma.contact.count({ where: { status: 'PENDING' } }),
       prisma.contact.count({ where: { status: 'RESPONDED' } }),
       prisma.contact.count({ where: { status: 'SPAM' } }),
       prisma.contact.count({ where: { status: 'ARCHIVED' } }),
-      prisma.contact.count({ where: { status: 'RESPONDED', respondedAt: { gte: startOfToday } } })
+      prisma.contact.count({ where: { status: 'RESPONDED', respondedAt: { gte: startOfToday } } }),
+      prisma.contact.count({ where: { status: 'RESPONDED', respondedAt: { gte: startOfWeek } } }),
+      prisma.contact.count({ where: { priority: { in: ['HIGH', 'URGENT'] } } })
     ]);
+
+    // Get category and priority statistics
+    const categoryStats = await prisma.contact.groupBy({
+      by: ['category'],
+      where: { status: { not: 'SPAM' } },
+      _count: { category: true }
+    });
+
+    const priorityStats = await prisma.contact.groupBy({
+      by: ['priority'],
+      where: { status: { not: 'SPAM' } },
+      _count: { priority: true }
+    });
 
     return NextResponse.json({
       contacts,
@@ -93,7 +132,19 @@ export async function GET(request) {
         responded: respondedCount,
         spam: spamCount,
         archived: archivedCount,
-        respondedToday
+        respondedToday,
+        respondedThisWeek,
+        highPriority: highPriorityCount
+      },
+      statistics: {
+        categories: categoryStats.map(stat => ({
+          category: stat.category || 'Uncategorized',
+          count: stat._count.category
+        })),
+        priorities: priorityStats.map(stat => ({
+          priority: stat.priority,
+          count: stat._count.priority
+        }))
       }
     });
 

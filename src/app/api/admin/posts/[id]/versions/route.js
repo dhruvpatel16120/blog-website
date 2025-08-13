@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { trackActivity } from '@/lib/activity';
 
 export async function GET(request, { params }) {
   try {
@@ -59,19 +58,6 @@ export async function POST(request, { params }) {
         published,
         featured,
         authorId
-      }
-    });
-
-    // Track activity
-    await trackActivity({
-      type: 'post_version_created',
-      adminId: authorId,
-      entity: 'Post',
-      entityId: id,
-      metadata: {
-        title,
-        versionId: version.id,
-        description: `New version created for post "${title}"`
       }
     });
 

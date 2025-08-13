@@ -8,9 +8,9 @@ export async function GET(_request, { params }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user?.type !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 400 });
     }
-    const { id } = params;
+    const { id } = await params;
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
     const contact = await prisma.contact.findUnique({ where: { id } });
@@ -28,7 +28,7 @@ export async function PATCH(request, { params }) {
     if (!session || session.user?.type !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = params;
+    const { id } = await params;
     const { status } = await request.json();
 
     if (!status) {
@@ -43,19 +43,7 @@ export async function PATCH(request, { params }) {
       data: { status }
     });
 
-    // Create admin notification for status change
-    try {
-      await prisma.notification.create({
-        data: {
-          type: 'info',
-          message: `Contact status updated to ${String(status)} for ${contact.name}`,
-          adminId: session.user.id,
-          read: false
-        }
-      });
-    } catch (e) {
-      console.warn('Notification create failed (status update):', e?.message || e);
-    }
+    // Admin notification removed - notification system not implemented
 
     return NextResponse.json({
       success: true,
@@ -82,7 +70,7 @@ export async function DELETE(request, { params }) {
     if (!session || session.user?.type !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
     const existing = await prisma.contact.findUnique({ where: { id } });
@@ -93,19 +81,7 @@ export async function DELETE(request, { params }) {
 
     await prisma.contact.delete({ where: { id } });
 
-    // Create admin notification for deletion
-    try {
-      await prisma.notification.create({
-        data: {
-          type: 'warning',
-          message: `Contact deleted: ${existing.name} (${existing.email})`,
-          adminId: session.user.id,
-          read: false
-        }
-      });
-    } catch (e) {
-      console.warn('Notification create failed (delete):', e?.message || e);
-    }
+    // Admin notification removed - notification system not implemented
 
     return NextResponse.json({ success: true, message: 'Contact deleted successfully' });
 

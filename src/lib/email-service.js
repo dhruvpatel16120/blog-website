@@ -10,11 +10,30 @@ class EmailService {
 
   initializeTransporter() {
     // Only initialize if we're in a server environment with email config
-    if (typeof window !== 'undefined' || !process.env.EMAIL_SERVER_USER) {
+    if (typeof window !== 'undefined') {
       return;
     }
     
     try {
+      // Check if we have email configuration
+      const hasEmailConfig = process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD;
+      
+      if (!hasEmailConfig) {
+        console.warn('Email configuration not found. Using test account for development.');
+        // For development, we can use a test account or just log that emails would be sent
+        this.transporter = {
+          sendMail: async (options) => {
+            console.log('📧 EMAIL WOULD BE SENT (Development Mode):', {
+              to: options.to,
+              subject: options.subject,
+              from: options.from
+            });
+            return { messageId: 'dev-' + Date.now() };
+          }
+        };
+        return;
+      }
+      
       this.transporter = nodemailer.createTransport({
         host: process.env.EMAIL_SERVER_HOST || 'smtp.gmail.com',
         port: parseInt(process.env.EMAIL_SERVER_PORT) || 587,
@@ -27,6 +46,16 @@ class EmailService {
           rejectUnauthorized: false
         }
       });
+      
+      // Test the connection
+      this.transporter.verify((error, success) => {
+        if (error) {
+          console.error('Email transporter verification failed:', error);
+        } else {
+          console.log('Email transporter ready');
+        }
+      });
+      
     } catch (error) {
       console.error('Failed to initialize email transporter:', error);
     }
@@ -42,20 +71,28 @@ class EmailService {
       return false;
     }
 
+    // Validate recipient email
+    if (!to || typeof to !== 'string' || to.trim() === '') {
+      console.error('Invalid recipient email:', to);
+      return false;
+    }
+
     try {
       const mailOptions = {
         from: process.env.EMAIL_FROM || 'noreply@techblog.com',
-        to,
+        to: to.trim(),
         subject,
         html,
         text,
       };
 
+      console.log('📧 Sending email to:', to, 'Subject:', subject);
       const result = await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', result.messageId);
+      console.log('✅ Email sent successfully:', result.messageId);
       return true;
     } catch (error) {
-      console.error('Failed to send email:', error);
+      console.error('❌ Failed to send email:', error);
+      console.error('Email details:', { to, subject, from: process.env.EMAIL_FROM });
       return false;
     }
   }
@@ -161,21 +198,33 @@ class EmailService {
 
   // Send contact acknowledgement
   async sendContactAcknowledgement(contactData) {
-    const template = emailTemplates.contactAcknowledgement({
-      name: contactData.name,
-      subject: contactData.subject,
-      message: contactData.message,
-      platformName: getPlatformName(),
-      platformUrl: getPlatformUrl(),
-      supportEmail: process.env.SUPPORT_EMAIL
-    });
+    try {
+      console.log('📧 Preparing contact acknowledgement for:', contactData.email);
+      
+      const template = emailTemplates.contactAcknowledgement({
+        name: contactData.name,
+        subject: contactData.subject,
+        message: contactData.message,
+        platformName: getPlatformName(),
+        platformUrl: getPlatformUrl(),
+        supportEmail: process.env.SUPPORT_EMAIL
+      });
 
-    return this.sendEmail(
-      contactData.email,
-      template.subject,
-      template.html,
-      template.text
-    );
+      console.log('📧 Contact acknowledgement template prepared, sending email...');
+      
+      const result = await this.sendEmail(
+        contactData.email,
+        template.subject,
+        template.html,
+        template.text
+      );
+      
+      console.log('📧 Contact acknowledgement result:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error in sendContactAcknowledgement:', error);
+      return false;
+    }
   }
 
   // Send contact reply
@@ -187,6 +236,103 @@ class EmailService {
       signature: replyData.signature,
       originalSubject: contactData.subject,
       originalMessage: contactData.message,
+      platformName: getPlatformName(),
+      platformUrl: getPlatformUrl()
+    });
+
+    return this.sendEmail(
+      contactData.email,
+      template.subject,
+      template.html,
+      template.text
+    );
+  }
+
+  // Send admin notification for new contact
+  async sendAdminNotification(contactData) {
+    try {
+      console.log('📧 Preparing admin notification for contact:', contactData.contactId);
+      
+      // Check if the template exists
+      if (!emailTemplates.adminContactNotification) {
+        console.warn('Admin notification template not found, using fallback');
+        // Fallback to a simple email
+        const subject = `New Contact Form Submission - ${getPlatformName()}`;
+        const html = `
+          <h2>New Contact Form Submission</h2>
+          <p><strong>Name:</strong> ${contactData.name}</p>
+          <p><strong>Email:</strong> ${contactData.email}</p>
+          <p><strong>Subject:</strong> ${contactData.subject || 'General inquiry'}</p>
+          <p><strong>Message:</strong> ${contactData.message}</p>
+          <p><strong>Category:</strong> ${contactData.category || 'General'}</p>
+          <p><strong>Priority:</strong> ${contactData.priority || 'MEDIUM'}</p>
+          <p><strong>Spam Score:</strong> ${contactData.spamScore || 0}%</p>
+        `;
+        const text = `New Contact: ${contactData.name} (${contactData.email}) - ${contactData.subject || 'General inquiry'}`;
+        
+        // Send to admin email(s) - prioritize SUPPORT_EMAIL
+        const adminEmails = process.env.SUPPORT_EMAIL ? 
+          [process.env.SUPPORT_EMAIL] : 
+          (process.env.ADMIN_EMAILS ? 
+            process.env.ADMIN_EMAILS.split(',').map(e => e.trim()) : 
+            [process.env.ADMIN_EMAIL || 'admin@techblog.com']);
+
+        console.log('📧 Sending fallback admin notification to:', adminEmails);
+
+        const results = await Promise.allSettled(
+          adminEmails.map(email => 
+            this.sendEmail(email, subject, html, text)
+          )
+        );
+
+        return results.some(result => result.status === 'fulfilled' && result.value);
+      }
+
+      console.log('📧 Using adminContactNotification template');
+      
+      const template = emailTemplates.adminContactNotification({
+        contactId: contactData.contactId,
+        name: contactData.name,
+        email: contactData.email,
+        subject: contactData.subject,
+        message: contactData.message,
+        category: contactData.category,
+        priority: contactData.priority,
+        source: contactData.source,
+        spamScore: contactData.spamScore,
+        platformName: getPlatformName(),
+        platformUrl: getPlatformUrl()
+      });
+
+      // Send to admin email(s) - prioritize SUPPORT_EMAIL
+      const adminEmails = process.env.SUPPORT_EMAIL ? 
+        [process.env.SUPPORT_EMAIL] : 
+        (process.env.ADMIN_EMAILS ? 
+          process.env.ADMIN_EMAILS.split(',').map(e => e.trim()) : 
+          [process.env.ADMIN_EMAIL || 'admin@techblog.com']);
+
+      console.log('📧 Sending admin notification to:', adminEmails);
+
+      const results = await Promise.allSettled(
+        adminEmails.map(email => 
+          this.sendEmail(email, template.subject, template.html, template.text)
+        )
+      );
+
+      return results.some(result => result.status === 'fulfilled' && result.value);
+    } catch (error) {
+      console.error('Failed to send admin notification:', error);
+      return false;
+    }
+  }
+
+  // Send contact reminder (for unresponded contacts)
+  async sendContactReminder(contactData) {
+    const template = emailTemplates.contactReminder({
+      name: contactData.name,
+      subject: contactData.subject,
+      message: contactData.message,
+      daysSinceSubmission: contactData.daysSinceSubmission,
       platformName: getPlatformName(),
       platformUrl: getPlatformUrl()
     });

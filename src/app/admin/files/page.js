@@ -12,7 +12,8 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  XMarkIcon
+  XMarkIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { formatFileSize } from '@/lib/file-upload';
 
@@ -140,23 +141,43 @@ export default function FilesPage() {
           </button>
         </div>
 
+        {/* Vercel Read-only FS Warning */}
+        <div
+          className="p-4 rounded-lg border"
+          style={{ backgroundColor: 'var(--muted)', borderColor: 'var(--border)' }}
+        >
+          <div className="flex items-start gap-3">
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+            <div>
+              <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                Files on Vercel are stored on a read-only filesystem.
+              </p>
+              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                Uploading and deleting files here works on localhost, but on Vercel deployments it will not persist.
+                For production, configure external storage (e.g., Amazon S3, Cloudinary) and point uploads there.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {categories.map(category => (
             <div
               key={category.id}
-              className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+              className={`p-4 rounded-lg border cursor-pointer transition-colors`}
+              style={
                 selectedCategory === category.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
+                  ? { borderColor: 'var(--primary)', backgroundColor: 'color-mix(in srgb, var(--primary) 10%, transparent)' }
+                  : { borderColor: 'var(--border)', backgroundColor: 'var(--card)' }
+              }
               onClick={() => setSelectedCategory(category.id)}
             >
               <div className="flex items-center space-x-3">
-                <category.icon className="h-8 w-8 text-gray-400" />
+                <category.icon className="h-8 w-8 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{category.count}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{category.name}</p>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{category.count}</p>
                 </div>
               </div>
             </div>
@@ -166,21 +187,23 @@ export default function FilesPage() {
         {/* Search and Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search files..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ backgroundColor: 'var(--card)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
             />
           </div>
           <div className="flex items-center space-x-2">
-            <FunnelIcon className="h-5 w-5 text-gray-400" />
+            <FunnelIcon className="h-5 w-5 text-muted-foreground" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ backgroundColor: 'var(--card)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
             >
               {categories.map(category => (
                 <option key={category.id} value={category.id}>
@@ -312,6 +335,11 @@ export default function FilesPage() {
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
+            </div>
+            <div className="mb-4 p-3 rounded border" style={{ backgroundColor: 'var(--muted)', borderColor: 'var(--border)' }}>
+              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                Note: On Vercel (production), uploads to the local filesystem will not persist. Use this uploader for local development. For production, configure an external provider (S3/Cloudinary).
+              </p>
             </div>
                          <FileUpload
                onFileUpload={handleFileUpload}
