@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input } from '@/components/ui';
@@ -98,7 +98,9 @@ export default function SignUpForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <AuthError />
+      <Suspense fallback={null}>
+        <AuthError />
+      </Suspense>
       <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 border border-gray-200 dark:border-gray-700">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
