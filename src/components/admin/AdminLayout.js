@@ -14,7 +14,6 @@ import {
   TagIcon,
   ChatBubbleLeftRightIcon,
   EnvelopeIcon,
-  Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   PhotoIcon
@@ -31,7 +30,7 @@ const navigation = [
   { name: 'Contacts', href: '/admin/contacts', icon: EnvelopeIcon },
   { name: 'Files', href: '/admin/files', icon: PhotoIcon },
   // Removed Analytics and Audit from navigation
-  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
+  // Settings removed
 ];
 
 export default function AdminLayout({ children, title = 'Admin Panel', adminSession: adminSessionProp }) {

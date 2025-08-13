@@ -96,7 +96,7 @@ export default function CookiesPage() {
                   <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
                     <li>Social media cookies for sharing content</li>
                     <li>Advertising cookies for targeted ads</li>
-                    <li>Newsletter subscription cookies</li>
+                    <li>Marketing cookies for optional communications</li>
                   </ul>
                 </div>
               </div>

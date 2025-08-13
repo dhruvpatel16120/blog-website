@@ -39,7 +39,7 @@ export default function PrivacyPage() {
                   <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Personal Information</h3>
                   <p>We may collect personal information that you voluntarily provide to us, including:</p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>Name and email address when you subscribe to our newsletter</li>
+                    <li>Name and email address you voluntarily provide (e.g., contact forms)</li>
                     <li>Contact information when you submit a contact form</li>
                     <li>Account information if you create an account</li>
                     <li>Comments and feedback you provide on our articles</li>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-600 dark:text-gray-400">
                 <li>To provide and maintain our website and services</li>
-                <li>To send you newsletters and updates (with your consent)</li>
+                <li>To send you updates and communications you request</li>
                 <li>To respond to your inquiries and provide customer support</li>
                 <li>To analyze website usage and improve our content</li>
                 <li>To detect and prevent fraud or abuse</li>

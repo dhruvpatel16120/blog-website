@@ -1,89 +1,111 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/nextauth-combined';
 
-export async function PATCH(request, { params }) {
+// PUT /api/admin/comments/[id] - Update comment (approve/reject)
+export async function PUT(request, { params }) {
   try {
-    const { id } = params;
-    const body = await request.json();
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id || session.user.type !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const updatedComment = await prisma.comment.update({
+    const { id } = params;
+    const { approved, content } = await request.json();
+
+    const updateData = {};
+    if (typeof approved === 'boolean') {
+      updateData.approved = approved;
+    }
+    if (content) {
+      updateData.content = content.trim();
+    }
+
+    const comment = await prisma.comment.update({
       where: { id },
-      data: body,
+      data: updateData,
       include: {
         author: {
           select: {
             id: true,
             username: true,
             fullName: true,
-            email: true
-          }
+            email: true,
+            avatar: true,
+          },
         },
         post: {
           select: {
             id: true,
             title: true,
-            slug: true
-          }
-        }
-      }
+            slug: true,
+          },
+        },
+      },
     });
 
-    // Transform the data to match frontend expectations
-    const transformedComment = {
-      id: updatedComment.id,
-      content: updatedComment.content,
-      isApproved: updatedComment.isApproved || false,
-      createdAt: updatedComment.createdAt,
-      updatedAt: updatedComment.updatedAt,
-      author: updatedComment.author,
-      post: updatedComment.post
-    };
-
-    return NextResponse.json(transformedComment);
-
+    return NextResponse.json({ comment });
   } catch (error) {
-    console.error('Error updating comment:', error);
-    return NextResponse.json(
-      { error: 'Failed to update comment' },
-      { status: 500 }
-    );
+    console.error('Error updating admin comment:', error);
+    return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
   }
 }
 
+// DELETE /api/admin/comments/[id] - Delete comment
 export async function DELETE(request, { params }) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id || session.user.type !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = params;
 
-    // Check if comment has any replies
-    const commentWithReplies = await prisma.comment.findUnique({
+    // First, check if the comment exists and get its details
+    const comment = await prisma.comment.findUnique({
       where: { id },
       include: {
         _count: {
           select: {
-            replies: true
-          }
-        }
-      }
+            replies: true,
+            likes: true,
+          },
+        },
+      },
     });
 
-    if (commentWithReplies._count.replies > 0) {
-      return NextResponse.json(
-        { error: 'Cannot delete comment with existing replies' },
-        { status: 400 }
-      );
+    if (!comment) {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
+    // Check if comment has replies - if so, delete them first
+    if (comment._count.replies > 0) {
+      // Delete all replies first (cascade delete)
+      await prisma.comment.deleteMany({
+        where: { parentId: id },
+      });
+    }
+
+    // Delete the main comment
     await prisma.comment.delete({
-      where: { id }
+      where: { id },
     });
 
-    return NextResponse.json({ success: true });
-
+    return NextResponse.json({ 
+      message: 'Comment deleted successfully',
+      deletedReplies: comment._count.replies 
+    });
   } catch (error) {
-    console.error('Error deleting comment:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete comment' },
-      { status: 500 }
-    );
+    console.error('Error deleting admin comment:', error);
+    
+    // Handle specific database errors
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
 }

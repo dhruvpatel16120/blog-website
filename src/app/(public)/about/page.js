@@ -1,4 +1,5 @@
 import React from 'react'
+import Image from 'next/image'
 import { Button, Badge } from '@/components/ui'
 import { 
   UserGroupIcon, 
@@ -9,55 +10,39 @@ import {
   RocketLaunchIcon
 } from '@heroicons/react/24/outline'
 
-// Mock team data
+// Team data with CDN images
 const team = [
   {
-    name: 'John Doe',
+    name: 'Aarav Shah',
     role: 'Founder & Lead Developer',
-    bio: 'Full-stack developer with 8+ years of experience in React, Node.js, and modern web technologies.',
-    avatar: '/api/placeholder/120/120',
-    social: {
-      twitter: '#',
-      github: '#',
-      linkedin: '#'
-    },
+    bio: 'Full‑stack developer focused on product, performance, and developer experience.',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop',
+    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
     expertise: ['React', 'Next.js', 'TypeScript']
   },
   {
-    name: 'Jane Smith',
-    role: 'Senior Frontend Developer',
-    bio: 'Passionate about creating beautiful, accessible, and performant user interfaces.',
-    avatar: '/api/placeholder/120/120',
-    social: {
-      twitter: '#',
-      github: '#',
-      linkedin: '#'
-    },
-    expertise: ['React', 'CSS', 'UI/UX']
+    name: 'Meera Patel',
+    role: 'Senior Frontend Engineer',
+    bio: 'Design‑system advocate crafting accessible, beautiful user interfaces.',
+    avatar: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=160&h=160&fit=crop&crop=faces',
+    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
+    expertise: ['UI/UX', 'Accessibility', 'Tailwind CSS']
   },
   {
-    name: 'Mike Johnson',
-    role: 'Backend Developer',
-    bio: 'Experienced in building scalable APIs and microservices with Node.js and cloud technologies.',
-    avatar: '/api/placeholder/120/120',
-    social: {
-      twitter: '#',
-      github: '#',
-      linkedin: '#'
-    },
-    expertise: ['Node.js', 'Express', 'MongoDB']
+    name: 'Vihaan Kumar',
+    role: 'Backend Engineer',
+    bio: 'Builds reliable APIs and data pipelines with a security‑first mindset.',
+    avatar: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=400&auto=format&fit=crop',
+    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
+    expertise: ['Node.js', 'Prisma', 'PostgreSQL']
   },
   {
-    name: 'Sarah Wilson',
-    role: 'DevOps Engineer',
-    bio: 'Specialized in CI/CD pipelines, cloud infrastructure, and deployment automation.',
-    avatar: '/api/placeholder/120/120',
-    social: {
-      twitter: '#',
-      github: '#',
-      linkedin: '#'
-    },
-    expertise: ['Docker', 'AWS', 'CI/CD']
+    name: 'Anaya Desai',
+    role: 'DevOps & Cloud',
+    bio: 'Automates everything. Cloud infra, CI/CD, and observability.',
+    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=400&auto=format&fit=crop',
+    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
+    expertise: ['Docker', 'AWS', 'Kubernetes']
   }
 ]
 
@@ -97,10 +82,14 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="text-center py-16 lg:py-24 mb-16" style={{
+      <section className="relative overflow-hidden text-center py-16 lg:py-24 mb-16" style={{
         background: 'linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%)'
       }}>
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="absolute inset-0 opacity-20" aria-hidden>
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-purple-600 blur-3xl" />
+        </div>
+        <div className="relative max-w-4xl mx-auto px-4">
           <Badge className="mb-6">About Us</Badge>
           <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight" style={{ color: 'var(--foreground)' }}>
             Building the Future of
@@ -111,10 +100,10 @@ export default function AboutPage() {
             exploring new technologies, and helping developers build amazing web applications.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">
+            <Button as="a" href="/contribute" size="lg">
               Join Our Community
             </Button>
-            <Button variant="outline" size="lg">
+            <Button as="a" href="#story" variant="outline" size="lg">
               Read Our Story
             </Button>
           </div>
@@ -135,7 +124,7 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {values.map((value, index) => (
-              <div key={index} className="text-center p-6">
+              <div key={index} className="text-center p-6 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <value.icon className="w-8 h-8 text-primary" />
                 </div>
@@ -191,12 +180,15 @@ export default function AboutPage() {
                   borderColor: 'var(--border)'
                 }}
               >
-                <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{
-                  backgroundColor: 'var(--muted)'
-                }}>
-                  <span className="text-2xl font-bold" style={{ color: 'var(--muted-foreground)' }}>
-                    {member.name.split(' ').map(n => n[0]).join('')}
-                  </span>
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden ring-2 ring-primary/20">
+                  <Image
+                    src={member.avatar}
+                    alt={member.name}
+                    width={96}
+                    height={96}
+                    sizes="96px"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 
                 <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
@@ -223,10 +215,12 @@ export default function AboutPage() {
                     <a
                       key={platform}
                       href={url}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors underline text-sm"
                       aria-label={platform}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <span className="capitalize text-sm">{platform}</span>
+                      <span className="capitalize">{platform}</span>
                     </a>
                   ))}
                 </div>
@@ -237,7 +231,7 @@ export default function AboutPage() {
       </section>
 
       {/* Story Section */}
-      <section className="mb-16">
+      <section id="story" className="mb-16">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -284,11 +278,11 @@ export default function AboutPage() {
           Connect with fellow developers, share your knowledge, and stay updated with the latest in web development.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg">
-            Subscribe to Newsletter
+          <Button as="a" href="/contribute" size="lg">
+            Start Contributing
           </Button>
-          <Button variant="outline" size="lg">
-            Follow Us on Twitter
+          <Button as="a" href="/contact" variant="outline" size="lg">
+            Contact Us
           </Button>
         </div>
       </section>

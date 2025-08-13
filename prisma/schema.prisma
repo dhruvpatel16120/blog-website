@@ -226,21 +226,6 @@ model Contact {
   @@map("contacts")
 }
 
-model SystemSetting {
-  id          String @id @default(cuid())
-  key         String @unique
-  value       String
-  description String?
-  updatedAt   DateTime @updatedAt
-
-  @@map("system_settings")
-}
-
-// AuditLog model removed
-
-// Notification model removed
-
-// PageView model removed
 
 enum AdminRole {
   ADMIN

@@ -8,19 +8,26 @@ import { getAllPosts } from '@/lib/posts';
 import SocialShare from '@/components/blog/SocialShare';
 import TableOfContents from '@/components/blog/TableOfContents';
 import ReadingProgress from '@/components/blog/ReadingProgress';
+import Comments from '@/components/blog/Comments';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default async function PostPage({ params }) {
-  const slug = await params.slug;
+  const slug = params.slug;
   const p = await prisma.post.findUnique({
     where: { slug },
     include: {
       categories: { include: { category: true } },
       tags: { include: { tag: true } },
+      _count: {
+        select: {
+          comments: true,
+        },
+      },
     },
   });
   const post = p && p.published ? {
+    id: p.id,
     slug: p.slug,
     title: p.title,
     content: p.content,
@@ -30,6 +37,7 @@ export default async function PostPage({ params }) {
     coverImage: p.coverImage,
     tags: p.tags?.map(t => t.tag.name) || [],
     categories: p.categories?.map(c => c.category.name) || [],
+    commentCount: p._count.comments,
   } : null;
 
   if (!post) {
@@ -66,6 +74,7 @@ export default async function PostPage({ params }) {
             <span>By {post.author}</span>
             <span>{formatDate(post.date)}</span>
             <span>{calculateReadingTime(post.content)} min read</span>
+            <span>{post.commentCount} comments</span>
             {post.categories && post.categories.map((cat) => (
               <Badge key={cat} variant="secondary">{cat}</Badge>
             ))}
@@ -77,6 +86,7 @@ export default async function PostPage({ params }) {
                 alt={post.title}
                 width={1200}
                 height={600}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                 className="rounded-lg w-full max-h-96 object-cover"
                 priority
               />
@@ -100,6 +110,7 @@ export default async function PostPage({ params }) {
           ) : <span />}
         </div>
       </div>
+      <Comments postId={post.id} postSlug={post.slug} />
       <RelatedPosts post={post} allPosts={allPosts} />
     </>
   );

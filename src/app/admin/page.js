@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { formatDate } from '@/lib/utils';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+  const [recentComments, setRecentComments] = useState([]);
+  const [recentPosts, setRecentPosts] = useState([]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -23,8 +29,23 @@ export default function AdminPage() {
       return;
     }
 
+    fetchStats();
     setIsLoading(false);
   }, [session, status, router]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+        setRecentComments(data.recentComments);
+        setRecentPosts(data.recentPosts);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   if (status === 'loading' || isLoading) {
     return (
@@ -56,7 +77,7 @@ export default function AdminPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Posts</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">0</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats?.totalPosts || 0}</p>
               </div>
             </div>
           </div>
@@ -70,7 +91,7 @@ export default function AdminPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">0</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats?.totalUsers || 0}</p>
               </div>
             </div>
           </div>
@@ -84,7 +105,10 @@ export default function AdminPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Comments</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">0</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats?.totalComments || 0}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {stats?.pendingComments || 0} pending
+                </p>
               </div>
             </div>
           </div>
@@ -98,8 +122,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Views</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">0</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Categories</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{stats?.totalCategories || 0}</p>
               </div>
             </div>
           </div>
@@ -108,6 +132,94 @@ export default function AdminPage() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Activity</h2>
           <p className="text-gray-500 dark:text-gray-400">No recent activity to display.</p>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Comments */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Comments</h3>
+              <Link href="/admin/comments" className="text-blue-600 hover:text-blue-800 text-sm">
+                View All
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {recentComments.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No comments yet</p>
+              ) : (
+                recentComments.map((comment) => (
+                  <div key={comment.id} className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      {comment.author.avatar ? (
+                        <Image
+                          src={comment.author.avatar}
+                          alt={comment.author.fullName}
+                          width={32}
+                          height={32}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                          <span className="text-gray-600 font-semibold text-xs">
+                            {comment.author.fullName?.charAt(0) || comment.author.username?.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {comment.author.fullName || comment.author.username}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {comment.content}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        on <Link href={`/blog/${comment.post.slug}`} className="hover:underline">
+                          {comment.post.title}
+                        </Link> • {formatDate(comment.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Recent Posts */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Posts</h3>
+              <Link href="/admin/posts" className="text-blue-600 hover:text-blue-800 text-sm">
+                View All
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {recentPosts.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No posts yet</p>
+              ) : (
+                recentPosts.map((post) => (
+                  <div key={post.id} className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {post.title}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {post._count.comments} comments • {formatDate(post.createdAt)}
+                      </p>
+                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      post.published
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                    }`}>
+                      {post.published ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </AdminLayout>

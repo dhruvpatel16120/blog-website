@@ -12,6 +12,7 @@ export default function ContactForm() {
     message: '',
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     setFormData({
@@ -20,8 +21,26 @@ export default function ContactForm() {
     });
   };
 
+  const validate = () => {
+    const next = {};
+    if (!formData.name.trim()) next.name = 'Name is required';
+    const email = formData.email.trim();
+    if (!email) next.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Invalid email address';
+    if (!formData.subject.trim()) next.subject = 'Subject is required';
+    const msg = formData.message.trim();
+    if (!msg) next.message = 'Message is required';
+    else if (msg.length < 10) next.message = 'Please provide at least 10 characters';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) {
+      toast.error('Please fix the highlighted fields');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -41,8 +60,10 @@ export default function ContactForm() {
           subject: '',
           message: '',
         });
+        setErrors({});
       } else {
-        toast.error('Failed to send message. Please try again.');
+        const data = await response.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to send message. Please try again.');
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.');
@@ -69,6 +90,7 @@ export default function ContactForm() {
             className="w-full"
             style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
           />
+          {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
@@ -85,6 +107,7 @@ export default function ContactForm() {
             className="w-full"
             style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
           />
+          {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
         </div>
       </div>
 
@@ -103,6 +126,7 @@ export default function ContactForm() {
           className="w-full"
           style={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
         />
+        {errors.subject && <p className="mt-1 text-xs text-red-600">{errors.subject}</p>}
       </div>
 
       <div>
@@ -124,6 +148,7 @@ export default function ContactForm() {
             color: 'var(--foreground)'
           }}
         />
+        {errors.message && <p className="mt-1 text-xs text-red-600">{errors.message}</p>}
       </div>
 
       <Button

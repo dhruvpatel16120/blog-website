@@ -27,8 +27,8 @@ const faqs = [
     answer: "Absolutely! We love hearing from our community. Send us your topic suggestions and we'll consider them for future articles."
   },
   {
-    question: "Do you have a newsletter?",
-    answer: "Yes! Subscribe to our newsletter to get the latest articles, tutorials, and tech news delivered to your inbox weekly."
+    question: "How can I stay updated?",
+    answer: "Follow us on Twitter, GitHub, and join our Discord community for the latest articles, tutorials, and news."
   },
   {
     question: "How can I report a bug or issue?",

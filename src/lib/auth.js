@@ -50,7 +50,8 @@ export const userAuthOptions = {
             username: user.username,
             fullName: user.fullName,
             avatar: user.avatar,
-            type: 'user'
+            type: 'user',
+            role: user.role
           };
         } catch (error) {
           console.error('User auth error:', error);
@@ -71,6 +72,7 @@ export const userAuthOptions = {
         token.username = user.username;
         token.fullName = user.fullName;
         token.avatar = user.avatar;
+        token.role = user.role;
       }
       return token;
     },
@@ -81,6 +83,7 @@ export const userAuthOptions = {
         session.user.username = token.username;
         session.user.fullName = token.fullName;
         session.user.avatar = token.avatar;
+        session.user.role = token.role;
       }
       return session;
     },

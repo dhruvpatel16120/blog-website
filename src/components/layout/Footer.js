@@ -1,24 +1,19 @@
 import Link from 'next/link'
 import { FaTwitter, FaLinkedin, FaGithub, FaEnvelope, FaYoutube, FaDiscord } from 'react-icons/fa'
-import { Button, Input } from '@/components/ui'
-import { cn } from '@/lib/utils'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Newsletter subscription logic would go here
-    console.log('Newsletter subscription')
-  }
+  // Newsletter removed
 
   const footerLinks = {
     content: [
       { name: 'Latest Posts', href: '/blog' },
-      { name: 'Popular Articles', href: '/blog?sort=popular' },
-      { name: 'Tutorials', href: '/categories/tutorials' },
-      { name: 'Tech News', href: '/categories/news' },
-      { name: 'Programming', href: '/categories/programming' }
+      { name: 'Popular Articles', href: '/blog?sort=views' },
+      { name: 'Data Science & AI', href: '/categories/data-science-ai' },
+      { name: 'Cybersecurity', href: '/categories/cybersecurity' },
+      { name: 'Programming', href: '/categories/programming-languages' },
+      { name: 'DevOps & Cloud', href: '/categories/devops-cloud' },
     ],
     community: [
       { name: 'Discord Server', href: 'https://discord.gg/techblog' },
@@ -48,7 +43,7 @@ const Footer = () => {
     <footer className="w-full border-t" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}>
       <div className="w-full py-8 px-4 sm:px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand & Newsletter */}
+          {/* Brand & Social */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center space-x-3 mb-1">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
@@ -62,23 +57,21 @@ const Footer = () => {
             <p className="mb-1 text-base leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
               Your go-to destination for the latest in technology, programming tutorials, and digital innovation. Stay ahead with our expert insights and practical guides.
             </p>
-            {/* Newsletter Signup */}
-            <div className="rounded-2xl shadow-lg p-4 mb-1 flex flex-col gap-2" style={{ backgroundColor: 'var(--muted)' }}>
-              <h3 className="text-base font-bold mb-2" style={{ color: 'var(--foreground)' }}>Stay updated with our newsletter</h3>
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="flex-1"
-                  required
-                />
-                <Button type="submit" className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 shadow-md">
-                  Subscribe
-                </Button>
-              </form>
-              <p className="mt-1 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                Get weekly updates on the latest tech trends and tutorials. No spam, unsubscribe anytime.
+            {/* Quick Links */}
+            <div className="rounded-2xl shadow-lg p-4 mb-1" style={{ backgroundColor: 'var(--muted)' }}>
+              <h3 className="text-base font-bold mb-2" style={{ color: 'var(--foreground)' }}>Stay connected</h3>
+              <p className="text-sm mb-2" style={{ color: 'var(--muted-foreground)' }}>
+                Follow us on social for updates and community discussions.
               </p>
+              <div className="flex flex-wrap gap-2 text-sm">
+                <Link href="https://twitter.com/techblog" className="underline">Twitter</Link>
+                <span>·</span>
+                <Link href="https://github.com/techblog" className="underline">GitHub</Link>
+                <span>·</span>
+                <Link href="https://linkedin.com/company/techblog" className="underline">LinkedIn</Link>
+                <span>·</span>
+                <Link href="https://discord.gg/techblog" className="underline">Discord</Link>
+              </div>
             </div>
             {/* Social Links */}
             <div className="flex space-x-3 mt-1">

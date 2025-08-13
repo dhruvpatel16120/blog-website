@@ -16,7 +16,8 @@ const BlogCard = ({ post, variant = 'default' }) => {
     readTime,
     categories = [],
     tags = [],
-    featured = false
+    featured = false,
+    commentCount = 0
   } = post
 
   const variants = {
@@ -40,6 +41,7 @@ const BlogCard = ({ post, variant = 'default' }) => {
               src={coverImage}
               alt={title}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
             {featured && (
@@ -99,9 +101,10 @@ const BlogCard = ({ post, variant = 'default' }) => {
                </div>
             </div>
 
-                         {/* Reading Time */}
+                         {/* Reading Time and Comments */}
              <div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-               {readTime || calculateReadingTime(content)} min read
+               <div>{readTime || calculateReadingTime(content)} min read</div>
+               <div>{commentCount} comments</div>
              </div>
           </div>
 

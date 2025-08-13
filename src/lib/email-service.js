@@ -281,3 +281,67 @@ class EmailService {
 const emailService = new EmailService();
 
 export default emailService;
+
+// Comment notification email
+export async function sendCommentNotificationEmail(comment, post, recipient) {
+  const subject = `New comment on "${post.title}"`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">New Comment Notification</h2>
+      <p>A new comment has been posted on your blog post.</p>
+      
+      <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Post: ${post.title}</h3>
+        <p><strong>Comment by:</strong> ${comment.author.fullName || comment.author.username}</p>
+        <p><strong>Comment:</strong></p>
+        <p style="background: white; padding: 10px; border-left: 3px solid #007bff; margin: 10px 0;">
+          ${comment.content}
+        </p>
+        <p><small>Posted on: ${new Date(comment.createdAt).toLocaleString()}</small></p>
+      </div>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/blog/${post.slug}" 
+           style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+          View Post
+        </a>
+      </div>
+      
+      <p style="color: #666; font-size: 14px;">
+        You can manage comments in your admin panel.
+      </p>
+    </div>
+  `;
+
+  return await emailService.sendEmail(recipient.email, subject, html);
+}
+
+// Comment approval notification
+export async function sendCommentApprovalEmail(comment, post, author) {
+  const subject = `Your comment has been approved`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Comment Approved</h2>
+      <p>Your comment has been approved and is now visible on the blog.</p>
+      
+      <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Post: ${post.title}</h3>
+        <p><strong>Your comment:</strong></p>
+        <p style="background: white; padding: 10px; border-left: 3px solid #28a745; margin: 10px 0;">
+          ${comment.content}
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/blog/${post.slug}" 
+           style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+          View Post
+        </a>
+      </div>
+    </div>
+  `;
+
+  return await emailService.sendEmail(author.email, subject, html);
+}

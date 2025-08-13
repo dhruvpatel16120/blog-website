@@ -3,52 +3,163 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth-combined';
 
-export async function GET() {
+// GET /api/admin/comments
+export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.type !== 'admin') {
+    
+    if (!session?.user?.id || session.user.type !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const comments = await prisma.comment.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            fullName: true,
-            email: true
-          }
-        },
-        post: {
-          select: {
-            id: true,
-            title: true,
-            slug: true
-          }
-        }
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page')) || 1;
+    const limit = parseInt(searchParams.get('limit')) || 20;
+    const status = searchParams.get('status');
+    const search = searchParams.get('search');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+    const postId = searchParams.get('postId');
+    const userId = searchParams.get('userId');
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where = {};
+    
+    if (status) {
+      if (status === 'pending') {
+        where.approved = false;
+      } else if (status === 'approved') {
+        where.approved = true;
+      } else if (status === 'rejected') {
+        where.approved = false;
+      } else if (status === 'spam') {
+        where.approved = false;
+        // You might want to add a spam flag to your comment model
       }
+    }
+
+    if (search) {
+      where.OR = [
+        { content: { contains: search, mode: 'insensitive' } },
+        { author: { fullName: { contains: search, mode: 'insensitive' } } },
+        { author: { username: { contains: search, mode: 'insensitive' } } },
+        { author: { email: { contains: search, mode: 'insensitive' } } },
+        { post: { title: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        where.createdAt.gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        where.createdAt.lte = new Date(dateTo + 'T23:59:59.999Z');
+      }
+    }
+
+    if (postId) {
+      where.postId = postId;
+    }
+
+    if (userId) {
+      where.authorId = userId;
+    }
+
+    // Get comments with pagination
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
+        where,
+        include: {
+          author: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              email: true,
+              avatar: true,
+            },
+          },
+          post: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+            },
+          },
+          parent: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  username: true,
+                  fullName: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+              replies: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.comment.count({ where }),
+    ]);
+
+    // Get summary statistics
+    const [
+      totalCount,
+      pendingCount,
+      approvedCount,
+      rejectedCount,
+      spamCount,
+      todayCount,
+    ] = await Promise.all([
+      prisma.comment.count(),
+      prisma.comment.count({ where: { approved: false } }),
+      prisma.comment.count({ where: { approved: true } }),
+      prisma.comment.count({ where: { approved: false } }),
+      prisma.comment.count({ where: { approved: false } }), // You might want to add a spam flag
+      prisma.comment.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+      }),
+    ]);
+
+    const summary = {
+      total: totalCount,
+      pending: pendingCount,
+      approved: approvedCount,
+      rejected: rejectedCount,
+      spam: spamCount,
+      today: todayCount,
+    };
+
+    return NextResponse.json({
+      comments,
+      total,
+      summary,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     });
-
-    // Transform the data to match frontend expectations
-    const transformedComments = comments.map(comment => ({
-      id: comment.id,
-      content: comment.content,
-      isApproved: comment.isApproved || false,
-      createdAt: comment.createdAt,
-      updatedAt: comment.updatedAt,
-      author: comment.author,
-      post: comment.post
-    }));
-
-    return NextResponse.json(transformedComments);
-
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch comments' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
   }
 }
 

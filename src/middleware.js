@@ -18,9 +18,7 @@ const PROTECTED_ADMIN_ROUTES = [
   '/admin/tags',
   '/admin/comments',
   '/admin/contacts',
-  '/admin/files',
-  // analytics and audit removed
-  '/admin/settings'
+  '/admin/files'
 ];
 
 // Admin API routes that require authentication
@@ -30,29 +28,24 @@ const PROTECTED_ADMIN_API_ROUTES = [
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-
-  // Maintenance Mode: if enabled, block all non-allowed paths
-  try {
-    // Prefer DB-backed maintenance flag; fall back to env on failure
-    const url = new URL('/api/maintenance', request.url);
-    let maintenance = false;
+  // Skip maintenance check for maintenance API itself to prevent loops
+  if (pathname !== '/api/maintenance') {
     try {
-      const res = await fetch(url, { headers: { 'x-mw': '1' }, cache: 'no-store' });
-      const data = await res.json();
-      maintenance = !!data?.maintenance;
-    } catch (_) {
+      // Use environment variable directly to avoid API calls in middleware
       const envMaintenance = process.env.MAINTENANCE_MODE;
-      maintenance = typeof envMaintenance !== 'undefined' && String(envMaintenance).toLowerCase() === 'true';
-    }
-    const allow = MAINTENANCE_ALLOW.some((p) => pathname === p || pathname.startsWith(p));
-    const isAdminUI = pathname.startsWith('/admin');
-    const isAdminAPI = pathname.startsWith('/api/admin');
-    if (maintenance && !(allow || isAdminUI || isAdminAPI)) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/maintenance';
-      return NextResponse.rewrite(url);
-    }
-  } catch {}
+      const maintenance = typeof envMaintenance !== 'undefined' && String(envMaintenance).toLowerCase() === 'true';
+      
+      const allow = MAINTENANCE_ALLOW.some((p) => pathname === p || pathname.startsWith(p));
+      const isAdminUI = pathname.startsWith('/admin');
+      const isAdminAPI = pathname.startsWith('/api/admin');
+      
+      if (maintenance && !(allow || isAdminUI || isAdminAPI)) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/maintenance';
+        return NextResponse.rewrite(url);
+      }
+    } catch {}
+  }
 
   // Allow access to public pages and API routes (except admin)
   if (pathname === '/' || 
