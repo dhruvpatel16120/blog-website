@@ -70,7 +70,7 @@ const Comments = ({ postId, postSlug }) => {
 
   useEffect(() => {
     fetchComments();
-  }, [postId]);
+  }, [postId, fetchComments]);
 
   // Reset comment count every minute
   useEffect(() => {

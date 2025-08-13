@@ -286,7 +286,7 @@ export default async function BlogPage({ searchParams }) {
             <div className="mt-4 flex flex-wrap gap-2">
               {search && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                  Search: "{search}"
+                  Search: &quot;{search}&quot;
                   <a href={buildUrl({ search: '' })} className="ml-2 text-blue-600 hover:text-blue-800">×</a>
                 </span>
               )}
