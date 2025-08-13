@@ -6,7 +6,7 @@ const AUTH_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-for-developm
 
 // Maintenance mode bypass list (public paths that still work)
 const MAINTENANCE_ALLOW = [
-  '/', '/favicon.ico', '/_next', '/api/maintenance', '/api/auth', '/admin/login'
+  '/favicon.ico', '/_next', '/api/maintenance', '/api/auth', '/admin/login', '/logo',
 ];
 
 // Protected admin routes that require authentication
@@ -33,14 +33,24 @@ export async function middleware(request) {
 
   // Maintenance Mode: if enabled, block all non-allowed paths
   try {
+    // Prefer DB-backed maintenance flag; fall back to env on failure
     const url = new URL('/api/maintenance', request.url);
-    const res = await fetch(url, { headers: { 'x-mw': '1' } });
-    const data = await res.json();
+    let maintenance = false;
+    try {
+      const res = await fetch(url, { headers: { 'x-mw': '1' }, cache: 'no-store' });
+      const data = await res.json();
+      maintenance = !!data?.maintenance;
+    } catch (_) {
+      const envMaintenance = process.env.MAINTENANCE_MODE;
+      maintenance = typeof envMaintenance !== 'undefined' && String(envMaintenance).toLowerCase() === 'true';
+    }
     const allow = MAINTENANCE_ALLOW.some((p) => pathname === p || pathname.startsWith(p));
-    if (data?.maintenance && !allow) {
-      const resp = NextResponse.json({ message: 'Maintenance in progress' }, { status: 503 });
-      resp.headers.set('Retry-After', '600');
-      return resp;
+    const isAdminUI = pathname.startsWith('/admin');
+    const isAdminAPI = pathname.startsWith('/api/admin');
+    if (maintenance && !(allow || isAdminUI || isAdminAPI)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/maintenance';
+      return NextResponse.rewrite(url);
     }
   } catch {}
 
@@ -82,8 +92,8 @@ export async function middleware(request) {
     pathname.startsWith(route)
   );
 
-  // Skip protection for admin login page
-  if (pathname === '/admin/login') {
+  // Skip protection for admin login and auth endpoints
+  if (pathname === '/admin/login' || pathname.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 
@@ -108,12 +118,11 @@ export async function middleware(request) {
           );
         }
         
-        // For page routes, redirect to admin login
-        const url = request.nextUrl.clone();
-        url.pathname = '/admin/login';
-        url.searchParams.set('error', 'unauthorized');
-        url.searchParams.set('callbackUrl', pathname);
-        return NextResponse.redirect(url);
+        // For page routes, redirect to admin login (avoid loops by not rewriting back)
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = '/admin/login';
+        loginUrl.searchParams.set('error', 'unauthorized');
+        return NextResponse.redirect(loginUrl);
       }
 
       // Check if admin account is still active

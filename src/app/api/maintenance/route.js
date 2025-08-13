@@ -6,8 +6,10 @@ export async function GET() {
     const s = await prisma.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MODE' } });
     const maintenance = String(s?.value || '').toLowerCase() === 'true';
     return NextResponse.json({ maintenance });
-  } catch (e) {
-    return NextResponse.json({ maintenance: false }, { status: 200 });
+  } catch {
+    const envVal = process.env.MAINTENANCE_MODE;
+    const maintenance = typeof envVal !== 'undefined' && String(envVal).toLowerCase() === 'true';
+    return NextResponse.json({ maintenance }, { status: 200 });
   }
 }
 
