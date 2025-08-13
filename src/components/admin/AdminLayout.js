@@ -15,13 +15,11 @@ import {
   ChatBubbleLeftRightIcon,
   EnvelopeIcon,
   Cog6ToothIcon,
-  BellIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   PhotoIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui';
-import NotificationCenter from './NotificationCenter';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
@@ -127,9 +125,6 @@ export default function AdminLayout({ children, title = 'Admin Panel', adminSess
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1"></div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-              {/* Notifications */}
-              <NotificationCenter />
-
               {/* Admin profile dropdown */}
               <div className="relative">
                 <div className="flex items-center gap-x-3">

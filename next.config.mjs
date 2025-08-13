@@ -1,8 +1,16 @@
 /** @type {import('next').NextConfig} */
+const domainEnv = process.env.NEXT_IMAGE_DOMAINS || '';
+const extraDomains = domainEnv
+  .split(',')
+  .map((d) => d.trim())
+  .filter(Boolean);
+
 const nextConfig = {
   images: {
     domains: [
-      'images.unsplash.com'
+      'images.unsplash.com',
+      'picsum.photos',
+      ...extraDomains,
     ],
   },
   experimental: {

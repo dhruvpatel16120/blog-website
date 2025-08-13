@@ -31,7 +31,6 @@ model User {
   comments Comment[]
   likes    Like[]
   // auditLogs removed
-  notifications Notification[]
 
   @@map("users")
   @@index([createdAt])
@@ -54,7 +53,6 @@ model Admin {
   updatedAt     DateTime  @updatedAt
 
   // auditLogs removed
-  notifications Notification[]
 
   @@map("admins")
 }
@@ -240,22 +238,7 @@ model SystemSetting {
 
 // AuditLog model removed
 
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String?
-  adminId   String?
-  type      String
-  message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
-  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
-
-  @@index([read])
-  @@index([createdAt])
-  @@map("notifications")
-}
+// Notification model removed
 
 // PageView model removed
 

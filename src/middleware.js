@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+// Use the same fallback as nextauth-combined.js to avoid secret mismatch in dev
+const AUTH_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development-only';
+
 // Protected admin routes that require authentication
 const PROTECTED_ADMIN_ROUTES = [
   '/admin',
@@ -71,7 +74,7 @@ export async function middleware(request) {
       // Get the JWT token from the request
       const token = await getToken({ 
         req: request, 
-        secret: process.env.NEXTAUTH_SECRET 
+        secret: AUTH_SECRET
       });
 
       // Check if user is authenticated and is an admin

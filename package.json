@@ -14,6 +14,7 @@
     "seed:categories": "node scripts/dummy_data/seed-categories.js",
     "seed:tags": "node scripts/dummy_data/seed-tags.js",
     "db:generate": "prisma generate",
+    "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "db:migrate": "prisma migrate dev",

@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, Button, Input } from '@/components/ui';
+import { useSession } from 'next-auth/react';
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
+  const adminSession = session?.user;
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
 
