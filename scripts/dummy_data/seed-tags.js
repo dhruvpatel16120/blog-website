@@ -2,52 +2,15 @@
 
 /*
   Seeds tags with real-world tech tags for a modern blog.
+  Uses the new SeedingUtils for consistent error handling and logging.
   
   Usage:
     node scripts/dummy_data/seed-tags.js
 */
 
-const { PrismaClient } = require('@prisma/client');
+const SeedingUtils = require('./utils/seeding-utils');
 
-const prisma = new PrismaClient();
-
-// Color codes for terminal output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  white: '\x1b[37m'
-};
-
-function log(message, color = 'white') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
-}
-
-function logHeader(message) {
-  console.log(`\n${colors.cyan}${'='.repeat(70)}${colors.reset}`);
-  console.log(`${colors.bright}${colors.blue}${message}${colors.reset}`);
-  console.log(`${colors.cyan}${'='.repeat(70)}${colors.reset}`);
-}
-
-function logSection(message) {
-  console.log(`\n${colors.yellow}${colors.bright}${message}${colors.reset}`);
-  console.log(`${colors.yellow}${'-'.repeat(message.length)}${colors.reset}`);
-}
-
-function logSuccess(message) {
-  console.log(`${colors.green}✅ ${message}${colors.reset}`);
-}
-
-function logInfo(message) {
-  console.log(`${colors.blue}ℹ️  ${message}${colors.reset}`);
-}
-
-// Real-world tech tags organized by category
+// Real-world tech tags organized by category with improved colors
 const TAGS = [
   // Frontend Technologies
   { name: 'React', slug: 'react', color: '#61DAFB' },
@@ -65,6 +28,9 @@ const TAGS = [
   { name: 'Zustand', slug: 'zustand', color: '#764ABC' },
   { name: 'GraphQL', slug: 'graphql', color: '#E10098' },
   { name: 'REST API', slug: 'rest-api', color: '#FF6B6B' },
+  { name: 'Svelte', slug: 'svelte', color: '#FF3E00' },
+  { name: 'Solid.js', slug: 'solidjs', color: '#2C4F7C' },
+  { name: 'Astro', slug: 'astro', color: '#FF5D01' },
 
   // Backend Technologies
   { name: 'Node.js', slug: 'nodejs', color: '#339933' },
@@ -80,6 +46,9 @@ const TAGS = [
   { name: '.NET', slug: 'dotnet', color: '#512BD4' },
   { name: 'PHP', slug: 'php', color: '#777BB4' },
   { name: 'Laravel', slug: 'laravel', color: '#FF2D20' },
+  { name: 'FastAPI', slug: 'fastapi', color: '#009688' },
+  { name: 'Gin', slug: 'gin', color: '#00ADD8' },
+  { name: 'Actix', slug: 'actix', color: '#000000' },
 
   // Database & Data
   { name: 'PostgreSQL', slug: 'postgresql', color: '#336791' },
@@ -90,6 +59,10 @@ const TAGS = [
   { name: 'Sequelize', slug: 'sequelize', color: '#52B0E7' },
   { name: 'SQL', slug: 'sql', color: '#E48E00' },
   { name: 'Data Modeling', slug: 'data-modeling', color: '#10B981' },
+  { name: 'Elasticsearch', slug: 'elasticsearch', color: '#FED10A' },
+  { name: 'Cassandra', slug: 'cassandra', color: '#1287B1' },
+  { name: 'Neo4j', slug: 'neo4j', color: '#018BFF' },
+  { name: 'InfluxDB', slug: 'influxdb', color: '#22ADF6' },
 
   // DevOps & Cloud
   { name: 'Docker', slug: 'docker', color: '#2496ED' },
@@ -104,6 +77,9 @@ const TAGS = [
   { name: 'Ansible', slug: 'ansible', color: '#EE0000' },
   { name: 'Vercel', slug: 'vercel', color: '#000000' },
   { name: 'Netlify', slug: 'netlify', color: '#00AD9F' },
+  { name: 'DigitalOcean', slug: 'digitalocean', color: '#0080FF' },
+  { name: 'Heroku', slug: 'heroku', color: '#430098' },
+  { name: 'Pulumi', slug: 'pulumi', color: '#8A3391' },
 
   // Mobile Development
   { name: 'React Native', slug: 'react-native', color: '#61DAFB' },
@@ -112,6 +88,9 @@ const TAGS = [
   { name: 'Android', slug: 'android', color: '#3DDC84' },
   { name: 'Swift', slug: 'swift', color: '#FA7343' },
   { name: 'Kotlin', slug: 'kotlin', color: '#7F52FF' },
+  { name: 'Xamarin', slug: 'xamarin', color: '#3498DB' },
+  { name: 'Ionic', slug: 'ionic', color: '#3880FF' },
+  { name: 'Cordova', slug: 'cordova', color: '#E8E8E8' },
 
   // Data Science & AI
   { name: 'Machine Learning', slug: 'machine-learning', color: '#FF6B6B' },
@@ -121,6 +100,11 @@ const TAGS = [
   { name: 'PyTorch', slug: 'pytorch', color: '#EE4C2C' },
   { name: 'Pandas', slug: 'pandas', color: '#130654' },
   { name: 'NumPy', slug: 'numpy', color: '#4DABCF' },
+  { name: 'Scikit-learn', slug: 'scikit-learn', color: '#F7931E' },
+  { name: 'Jupyter', slug: 'jupyter', color: '#F37626' },
+  { name: 'OpenAI', slug: 'openai', color: '#412991' },
+  { name: 'Hugging Face', slug: 'hugging-face', color: '#FF6B6B' },
+  { name: 'LangChain', slug: 'langchain', color: '#00FF00' },
 
   // Testing & Quality
   { name: 'Jest', slug: 'jest', color: '#C21325' },
@@ -133,6 +117,8 @@ const TAGS = [
   { name: 'Code Quality', slug: 'code-quality', color: '#10B981' },
   { name: 'ESLint', slug: 'eslint', color: '#4B32C3' },
   { name: 'Prettier', slug: 'prettier', color: '#F7B93E' },
+  { name: 'SonarQube', slug: 'sonarqube', color: '#4E9BCD' },
+  { name: 'Coverage', slug: 'coverage', color: '#10B981' },
 
   // Performance & Optimization
   { name: 'Performance', slug: 'performance', color: '#F59E0B' },
@@ -141,6 +127,10 @@ const TAGS = [
   { name: 'Lighthouse', slug: 'lighthouse', color: '#F59E0B' },
   { name: 'Bundle Optimization', slug: 'bundle-optimization', color: '#F59E0B' },
   { name: 'Image Optimization', slug: 'image-optimization', color: '#F59E0B' },
+  { name: 'Web Vitals', slug: 'web-vitals', color: '#F59E0B' },
+  { name: 'Lazy Loading', slug: 'lazy-loading', color: '#F59E0B' },
+  { name: 'Code Splitting', slug: 'code-splitting', color: '#F59E0B' },
+  { name: 'Tree Shaking', slug: 'tree-shaking', color: '#F59E0B' },
 
   // Security
   { name: 'Security', slug: 'security', color: '#DC2626' },
@@ -151,6 +141,10 @@ const TAGS = [
   { name: 'HTTPS', slug: 'https', color: '#DC2626' },
   { name: 'XSS', slug: 'xss', color: '#DC2626' },
   { name: 'CSRF', slug: 'csrf', color: '#DC2626' },
+  { name: 'SQL Injection', slug: 'sql-injection', color: '#DC2626' },
+  { name: 'OWASP', slug: 'owasp', color: '#DC2626' },
+  { name: 'Penetration Testing', slug: 'penetration-testing', color: '#DC2626' },
+  { name: 'Zero Trust', slug: 'zero-trust', color: '#DC2626' },
 
   // Architecture & Design
   { name: 'Microservices', slug: 'microservices', color: '#1F2937' },
@@ -159,6 +153,10 @@ const TAGS = [
   { name: 'Design Patterns', slug: 'design-patterns', color: '#1F2937' },
   { name: 'Clean Code', slug: 'clean-code', color: '#1F2937' },
   { name: 'SOLID', slug: 'solid', color: '#1F2937' },
+  { name: 'Event Sourcing', slug: 'event-sourcing', color: '#1F2937' },
+  { name: 'CQRS', slug: 'cqrs', color: '#1F2937' },
+  { name: 'Domain-Driven Design', slug: 'ddd', color: '#1F2937' },
+  { name: 'Hexagonal Architecture', slug: 'hexagonal-architecture', color: '#1F2937' },
 
   // Tools & Utilities
   { name: 'Git', slug: 'git', color: '#F05032' },
@@ -169,6 +167,10 @@ const TAGS = [
   { name: 'Pnpm', slug: 'pnpm', color: '#F69220' },
   { name: 'GitHub', slug: 'github', color: '#181717' },
   { name: 'GitLab', slug: 'gitlab', color: '#FCA326' },
+  { name: 'Postman', slug: 'postman', color: '#FF6C37' },
+  { name: 'Insomnia', slug: 'insomnia', color: '#4000BF' },
+  { name: 'Figma', slug: 'figma', color: '#F24E1E' },
+  { name: 'Notion', slug: 'notion', color: '#000000' },
 
   // Emerging Technologies
   { name: 'Web3', slug: 'web3', color: '#F7931E' },
@@ -177,109 +179,103 @@ const TAGS = [
   { name: 'IoT', slug: 'iot', color: '#FF6B6B' },
   { name: 'Edge Computing', slug: 'edge-computing', color: '#FF6B6B' },
   { name: 'Serverless', slug: 'serverless', color: '#FF6B6B' },
-  { name: 'Jamstack', slug: 'jamstack', color: '#FF6B6B' }
+  { name: 'Jamstack', slug: 'jamstack', color: '#FF6B6B' },
+  { name: 'WebAssembly', slug: 'webassembly', color: '#654FF0' },
+  { name: 'Progressive Web Apps', slug: 'pwa', color: '#5A0FC8' },
+  { name: 'Web Components', slug: 'web-components', color: '#29ABE2' },
+  { name: 'Deno', slug: 'deno', color: '#000000' },
+  { name: 'Bun', slug: 'bun', color: '#FBF0DF' }
 ];
 
-async function upsertTag(tagData) {
-  return prisma.tag.upsert({
-    where: { slug: tagData.slug },
-    update: {
-      name: tagData.name,
-      color: tagData.color,
-      updatedAt: new Date()
-    },
-    create: {
-      slug: tagData.slug,
-      name: tagData.name,
-      color: tagData.color,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  });
-}
-
 async function seed() {
-  console.clear();
-  logHeader('🏷️  Tech Tags Seeding Script');
-  log('Creating comprehensive tech tags for your blog...', 'white');
-
+  const utils = new SeedingUtils();
+  
   try {
-    // Check database connection
-    logSection('🔍 Database Connection Test');
-    await prisma.$connect();
-    logSuccess('Database connection successful');
+    utils.logHeader('🏷️  Tech Tags Seeding Script');
+    utils.log('Creating comprehensive tech tags for your blog...', 'white');
 
-    logSection('📝 Creating Tags');
+    // Connect to database
+    utils.logSection('🔍 Database Connection');
+    await utils.connect();
+
+    // Seed tags
+    utils.logSection('📝 Creating Tags');
     let created = 0;
     let updated = 0;
 
     for (const tag of TAGS) {
       try {
-        const existing = await prisma.tag.findUnique({
+        // Validate required fields
+        utils.validateRequiredFields(tag, ['name', 'slug']);
+
+        const existing = await utils.prisma.tag.findUnique({
           where: { slug: tag.slug }
         });
 
         if (existing) {
-          await upsertTag(tag);
+          await utils.upsertTag(tag);
           updated++;
-          logInfo(`Updated: ${tag.name}`);
+          utils.logInfo(`Updated: ${tag.name}`);
         } else {
-          await upsertTag(tag);
+          await utils.upsertTag(tag);
           created++;
-          logSuccess(`Created: ${tag.name}`);
+          utils.logSuccess(`Created: ${tag.name}`);
         }
       } catch (error) {
-        log(`Error with tag ${tag.name}: ${error.message}`, 'red');
+        utils.logError(`Error with tag ${tag.name}: ${error.message}`);
+        throw error;
       }
     }
 
-    logSection('📊 Seeding Results');
-    log(`Total Tags: ${TAGS.length}`, 'white');
-    log(`Newly Created: ${created}`, 'green');
-    log(`Updated: ${updated}`, 'blue');
+    // Display results
+    utils.logSection('📊 Seeding Results');
+    utils.log(`Total Tags: ${TAGS.length}`, 'white');
+    utils.log(`Newly Created: ${created}`, 'green');
+    utils.log(`Updated: ${updated}`, 'blue');
 
     // Display all tags
-    logSection('📋 All Tags');
-    const allTags = await prisma.tag.findMany({
+    utils.logSection('📋 All Tags');
+    const allTags = await utils.prisma.tag.findMany({
       orderBy: { name: 'asc' }
     });
 
     allTags.forEach((tag, index) => {
-      log(`${index + 1}. ${tag.name} (${tag.slug})`, 'white');
+      utils.log(`${index + 1}. ${tag.name} (${tag.slug})`, 'white');
       if (tag.color) {
-        log(`   Color: ${tag.color}`, 'cyan');
+        utils.log(`   Color: ${tag.color}`, 'cyan');
       }
     });
 
-    logSection('✅ Seeding Complete');
-    log('Tags are ready for use in your blog!', 'green');
+    utils.logSection('✅ Seeding Complete');
+    utils.log('Tags are ready for use in your blog!', 'green');
 
   } catch (error) {
-    log(`❌ Seeding error: ${error.message}`, 'red');
-    logSection('🔧 Troubleshooting');
-    log('1. Ensure database is running', 'white');
-    log('2. Check DATABASE_URL in .env file', 'white');
-    log('3. Verify Prisma schema is up to date', 'white');
-    log('4. Run: npm run db:generate', 'white');
-    log('5. Run: npm run db:push', 'white');
+    utils.logError(`Seeding error: ${error.message}`);
+    utils.logSection('🔧 Troubleshooting');
+    utils.log('1. Ensure database is running', 'white');
+    utils.log('2. Check DATABASE_URL in .env file', 'white');
+    utils.log('3. Verify Prisma schema is up to date', 'white');
+    utils.log('4. Run: npm run db:generate', 'white');
+    utils.log('5. Run: npm run db:push', 'white');
+    process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await utils.disconnect();
   }
 }
 
 // Handle process termination gracefully
 process.on('SIGINT', () => {
-  log('\n\n⚠️  Script interrupted by user', 'yellow');
+  console.log('\n\n⚠️  Script interrupted by user');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  log('\n\n⚠️  Script terminated', 'yellow');
+  console.log('\n\n⚠️  Script terminated');
   process.exit(0);
 });
 
 // Run the script
 seed().catch((error) => {
-  log(`Unexpected error: ${error.message}`, 'red');
+  console.error(`Unexpected error: ${error.message}`);
   process.exit(1);
 });

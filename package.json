@@ -9,6 +9,7 @@
     "lint": "next lint",
     "setup": "node scripts/setup-env.js",
     "create-admin": "node scripts/create-admin.js",
+    "seed:all": "node scripts/dummy_data/seed-all.js",
     "seed:posts": "node scripts/dummy_data/seed-post.js",
     "seed:users": "node scripts/dummy_data/seed-users.js",
     "seed:categories": "node scripts/dummy_data/seed-categories.js",

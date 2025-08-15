@@ -2,33 +2,12 @@
 
 /*
   Seeds 5 real-world Backend Development posts with categories and tags.
+  Uses the new SeedingUtils for consistent error handling and logging.
   - Ensures 'Backend Development' category (slug: backend-development)
   - Upserts tags and creates posts with SEO metadata
 */
 
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-
-const prisma = new PrismaClient();
-
-function slugify(title) {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
-
-function estimateReadTime(content) {
-  const words = content.split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(words / 220));
-}
-
-function nowMinusDays(days) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d;
-}
-
-function cover(seed) {
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1600/900`;
-}
+const SeedingUtils = require('../utils/seeding-utils');
 
 const POSTS = [
   {
@@ -58,40 +37,23 @@ const POSTS = [
   }
 ];
 
-async function ensureAuthorUser() {
-  const first = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (first) return first;
-  const hashed = await bcrypt.hash('seed@12345', 12);
-  return prisma.user.create({
-    data: {
-      username: 'seed-author',
-      email: 'author@example.com',
-      fullName: 'Seed Author',
-      password: hashed,
-      role: 'USER',
-      isActive: true
-    }
-  });
+function slugify(title) {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-async function upsertCategory(slug) {
-  const name = slug.split('-').map((s) => s[0].toUpperCase() + s.slice(1)).join(' ');
-  return prisma.category.upsert({ where: { slug }, update: {}, create: { slug, name } });
+function estimateReadTime(content) {
+  const words = content.split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 220));
 }
 
-async function upsertTag(slug) {
-  const name = slug.split('-').map((s) => s[0].toUpperCase() + s.slice(1)).join(' ');
-  return prisma.tag.upsert({ where: { slug }, update: { name }, create: { slug, name } });
+function nowMinusDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d;
 }
 
-async function uniqueSlug(base) {
-  let candidate = base, i = 1;
-  /* eslint-disable no-await-in-loop */
-  while (await prisma.post.findUnique({ where: { slug: candidate } })) {
-    i += 1; candidate = `${base}-${i}`;
-  }
-  /* eslint-enable no-await-in-loop */
-  return candidate;
+function cover(seed) {
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1600/900`;
 }
 
 function contentFor(title, tags) {
@@ -127,26 +89,36 @@ function keywordsFrom(title, tags) {
 }
 
 async function seed() {
-  console.log('📝 Seeding 5 Backend Development posts...');
+  const utils = new SeedingUtils();
+  
   try {
-    await prisma.$connect();
-    const author = await ensureAuthorUser();
-    const category = await upsertCategory('backend-development');
+    utils.logHeader('📝 Backend Development Posts Seeding Script');
+    utils.log('Creating realistic backend development posts for your blog...', 'white');
+
+    await utils.connect();
+    const author = await utils.ensureAuthorUser();
+    const category = await utils.upsertCategory({
+      name: 'Backend Development',
+      slug: 'backend-development',
+      description: 'Server-side development, APIs, and backend architecture',
+      color: '#10B981',
+      icon: '🔧'
+    });
 
     let count = 0;
     for (let i = 0; i < POSTS.length; i += 1) {
       const p = POSTS[i];
-      const base = slugify(p.title);
-      const slug = await uniqueSlug(base);
+      const base = utils.slugify(p.title);
+      const slug = await utils.generateUniqueSlug(base, 'post');
       const content = contentFor(p.title, p.tags);
-      const readTime = estimateReadTime(content);
-      const publishedAt = nowMinusDays(POSTS.length - i);
-      const coverImage = cover(slug);
+      const readTime = utils.estimateReadTime(content);
+      const publishedAt = utils.daysAgo(POSTS.length - i);
+      const coverImage = utils.generateCoverImage(slug);
       const wordCount = content.split(/\s+/).filter(Boolean).length;
       const charCount = content.length;
-      const metaKeywords = keywordsFrom(p.title, p.tags).join(', ');
+      const metaKeywords = utils.generateKeywords(p.title, p.tags);
 
-      const created = await prisma.post.create({
+      const created = await utils.prisma.post.create({
         data: {
           title: p.title,
           slug,
@@ -168,20 +140,28 @@ async function seed() {
         }
       });
 
-      await prisma.postCategory.create({ data: { postId: created.id, categoryId: category.id } });
+      await utils.prisma.postCategory.create({ data: { postId: created.id, categoryId: category.id } });
       for (const t of p.tags) {
-        const tag = await upsertTag(slugify(t));
-        await prisma.postTag.create({ data: { postId: created.id, tagId: tag.id } });
+        const tag = await utils.upsertTag({
+          name: t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          slug: utils.slugify(t),
+          color: '#6B7280'
+        });
+        await utils.prisma.postTag.create({ data: { postId: created.id, tagId: tag.id } });
       }
 
       count += 1;
-      console.log(`✓ Created: ${created.title} (${created.slug})`);
+      utils.logSuccess(`Created: ${created.title} (${created.slug})`);
     }
-    console.log(`\n✅ Done. Created ${count} Backend Development posts.`);
+    
+    utils.logSection('✅ Seeding Complete');
+    utils.log(`Created ${count} Backend Development posts successfully!`, 'green');
+    
   } catch (e) {
-    console.error('❌ Seed error:', e?.message || e);
+    utils.logError(`Seed error: ${e?.message || e}`);
+    process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await utils.disconnect();
   }
 }
 

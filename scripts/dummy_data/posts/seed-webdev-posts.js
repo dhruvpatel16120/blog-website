@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /*
-  Seeds 5 real-world Web Development posts with categories and tags.
+  Seeds 10 real-world Web Development posts with categories and tags.
+  Uses the new SeedingUtils for consistent error handling and logging.
   - Uses the first existing user as author, or creates a seed author if none exists
   - Ensures the 'Web Development' category exists
   - Upserts tags as needed (creates missing ones)
@@ -9,36 +10,10 @@
   - Sets published, readTime, viewCount, featured flags
 
   Usage:
-    node scripts/dummy_data/seed-webdev-posts.js
+    node scripts/dummy_data/posts/seed-webdev-posts.js
 */
 
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-
-const prisma = new PrismaClient();
-
-function slugify(title) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-function estimateReadTime(content) {
-  const words = content.split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(words / 200));
-}
-
-function nowMinusDays(days) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d;
-}
-
-function getCoverImage(seed) {
-  // Deterministic CDN image per post
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1600/900`;
-}
+const SeedingUtils = require('../utils/seeding-utils');
 
 const POSTS = [
   {
@@ -114,59 +89,27 @@ const POSTS = [
   }
 ];
 
-async function ensureAuthorUser() {
-  const firstUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (firstUser) return firstUser;
-
-  const hashedPassword = await bcrypt.hash('seed@12345', 12);
-  return prisma.user.create({
-    data: {
-      username: 'seed-author',
-      email: 'author@example.com',
-      fullName: 'Seed Author',
-      password: hashedPassword,
-      role: 'USER',
-      isActive: true,
-      bio: 'Author created by seed script.',
-    },
-  });
+function slugify(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 }
 
-async function upsertCategory(slug) {
-  const name = slug
-    .split('-')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(' ');
-  return prisma.category.upsert({
-    where: { slug },
-    update: {},
-    create: { slug, name },
-  });
+function estimateReadTime(content) {
+  const words = content.split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
 }
 
-async function upsertTag(slug) {
-  const name = slug
-    .split('-')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(' ');
-  return prisma.tag.upsert({
-    where: { slug },
-    update: { name },
-    create: { slug, name },
-  });
+function nowMinusDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d;
 }
 
-async function uniqueSlug(base) {
-  let candidate = base;
-  let i = 1;
-  // Loop until a unique slug found
-  /* eslint-disable no-await-in-loop */
-  while (await prisma.post.findUnique({ where: { slug: candidate } })) {
-    i += 1;
-    candidate = `${base}-${i}`;
-  }
-  /* eslint-enable no-await-in-loop */
-  return candidate;
+function getCoverImage(seed) {
+  // Deterministic CDN image per post
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1600/900`;
 }
 
 function buildContent(title, tags) {
@@ -272,32 +215,44 @@ function getKeywordsFrom(title, tags) {
 }
 
 async function seed() {
-  console.log('📝 Seeding 5 Web Development posts...');
+  const utils = new SeedingUtils();
+  
   try {
-    await prisma.$connect();
+    utils.logHeader('📝 Web Development Posts Seeding Script');
+    utils.log('Creating realistic web development posts for your blog...', 'white');
 
-    const author = await ensureAuthorUser();
-    console.log(`👤 Using author: ${author.fullName} <${author.email}>`);
+    // Connect to database
+    utils.logSection('🔍 Database Connection');
+    await utils.connect();
+
+    const author = await utils.ensureAuthorUser();
+    utils.logInfo(`Using author: ${author.fullName} <${author.email}>`);
 
     // Ensure Web Development category exists
-    const webDevCategory = await upsertCategory('web-development');
+    const webDevCategory = await utils.upsertCategory({
+      name: 'Web Development',
+      slug: 'web-development',
+      description: 'Modern web development techniques, frameworks, and best practices',
+      color: '#3B82F6',
+      icon: '🌐'
+    });
 
     let created = 0;
     for (let idx = 0; idx < POSTS.length; idx += 1) {
       const p = POSTS[idx];
-      const baseSlug = slugify(p.title);
-      const slug = await uniqueSlug(baseSlug);
+      const baseSlug = utils.slugify(p.title);
+      const slug = await utils.generateUniqueSlug(baseSlug, 'post');
       const content = buildContent(p.title, p.tags);
-      const readTime = estimateReadTime(content);
+      const readTime = utils.estimateReadTime(content);
       const featured = idx < 1; // first one featured
       const viewCount = 200 + Math.floor(Math.random() * 5000);
-      const publishedAt = nowMinusDays(POSTS.length - idx);
-      const coverImage = getCoverImage(slug);
+      const publishedAt = utils.daysAgo(POSTS.length - idx);
+      const coverImage = utils.generateCoverImage(slug);
       const wordCount = content.split(/\s+/).filter(Boolean).length;
       const charCount = content.length;
-      const metaKeywords = getKeywordsFrom(p.title, p.tags).join(', ');
+      const metaKeywords = utils.generateKeywords(p.title, p.tags);
 
-      const createdPost = await prisma.post.create({
+      const createdPost = await utils.prisma.post.create({
         data: {
           title: p.title,
           slug,
@@ -320,25 +275,32 @@ async function seed() {
       });
 
       // Categories (force add Web Development)
-      await prisma.postCategory.create({
+      await utils.prisma.postCategory.create({
         data: { postId: createdPost.id, categoryId: webDevCategory.id },
       });
 
       // Tags
       for (const t of p.tags) {
-        const tag = await upsertTag(slugify(t));
-        await prisma.postTag.create({ data: { postId: createdPost.id, tagId: tag.id } });
+        const tag = await utils.upsertTag({
+          name: t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          slug: t,
+          color: '#6B7280'
+        });
+        await utils.prisma.postTag.create({ data: { postId: createdPost.id, tagId: tag.id } });
       }
 
       created += 1;
-      console.log(`✓ Created: ${createdPost.title} (${createdPost.slug})`);
+      utils.logSuccess(`Created: ${createdPost.title} (${createdPost.slug})`);
     }
 
-    console.log(`\n✅ Done. Created ${created} Web Development posts.`);
+    utils.logSection('✅ Seeding Complete');
+    utils.log(`Created ${created} Web Development posts successfully!`, 'green');
+
   } catch (err) {
-    console.error('❌ Seed error:', err.message);
+    utils.logError(`Seed error: ${err.message}`);
+    process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await utils.disconnect();
   }
 }
 

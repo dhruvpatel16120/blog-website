@@ -2,18 +2,12 @@
 
 /*
   Seeds 5 real-world Frontend Development posts with categories and tags.
-  - Uses the first existing user as author, or creates a seed author if none exists
-  - Ensures the 'Frontend Development' category exists (slug: frontend-development)
-  - Upserts tags as needed (creates missing ones)
-  - Generates unique slugs
-  - Marks posts as published with sensible metadata
-
-  Usage:
-    node scripts/dummy_data/posts/seed-frontend-posts.js
+  Uses the new SeedingUtils for consistent error handling and logging.
+  - Ensures 'Frontend Development' category (slug: frontend-development)
+  - Upserts tags and creates posts with SEO metadata
 */
 
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+const SeedingUtils = require('../utils/seeding-utils');
 
 const prisma = new PrismaClient();
 
@@ -169,27 +163,36 @@ function keywordsFrom(title, tags) {
 }
 
 async function seed() {
-  console.log('📝 Seeding 5 Frontend Development posts...');
+  const utils = new SeedingUtils();
+  
   try {
-    await prisma.$connect();
+    utils.logHeader('📝 Frontend Development Posts Seeding Script');
+    utils.log('Creating realistic frontend development posts for your blog...', 'white');
 
-    const author = await ensureAuthorUser();
-    const category = await upsertCategory('frontend-development');
+    await utils.connect();
+    const author = await utils.ensureAuthorUser();
+    const category = await utils.upsertCategory({
+      name: 'Frontend Development',
+      slug: 'frontend-development',
+      description: 'React, Vue, Angular, and modern frontend technologies',
+      color: '#8B5CF6',
+      icon: '⚛️'
+    });
 
     let count = 0;
     for (let i = 0; i < POSTS.length; i += 1) {
       const p = POSTS[i];
-      const base = slugify(p.title);
-      const slug = await uniqueSlug(base);
+      const base = utils.slugify(p.title);
+      const slug = await utils.generateUniqueSlug(base, 'post');
       const content = buildContent(p.title, p.tags);
-      const readTime = estimateReadTime(content);
-      const publishedAt = nowMinusDays(POSTS.length - i);
-      const coverImage = cover(slug);
+      const readTime = utils.estimateReadTime(content);
+      const publishedAt = utils.daysAgo(POSTS.length - i);
+      const coverImage = utils.generateCoverImage(slug);
       const wordCount = content.split(/\s+/).filter(Boolean).length;
       const charCount = content.length;
-      const metaKeywords = keywordsFrom(p.title, p.tags).join(', ');
+      const metaKeywords = utils.generateKeywords(p.title, p.tags);
 
-      const created = await prisma.post.create({
+      const created = await utils.prisma.post.create({
         data: {
           title: p.title,
           slug,
@@ -211,21 +214,28 @@ async function seed() {
         }
       });
 
-      await prisma.postCategory.create({ data: { postId: created.id, categoryId: category.id } });
+      await utils.prisma.postCategory.create({ data: { postId: created.id, categoryId: category.id } });
       for (const t of p.tags) {
-        const tag = await upsertTag(slugify(t));
-        await prisma.postTag.create({ data: { postId: created.id, tagId: tag.id } });
+        const tag = await utils.upsertTag({
+          name: t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          slug: utils.slugify(t),
+          color: '#6B7280'
+        });
+        await utils.prisma.postTag.create({ data: { postId: created.id, tagId: tag.id } });
       }
 
       count += 1;
-      console.log(`✓ Created: ${created.title} (${created.slug})`);
+      utils.logSuccess(`Created: ${created.title} (${created.slug})`);
     }
-
-    console.log(`\n✅ Done. Created ${count} Frontend Development posts.`);
+    
+    utils.logSection('✅ Seeding Complete');
+    utils.log(`Created ${count} Frontend Development posts successfully!`, 'green');
+    
   } catch (e) {
-    console.error('❌ Seed error:', e?.message || e);
+    utils.logError(`Seed error: ${e?.message || e}`);
+    process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await utils.disconnect();
   }
 }
 

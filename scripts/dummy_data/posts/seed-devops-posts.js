@@ -2,22 +2,20 @@
 
 /*
   Seeds 2 DevOps & Cloud posts (category slug: devops-cloud)
+  Uses the new SeedingUtils for consistent error handling and logging.
 */
 
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-
-const prisma = new PrismaClient();
-
-function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
-function cover(seed) { return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1600/900`; }
-function readTime(text) { return Math.max(1, Math.ceil(text.split(/\s+/).filter(Boolean).length / 220)); }
-function dayOffset(n) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
+const SeedingUtils = require('../utils/seeding-utils');
 
 const POSTS = [
   { title: 'Kubernetes in Production: Scaling, Probes, and Rolling Updates', excerpt: 'Operate k8s clusters with confidence: probes, resources, HPA, and rolling updates.', tags: ['kubernetes', 'scaling', 'hpa', 'sre'] },
   { title: 'IaC Done Right: Terraform Modules, Workspaces, and State', excerpt: 'Structure Terraform for teams: modules, workspaces, remote state, and drift detection.', tags: ['terraform', 'iac', 'cloud', 'devops'] },
 ];
+
+function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+function cover(seed) { return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1600/900`; }
+function readTime(text) { return Math.max(1, Math.ceil(text.split(/\s+/).filter(Boolean).length / 220)); }
+function dayOffset(n) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
 
 async function ensureAuthor() {
   const u = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
@@ -49,46 +47,72 @@ function content(title, tags) {
 }
 
 async function main() {
-  console.log('📝 Seeding DevOps & Cloud posts...');
-  await prisma.$connect();
-  const author = await ensureAuthor();
-  const cat = await upsertCategory('devops-cloud');
-  let count = 0;
-  for (let i = 0; i < POSTS.length; i += 1) {
-    const p = POSTS[i];
-    const slug = await uniqueSlug(slugify(p.title));
-    const body = content(p.title, p.tags);
-    const created = await prisma.post.create({
-      data: {
-        title: p.title,
-        slug,
-        excerpt: p.excerpt,
-        content: body,
-        coverImage: cover(slug),
-        published: true,
-        featured: i === 0,
-        viewCount: 300 + Math.floor(Math.random() * 3000),
-        readTime: readTime(body),
-        wordCount: body.split(/\s+/).filter(Boolean).length,
-        charCount: body.length,
-        authorId: author.id,
-        publishedAt: dayOffset(POSTS.length - i),
-        seoTitle: p.title,
-        seoDescription: p.excerpt,
-        seoImage: cover(slug),
-        metaKeywords: [...new Set((p.title + ' ' + p.tags.join(' ')).toLowerCase().split(/\s+/))].slice(0, 15).join(', '),
-      }
+  const utils = new SeedingUtils();
+  
+  try {
+    utils.logHeader('📝 DevOps & Cloud Posts Seeding Script');
+    utils.log('Creating realistic DevOps & Cloud posts for your blog...', 'white');
+
+    await utils.connect();
+    const author = await utils.ensureAuthorUser();
+    const cat = await utils.upsertCategory({
+      name: 'DevOps & Cloud',
+      slug: 'devops-cloud',
+      description: 'CI/CD, Docker, Kubernetes, AWS, Azure, and cloud infrastructure',
+      color: '#EF4444',
+      icon: '☁️'
     });
-    await prisma.postCategory.create({ data: { postId: created.id, categoryId: cat.id } });
-    for (const t of p.tags) {
-      const tag = await upsertTag(slugify(t));
-      await prisma.postTag.create({ data: { postId: created.id, tagId: tag.id } });
+
+    let count = 0;
+    for (let i = 0; i < POSTS.length; i += 1) {
+      const p = POSTS[i];
+      const slug = await utils.generateUniqueSlug(utils.slugify(p.title), 'post');
+      const body = content(p.title, p.tags);
+      const created = await utils.prisma.post.create({
+        data: {
+          title: p.title,
+          slug,
+          excerpt: p.excerpt,
+          content: body,
+          coverImage: utils.generateCoverImage(slug),
+          published: true,
+          featured: i === 0,
+          viewCount: 300 + Math.floor(Math.random() * 3000),
+          readTime: utils.estimateReadTime(body),
+          wordCount: body.split(/\s+/).filter(Boolean).length,
+          charCount: body.length,
+          authorId: author.id,
+          publishedAt: utils.daysAgo(POSTS.length - i),
+          seoTitle: p.title,
+          seoDescription: p.excerpt,
+          seoImage: utils.generateCoverImage(slug),
+          metaKeywords: utils.generateKeywords(p.title, p.tags)
+        }
+      });
+      
+      await utils.prisma.postCategory.create({ data: { postId: created.id, categoryId: cat.id } });
+      for (const t of p.tags) {
+        const tag = await utils.upsertTag({
+          name: t.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          slug: utils.slugify(t),
+          color: '#6B7280'
+        });
+        await utils.prisma.postTag.create({ data: { postId: created.id, tagId: tag.id } });
+      }
+      
+      count += 1;
+      utils.logSuccess(`Created ${created.slug}`);
     }
-    count += 1;
-    console.log(`✓ Created ${created.slug}`);
+    
+    utils.logSection('✅ Seeding Complete');
+    utils.log(`Created ${count} DevOps & Cloud posts successfully!`, 'green');
+    
+  } catch (e) {
+    utils.logError(`Seed error: ${e?.message || e}`);
+    process.exit(1);
+  } finally {
+    await utils.disconnect();
   }
-  console.log(`✅ Done. Created ${count} DevOps & Cloud posts.`);
-  await prisma.$disconnect();
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
