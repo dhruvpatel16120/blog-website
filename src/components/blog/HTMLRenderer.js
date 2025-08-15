@@ -19,25 +19,25 @@ const HTMLRenderer = ({ content }) => {
     // Find all img tags and enhance them
     const images = tempDiv.querySelectorAll('img');
     images.forEach((img) => {
-      // Ensure image URLs are absolute and properly formatted
-      if (img.src && !img.src.startsWith('http') && !img.src.startsWith('data:')) {
-        // Convert relative URLs to absolute
-        let absoluteUrl = img.src;
-        if (!absoluteUrl.startsWith('/')) {
-          absoluteUrl = `/${absoluteUrl}`;
+      // Normalize URLs: convert same-origin absolute URLs to path-only; ensure /uploads paths are correct
+      if (img.src) {
+        try {
+          const isData = img.src.startsWith('data:');
+          if (!isData) {
+            // Do not modify absolute URLs; only normalize relative-like ones
+            if (!img.src.startsWith('http://') && !img.src.startsWith('https://') && !img.src.startsWith('//')) {
+              if (!img.src.startsWith('/')) {
+                img.src = `/${img.src}`;
+              }
+              if (!img.src.startsWith('/uploads/') && img.src.includes('uploads/')) {
+                const idx = img.src.indexOf('uploads/');
+                img.src = `/${img.src.substring(idx)}`;
+              }
+            }
+          }
+        } catch (_e) {
+          // Ignore URL parsing errors and leave src as-is
         }
-        
-        // Ensure the URL starts with the correct path
-        if (absoluteUrl.startsWith('/uploads/')) {
-          // This is already correct
-        } else if (absoluteUrl.includes('uploads/')) {
-          // Extract the uploads part
-          const uploadsIndex = absoluteUrl.indexOf('uploads/');
-          absoluteUrl = `/${absoluteUrl.substring(uploadsIndex)}`;
-        }
-        
-        img.src = absoluteUrl;
-        console.log('Processed image URL:', absoluteUrl); // Debug log
       }
       
       // Add responsive classes and styling
@@ -52,11 +52,10 @@ const HTMLRenderer = ({ content }) => {
       img.onerror = function() {
         console.error('Failed to load image:', this.src);
         this.style.display = 'none';
-        // Create a fallback element
         const fallback = document.createElement('div');
         fallback.className = 'bg-gray-200 dark:bg-gray-700 p-4 rounded-lg text-center text-gray-500 dark:text-gray-400 my-4';
         fallback.innerHTML = `<p>Image failed to load: ${this.src}</p>`;
-        this.parentNode.insertBefore(fallback, this);
+        this.parentNode && this.parentNode.insertBefore(fallback, this);
       };
       
       // Add loading state

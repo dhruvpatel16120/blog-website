@@ -5,6 +5,14 @@ const extraDomains = domainEnv
   .map((d) => d.trim())
   .filter(Boolean);
 
+const nextAuthHost = (() => {
+  try {
+    return process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : null;
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig = {
   images: {
     domains: [
@@ -12,6 +20,7 @@ const nextConfig = {
       'picsum.photos',
       'ui-avatars.com',
       'api.dicebear.com',
+      ...(nextAuthHost ? [nextAuthHost] : []),
       ...extraDomains,
     ],
   },

@@ -50,6 +50,42 @@ export default function FileUpload({
   const [selectedCategory, setSelectedCategory] = useState(category);
   const fileInputRef = useRef(null);
 
+  const uploadFiles = useCallback(async (filesToUpload) => {
+    setUploading(true);
+    setErrors([]);
+
+    try {
+      const uploadPromises = filesToUpload.map(async (file, index) => {
+        const preview = showPreview && isImageFile(file) ? await createFilePreview(file) : null;
+        if (showProgress) {
+          setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+        }
+        const result = await uploadFile(file, selectedCategory, userId);
+        if (showProgress) {
+          setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+        }
+        return {
+          ...result,
+          preview,
+          originalFile: file,
+          status: 'uploaded'
+        };
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      const updatedFiles = [...files, ...uploadedFiles];
+      setFiles(updatedFiles);
+      if (onFileUpload) {
+        onFileUpload(uploadedFiles, updatedFiles);
+      }
+    } catch (error) {
+      setErrors([error.message]);
+    } finally {
+      setUploading(false);
+      setUploadProgress({});
+    }
+  }, [files, onFileUpload, showPreview, showProgress, selectedCategory, userId]);
+
   const validateAndUpload = useCallback(async (fileList) => {
     const newFiles = Array.from(fileList);
     const validFiles = [];
@@ -103,54 +139,9 @@ export default function FileUpload({
       }));
       setFiles(prev => [...prev, ...fileObjects]);
     }
-  }, [files, maxFiles, acceptedTypes, autoUpload]);
+  }, [files, maxFiles, acceptedTypes, autoUpload, uploadFiles]);
 
-  const uploadFiles = async (filesToUpload) => {
-    setUploading(true);
-    setErrors([]);
-
-    try {
-      const uploadPromises = filesToUpload.map(async (file, index) => {
-        // Create preview for images
-        const preview = showPreview && isImageFile(file) ? await createFilePreview(file) : null;
-        
-        // Update progress
-        if (showProgress) {
-          setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
-        }
-        
-        // Upload file
-        const result = await uploadFile(file, selectedCategory, userId);
-        
-        // Update progress to 100%
-        if (showProgress) {
-          setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
-        }
-        
-        return {
-          ...result,
-          preview,
-          originalFile: file,
-          status: 'uploaded'
-        };
-      });
-
-      const uploadedFiles = await Promise.all(uploadPromises);
-      
-      const updatedFiles = [...files, ...uploadedFiles];
-      setFiles(updatedFiles);
-      
-      // Call parent callback
-      if (onFileUpload) {
-        onFileUpload(uploadedFiles, updatedFiles);
-      }
-    } catch (error) {
-      setErrors([error.message]);
-    } finally {
-      setUploading(false);
-      setUploadProgress({});
-    }
-  };
+  // (deduped) keep only one uploadFiles implementation above
 
   const handleFileSelect = useCallback((e) => {
     const fileList = e.target.files;

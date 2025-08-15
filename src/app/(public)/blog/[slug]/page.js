@@ -104,7 +104,7 @@ export default async function PostPage({ params }) {
               <div className="whitespace-pre-wrap">{post.content}</div>
             </div>
           )}
-          <SocialShare title={post.title} slug={post.slug} />
+          <SocialShare title={post.title} slug={post.slug} excerpt={post.excerpt} />
           <div className="mt-8 flex flex-wrap gap-2">
             {post.tags && post.tags.map((tag) => (
               <Badge key={tag} variant="outline">#{tag}</Badge>

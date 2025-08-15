@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { 
   FolderIcon, 
   PhotoIcon, 
@@ -337,10 +338,12 @@ export default function FileManager({
                     {/* File Preview */}
                     <div className="aspect-square mb-2 rounded overflow-hidden bg-gray-100 dark:bg-gray-700">
                       {file.fileType === 'image' ? (
-                        <img
+                        <Image
                           src={file.url}
                           alt={file.originalName}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="(max-width: 768px) 50vw, 200px"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full">
@@ -393,9 +396,11 @@ export default function FileManager({
                     {/* File Icon */}
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                       {file.fileType === 'image' ? (
-                        <img
+                        <Image
                           src={file.url}
                           alt={file.originalName}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (

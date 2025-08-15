@@ -177,64 +177,33 @@ export default function CommentsPage() {
     <AdminLayout title="Comments Management" adminSession={adminSession}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Comments Management</h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Moderate and manage user comments across all posts
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Comments Management</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Moderate and manage user comments
             </p>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ChatBubbleLeftIcon className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Comments</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.total}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ClockIcon className="h-8 w-8 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.pending}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Comments', value: summary.total, icon: ChatBubbleLeftIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+            { label: 'Pending Approval', value: summary.pending, icon: ClockIcon, color: 'bg-yellow-900 dark:bg-yellow-800', textColor: 'text-white' },
+            { label: 'Approved', value: summary.approved, icon: CheckCircleIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+            { label: 'Rejected', value: summary.rejected, icon: ExclamationTriangleIcon, color: 'bg-red-900 dark:bg-red-800', textColor: 'text-white' },
+          ].map((card, idx) => (
+            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
               </div>
             </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Approved</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.approved}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Rejected</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.rejected}</p>
-              </div>
-            </div>
-          </Card>
+          ))}
         </div>
 
         {/* Filters */}

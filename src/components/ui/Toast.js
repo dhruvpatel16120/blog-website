@@ -41,31 +41,31 @@ const Toast = forwardRef(({
   const types = {
     success: {
       icon: CheckCircleIcon,
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      textColor: 'text-green-800',
-      iconColor: 'text-green-400'
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      borderColor: 'border-green-200 dark:border-green-700',
+      textColor: 'text-green-800 dark:text-green-200',
+      iconColor: 'text-green-400 dark:text-green-300'
     },
     error: {
       icon: XCircleIcon,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-800',
-      iconColor: 'text-red-400'
+      bgColor: 'bg-red-50 dark:bg-red-900/20',
+      borderColor: 'border-red-200 dark:border-red-700',
+      textColor: 'text-red-800 dark:text-red-200',
+      iconColor: 'text-red-400 dark:text-red-300'
     },
     warning: {
       icon: ExclamationTriangleIcon,
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      textColor: 'text-yellow-800',
-      iconColor: 'text-yellow-400'
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+      borderColor: 'border-yellow-200 dark:border-yellow-700',
+      textColor: 'text-yellow-800 dark:text-yellow-200',
+      iconColor: 'text-yellow-400 dark:text-yellow-300'
     },
     info: {
       icon: InformationCircleIcon,
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-800',
-      iconColor: 'text-blue-400'
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+      borderColor: 'border-blue-200 dark:border-blue-700',
+      textColor: 'text-blue-800 dark:text-blue-200',
+      iconColor: 'text-blue-400 dark:text-blue-300'
     }
   }
 
@@ -84,39 +84,39 @@ const Toast = forwardRef(({
       <div
         ref={ref}
         className={cn(
-          'max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden',
+          'min-w-[280px] sm:min-w-[320px] max-w-sm sm:max-w-md bg-white dark:bg-gray-800 shadow-2xl rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 dark:ring-white ring-opacity-10 overflow-hidden border border-gray-200 dark:border-gray-700',
           className
         )}
         {...props}
       >
-        <div className={cn('p-4 border-l-4', bgColor, borderColor)}>
+        <div className={cn('p-3 sm:p-4 border-l-4', bgColor, borderColor)}>
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <Icon className={cn('h-6 w-6', iconColor)} aria-hidden="true" />
+              <Icon className={cn('h-5 w-5', iconColor)} aria-hidden="true" />
             </div>
-            <div className="ml-3 w-0 flex-1 pt-0.5">
+            <div className="ml-3 flex-1 min-w-0">
               {title && (
-                <p className={cn('text-sm font-medium', textColor)}>
+                <p className={cn('text-sm font-medium break-words', textColor)}>
                   {title}
                 </p>
               )}
               {message && (
-                <p className={cn('mt-1 text-sm', textColor)}>
+                <p className={cn('mt-1 text-sm leading-relaxed break-words max-w-xs sm:max-w-sm', textColor)}>
                   {message}
                 </p>
               )}
             </div>
-            <div className="ml-4 flex flex-shrink-0">
+            <div className="ml-3 flex flex-shrink-0">
               <button
                 type="button"
                 className={cn(
-                  'bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+                  'rounded-md inline-flex text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-800 p-1',
                   iconColor.replace('text-', 'focus:ring-')
                 )}
                 onClick={handleClose}
               >
                 <span className="sr-only">Close</span>
-                <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+                <XMarkIcon className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -148,7 +148,7 @@ const ToastContainer = forwardRef(({
     <div
       ref={ref}
       className={cn(
-        'fixed z-50 flex flex-col gap-2',
+        'fixed z-[9999] flex flex-col gap-3 px-4 sm:px-0',
         positions[position],
         className
       )}

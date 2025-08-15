@@ -21,6 +21,7 @@ export default function CategoriesForm() {
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
   const [limit, setLimit] = useState(parseInt(searchParams.get('limit') || '10', 10));
   const [total, setTotal] = useState(0);
+  const [summary, setSummary] = useState({ total: 0, active: 0, unused: 0, totalPosts: 0 });
   const [success, setSuccess] = useState('');
 
   const load = useCallback(async () => {
@@ -32,6 +33,9 @@ export default function CategoriesForm() {
       if (res.ok) {
         setItems(data.data || []);
         setTotal(data.total || 0);
+        if (data.summary) {
+          setSummary(data.summary);
+        }
       }
     } finally { setLoading(false); }
   }, [q, sortBy, order, page, limit]);
@@ -59,6 +63,47 @@ export default function CategoriesForm() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
           <Button onClick={goNew}>New Category</Button>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Categories', value: summary.total, icon: 'FolderIcon', color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+            { label: 'Active Categories', value: summary.active, icon: 'CheckCircleIcon', color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+            { label: 'Unused Categories', value: summary.unused, icon: 'ArchiveBoxIcon', color: 'bg-yellow-900 dark:bg-yellow-800', textColor: 'text-white' },
+            { label: 'Total Posts', value: summary.totalPosts, icon: 'DocumentTextIcon', color: 'bg-blue-900 dark:bg-blue-800', textColor: 'text-white' },
+          ].map((card, idx) => (
+            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <div className={`h-8 w-8 ${card.textColor} opacity-80 flex items-center justify-center`}>
+                  {card.icon === 'FolderIcon' && (
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  )}
+                  {card.icon === 'CheckCircleIcon' && (
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  {card.icon === 'ArchiveBoxIcon' && (
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  )}
+                  {card.icon === 'DocumentTextIcon' && (
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {success && (

@@ -38,7 +38,11 @@ const BlogCard = ({ post, variant = 'default' }) => {
         {coverImage && (
           <div className="relative h-48 lg:h-64 overflow-hidden rounded-t-lg">
             <Image
-              src={coverImage}
+              src={(() => {
+                if (!coverImage) return '';
+                if (coverImage.startsWith('http://') || coverImage.startsWith('https://') || coverImage.startsWith('//')) return coverImage;
+                return coverImage.startsWith('/') ? coverImage : `/${coverImage}`;
+              })()}
               alt={title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

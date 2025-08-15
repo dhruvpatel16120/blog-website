@@ -69,7 +69,15 @@ export default function PostEditor({ mode = 'create', postId }) {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const showToastMessageRef = useRef((message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  });
   const autoSaveRef = useRef(null);
+  const fetchPostRef = useRef(null);
+  const fetchCategoriesAndTagsRef = useRef(null);
+  const fetchUsersRef = useRef(null);
   // Cover image picker from files
   const [showCoverPicker, setShowCoverPicker] = useState(false);
   const [pickerFiles, setPickerFiles] = useState([]);
@@ -80,18 +88,30 @@ export default function PostEditor({ mode = 'create', postId }) {
   // Fetch post data for edit mode
   useEffect(() => {
     if (mode === 'edit' && postId) {
-      fetchPost();
+      fetchPostRef.current && fetchPostRef.current();
     }
   }, [mode, postId]);
 
   // Fetch categories and tags
   useEffect(() => {
-    fetchCategoriesAndTags();
+    (async () => {
+      try {
+        if (fetchCategoriesAndTagsRef.current) {
+          await fetchCategoriesAndTagsRef.current();
+        }
+      } catch (_) {}
+    })();
   }, []);
 
   // Fetch users for author selector
   useEffect(() => {
-    fetchUsers();
+    (async () => {
+      try {
+        if (fetchUsersRef.current) {
+          await fetchUsersRef.current();
+        }
+      } catch (_) {}
+    })();
   }, []);
 
   // Set default author when creating new post
@@ -120,20 +140,17 @@ export default function PostEditor({ mode = 'create', postId }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  const submitRef = useRef(null);
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        if (mode === 'edit' && postId) {
-          submit();
-        } else {
-          submit();
-        }
+        submitRef.current && submitRef.current();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        submit();
+        submitRef.current && submitRef.current();
       }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault();
@@ -154,7 +171,7 @@ export default function PostEditor({ mode = 'create', postId }) {
         const post = data.data;
         
         if (!post) {
-          showToastMessage('Post not found', 'error');
+          showToastMessageRef.current('Post not found', 'error');
           setLoading(false);
           return;
         }
@@ -197,15 +214,20 @@ export default function PostEditor({ mode = 'create', postId }) {
         setLoading(false);
       } else {
         const errorData = await res.json().catch(() => ({}));
-        showToastMessage(errorData.error || 'Failed to fetch post', 'error');
+        showToastMessageRef.current(errorData.error || 'Failed to fetch post', 'error');
         setLoading(false);
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      showToastMessage('Network error: Failed to fetch post', 'error');
+      showToastMessageRef.current('Network error: Failed to fetch post', 'error');
       setLoading(false);
     }
   }, [postId]);
+
+  // Keep refs in sync for lint-satisfying, side-effect-free calls
+  useEffect(() => {
+    fetchPostRef.current = fetchPost;
+  }, [fetchPost]);
 
   const fetchCategoriesAndTags = useCallback(async () => {
     try {
@@ -229,9 +251,13 @@ export default function PostEditor({ mode = 'create', postId }) {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      showToastMessage('Failed to fetch categories and tags', 'error');
+      showToastMessageRef.current('Failed to fetch categories and tags', 'error');
     }
   }, []);
+
+  useEffect(() => {
+    fetchCategoriesAndTagsRef.current = fetchCategoriesAndTags;
+  }, [fetchCategoriesAndTags]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -242,15 +268,19 @@ export default function PostEditor({ mode = 'create', postId }) {
         setAllUsers(data.data || []);
       } else {
         console.error('Failed to fetch users:', res.status);
-        showToastMessage('Failed to fetch users', 'error');
+        showToastMessageRef.current('Failed to fetch users', 'error');
       }
     } catch (error) {
       console.error('Fetch users error:', error);
-      showToastMessage('Failed to fetch users', 'error');
+      showToastMessageRef.current('Failed to fetch users', 'error');
     } finally {
       setUsersLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchUsersRef.current = fetchUsers;
+  }, [fetchUsers]);
 
   // New advanced functions
   const calculateStats = (text) => {
@@ -301,6 +331,11 @@ export default function PostEditor({ mode = 'create', postId }) {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   }, []);
+
+  // Keep a stable ref for early/late uses
+  useEffect(() => {
+    showToastMessageRef.current = showToastMessage;
+  }, [showToastMessage]);
 
   const handleImageUpload = async (file, targetCategory = 'images') => {
     try {
@@ -513,7 +548,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       return false;
     }
     return true;
-  }, [title, content, categories, tags, excerpt, seoTitle, seoDescription, coverImage, seoImage]);
+  }, [title, content, categories, tags, excerpt, seoTitle, seoDescription, coverImage, seoImage, showToastMessage]);
 
   const isValidUrl = (value) => {
     if (!value || typeof value !== 'string') return false;
@@ -601,7 +636,11 @@ export default function PostEditor({ mode = 'create', postId }) {
     } finally {
       setLoading(false);
     }
-  }, [mode, postId, title, content, markdownContent, excerpt, coverImage, published, featured, categories, tags, seoTitle, seoDescription, seoImage, customSlug, metaKeywords, readingTime, wordCount, charCount, scheduledDate, scheduledTime, editorMode, contentType, selectedAuthor]);
+  }, [mode, postId, title, content, markdownContent, excerpt, coverImage, published, featured, categories, tags, seoTitle, seoDescription, seoImage, customSlug, metaKeywords, readingTime, wordCount, charCount, scheduledDate, scheduledTime, contentType, selectedAuthor, showToastMessage, validateForm]);
+
+  useEffect(() => {
+    submitRef.current = submit;
+  }, [submit]);
 
   const schedule = async () => {
     if (!scheduledDate || !scheduledTime) {
@@ -979,8 +1018,7 @@ export default function PostEditor({ mode = 'create', postId }) {
                               throw new Error(err.error || 'Upload failed');
                             }
                             const data = await res.json();
-                            // Ensure the URL is absolute
-                            const imageUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+                            const imageUrl = typeof data.url === 'string' ? data.url : (data.path || '');
                             console.log('File picker upload result:', {
                               originalUrl: data.url,
                               finalUrl: imageUrl,
@@ -1011,8 +1049,7 @@ export default function PostEditor({ mode = 'create', postId }) {
                           if (!data?.url) {
                             throw new Error('Invalid upload response');
                           }
-                          // Ensure the URL is absolute
-                          const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+                          const finalUrl = data.url;
                           console.log('TinyMCE image upload result:', {
                             originalUrl: data.url,
                             finalUrl: finalUrl,
@@ -1485,7 +1522,14 @@ export default function PostEditor({ mode = 'create', postId }) {
             {editorMode === 'markdown' ? (
               renderMarkdownPreview()
             ) : (
-              <div dangerouslySetInnerHTML={{ __html: content || '<p><em>No content</em></p>' }} />
+              <div className="prose max-w-none dark:prose-invert">
+                {/* Ensure relative image URLs render */}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: (content || '<p><em>No content</em></p>').replace(/src=\"(?!https?:\/\/)([^\"]+)\"/g, 'src="/$1"')
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>

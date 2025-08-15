@@ -65,6 +65,12 @@ export default function TagsForm() {
     <AdminLayout title="Tag Management" adminSession={adminSession}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tags Management</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Manage blog tags and categorization
+            </p>
+          </div>
           <Button onClick={goNew}>New Tag</Button>
         </div>
 
@@ -80,16 +86,21 @@ export default function TagsForm() {
           </div>
         )}
 
-        {/* Summary */}
+        {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Total', value: summary.total, color: 'bg-gray-100 dark:bg-gray-800' },
-            { label: 'Used', value: summary.used, color: 'bg-blue-100 dark:bg-blue-900/20' },
-            { label: 'Unused', value: summary.unused, color: 'bg-yellow-100 dark:bg-yellow-900/20' },
+            { label: 'Total Tags', value: summary.total, icon: TagIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+            { label: 'Used Tags', value: summary.used, icon: CheckCircleIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+            { label: 'Unused Tags', value: summary.unused, icon: XMarkIcon, color: 'bg-yellow-900 dark:bg-yellow-800', textColor: 'text-white' },
           ].map((card, idx) => (
-            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-200 dark:border-gray-700`}>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{card.label}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
+              </div>
             </div>
           ))}
         </div>

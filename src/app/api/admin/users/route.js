@@ -82,6 +82,16 @@ export async function GET(request) {
       }),
     ]);
 
+    // Calculate summary statistics from the full dataset (not paginated)
+    const [totalUsers, activeUsers, inactiveUsers, adminUsers, regularUsers, totalAdmins] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { isActive: false } }),
+      prisma.user.count({ where: { role: 'ADMIN' } }),
+      prisma.user.count({ where: { role: 'USER' } }),
+      prisma.admin.count({ where: { isActive: true } }),
+    ]);
+
     const data = users.map((user) => ({
       ...user,
       postCount: user._count.posts,
@@ -98,6 +108,13 @@ export async function GET(request) {
       sortBy,
       order,
       filters: { q, status, role },
+      summary: {
+        total: totalUsers,
+        active: activeUsers,
+        inactive: inactiveUsers,
+        admins: adminUsers + totalAdmins, // Include both User admins and Admin model users
+        users: regularUsers,
+      },
     });
 
   } catch (error) {

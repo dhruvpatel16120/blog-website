@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -876,7 +877,7 @@ export default function FilesPage() {
                 <strong>This file management system works locally but has limitations on deployment servers:</strong>
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li><strong>Vercel/Netlify:</strong> Read-only filesystem - uploads and deletions won't persist</li>
+                <li><strong>Vercel/Netlify:</strong> Read-only filesystem - uploads and deletions won&apos;t persist</li>
                 <li><strong>Docker containers:</strong> File changes may not persist between restarts</li>
                 <li><strong>Serverless functions:</strong> No persistent file storage</li>
               </ul>
@@ -907,66 +908,50 @@ export default function FilesPage() {
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {[
-          { 
-            label: 'Total Files', 
-            value: summary.total, 
-            color: 'bg-gray-100 dark:bg-gray-800',
-            icon: FolderIcon 
-          },
-          { 
-            label: 'Total Size', 
-            value: formatFileSize(summary.totalSize), 
-            color: 'bg-blue-100 dark:bg-blue-900/20',
-            icon: DocumentIcon 
-          },
-          { 
-            label: 'Images', 
-            value: summary.images, 
-            color: 'bg-green-100 dark:bg-green-900/20',
-            icon: PhotoIcon 
-          },
-          { 
-            label: 'Documents', 
-            value: summary.documents, 
-            color: 'bg-purple-100 dark:bg-purple-900/20',
-            icon: DocumentIcon 
-          },
-          { 
-            label: 'Cover Images', 
-            value: summary['cover-images'], 
-            color: 'bg-orange-100 dark:bg-orange-900/20',
-            icon: PhotoIcon 
-          }
-        ].map((card, idx) => (
-          <div 
-            key={idx} 
-            className={`p-4 rounded-lg border ${card.color} border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-all`}
-            onClick={() => {
-              if (card.label === 'Images') handleFilterChange('category', 'images');
-              else if (card.label === 'Documents') handleFilterChange('category', 'documents');
-              else if (card.label === 'Cover Images') handleFilterChange('category', 'cover-images');
-              else if (card.label === 'Total Files') handleFilterChange('category', 'all');
-            }}
-          >
-            <div className="flex items-center space-x-3">
-              <card.icon className="h-8 w-8 text-gray-600 dark:text-gray-400" />
-            <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{card.label}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
-            </div>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Files Management</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Manage uploaded files and media assets
+            </p>
           </div>
+          <div className="flex space-x-3">
+            <Button onClick={() => setShowUploadModal(true)} className="flex items-center">
+              <CloudArrowUpIcon className="h-4 w-4 mr-2" />
+              Upload Files
+            </Button>
           </div>
-        ))}
         </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-4">
+          {[
+            { label: 'Total Files', value: summary.total, icon: FolderIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+            { label: 'Images', value: summary.images, icon: PhotoIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+            { label: 'Documents', value: summary.documents, icon: DocumentIcon, color: 'bg-blue-900 dark:bg-blue-800', textColor: 'text-white' },
+            { label: 'Cover Images', value: summary['cover-images'], icon: PhotoIcon, color: 'bg-purple-900 dark:bg-purple-800', textColor: 'text-white' },
+            { label: 'Total Size', value: formatFileSize(summary.totalSize), icon: ArchiveBoxIcon, color: 'bg-orange-900 dark:bg-orange-800', textColor: 'text-white' },
+          ].map((card, idx) => (
+            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Storage Management Actions */}
       <div className="mb-4 p-3 rounded-lg border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
         <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
           <ExclamationTriangleIcon className="h-4 w-4" />
-          <span><strong>Note:</strong> Storage operations (cleanup, duplicate removal) work locally but may not persist on deployment servers like Vercel.</span>
+          <span><strong>Note:</strong> Storage related operations (cleanup, duplicate removal) work locally but may not persist on deployment servers like Vercel.</span>
         </div>
       </div>
       
@@ -1431,18 +1416,20 @@ export default function FilesPage() {
                   />
 
                   {/* File Preview */}
-                  <div className="aspect-square mb-2 rounded overflow-hidden bg-gray-100 dark:bg-gray-700">
+                  <div className="aspect-square mb-2 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 relative">
                         {file.fileType === 'image' ? (
-                          <img
-                        src={file.url}
-                        alt={file.originalName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
+                          <Image
+                            src={file.url}
+                            alt={file.originalName}
+                            fill
+                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 200px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
                             <FileTypeIcon className="h-12 w-12 text-gray-400" />
-                      </div>
-                    )}
+                          </div>
+                        )}
                   </div>
 
                   {/* File Info */}
@@ -1560,7 +1547,7 @@ export default function FilesPage() {
                       <strong>File operations are limited on deployment servers:</strong>
                     </p>
                     <ul className="list-disc list-inside ml-4 space-y-1">
-                      <li><strong>Vercel/Netlify:</strong> Read-only filesystem - uploads and deletions won't persist</li>
+                      <li><strong>Vercel/Netlify:</strong> Read-only filesystem - uploads and deletions won&apos;t persist</li>
                       <li><strong>Docker containers:</strong> File changes may not persist between restarts</li>
                       <li><strong>Serverless functions:</strong> No persistent file storage</li>
                     </ul>
@@ -1611,11 +1598,15 @@ export default function FilesPage() {
               {/* File Preview */}
               <div className="flex justify-center">
                 {selectedFile.fileType === 'image' ? (
-                  <img
-                    src={selectedFile.url}
-                    alt={selectedFile.originalName}
-                    className="max-w-full max-h-64 rounded-lg"
-                  />
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={selectedFile.url}
+                      alt={selectedFile.originalName}
+                      fill
+                      sizes="(max-width: 768px) 90vw, 600px"
+                      className="object-contain rounded-lg"
+                    />
+                  </div>
                 ) : (
                   <div className="w-32 h-32 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                     <DocumentIcon className="h-16 w-16 text-gray-400" />

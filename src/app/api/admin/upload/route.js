@@ -146,12 +146,18 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    // Return the public URL - use absolute URL for proper display in blog posts
+    // Build URLs using NEXTAUTH_URL as base
     const publicUrl = `/uploads/${uploadCategory}/${fileName}`;
-    
-    // For TinyMCE and blog posts, we need to ensure the URL is properly formatted
-    // The URL should work from any page in the application
-    const absoluteUrl = publicUrl.startsWith('/') ? publicUrl : `/${publicUrl}`;
+    const baseUrl = process.env.NEXTAUTH_URL || '';
+    let absoluteUrl = publicUrl;
+    try {
+      if (baseUrl) {
+        absoluteUrl = new URL(publicUrl, baseUrl).toString();
+      }
+    } catch (_e) {
+      // fallback to path-only if env is invalid
+      absoluteUrl = publicUrl;
+    }
     
     console.log('Upload completed successfully:', {
       originalName: file.name,
@@ -168,6 +174,7 @@ export async function POST(request) {
 
     return NextResponse.json({ 
       url: absoluteUrl,
+      path: publicUrl,
       fileName: fileName,
       originalName: file.name,
       fileSize: file.size,

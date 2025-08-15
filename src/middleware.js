@@ -71,8 +71,7 @@ export async function middleware(request) {
       pathname.startsWith('/api/me') ||
       pathname.startsWith('/api/profile') ||
       pathname.startsWith('/api/upload') ||
-      pathname.startsWith('/api/categories') ||
-      pathname.startsWith('/api/views')) {
+      pathname.startsWith('/api/categories')) {
     return NextResponse.next();
   }
 

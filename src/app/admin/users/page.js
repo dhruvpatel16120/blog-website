@@ -23,6 +23,7 @@ import {
   ArchiveBoxIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 const USER_STATUS = {
   ACTIVE: { label: 'Active', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', icon: CheckCircleIcon },
@@ -42,7 +43,7 @@ export default function AdminUsers() {
   const adminSession = session?.user;
   const router = useRouter();
   const [users, setUsers] = useState([]);
-  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0, pending: 0, admins: 0, users: 0 });
+  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0, admins: 0, users: 0 });
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [filters, setFilters] = useState({
     status: '',
@@ -86,14 +87,11 @@ export default function AdminUsers() {
         setUsers(usersList);
         setPagination(prev => ({ ...prev, total: data.total }));
         
-        // Calculate summary from users data
-        const total = usersList.length;
-        const active = usersList.filter(u => u.isActive).length;
-        const inactive = usersList.filter(u => !u.isActive).length;
-        const admins = usersList.filter(u => u.role === 'ADMIN').length;
-        const regularUsers = usersList.filter(u => u.role === 'USER').length;
-        
-        setSummary({ total, active, inactive, pending: 0, admins, users: regularUsers });
+        // Use the API summary data instead of calculating from paginated results
+        // This includes counts from both User model (with USER/ADMIN roles) and Admin model
+        if (data.summary) {
+          setSummary(data.summary);
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -214,54 +212,49 @@ export default function AdminUsers() {
   return (
     <AdminLayout title="User Management" adminSession={adminSession}>
       <div className="space-y-6">
-        {/* Header with Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Manage user accounts, permissions, and monitor user activity
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users Management</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Manage user accounts and permissions
             </p>
           </div>
-          <div className="mt-4 sm:mt-0 flex gap-2">
-            <Button
-              onClick={() => router.push('/admin/users/new')}
-              className="flex items-center"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create User
-            </Button>
-            <Button
-              onClick={() => router.push('/admin/users/invite')}
-              variant="outline"
-              className="flex items-center"
-            >
-              <EnvelopeIcon className="h-4 w-4 mr-2" />
-              Invite User
-            </Button>
-            <Button
-              onClick={async () => {
-                try {
-                  const response = await fetch('/api/admin/users/generate-avatars', {
-                    method: 'POST'
-                  });
-                  const result = await response.json();
-                  if (response.ok) {
-                    setSuccessMessage(result.message);
-                    fetchUsers(); // Refresh the user list
-                  } else {
-                    setSuccessMessage('Error: ' + result.error);
-                  }
-                } catch (error) {
-                  setSuccessMessage('Error generating avatars');
-                }
-              }}
-              variant="outline"
-              className="flex items-center"
-            >
-              <UserIcon className="h-4 w-4 mr-2" />
-              Generate Avatars
-            </Button>
+          <div className="flex space-x-3">
+            <Link href="/admin/users/invite">
+              <Button className="flex items-center">
+                <EnvelopeIcon className="h-4 w-4 mr-2" />
+                Invite User
+              </Button>
+            </Link>
+            <Link href="/admin/users/new">
+              <Button className="flex items-center">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                New User
+              </Button>
+            </Link>
           </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            { label: 'Total Users', value: summary.total, icon: UserGroupIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+            { label: 'Active', value: summary.active, icon: CheckCircleIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+            { label: 'Inactive', value: summary.inactive, icon: XCircleIcon, color: 'bg-red-900 dark:bg-red-800', textColor: 'text-white' },
+            { label: 'Admins', value: summary.admins, icon: ShieldCheckIcon, color: 'bg-purple-900 dark:bg-purple-800', textColor: 'text-white' },
+            { label: 'Regular Users', value: summary.users, icon: UserIcon, color: 'bg-blue-900 dark:bg-blue-800', textColor: 'text-white' },
+          ].map((card, idx) => (
+            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Success Message */}
@@ -285,60 +278,6 @@ export default function AdminUsers() {
             </div>
           </div>
         )}
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserGroupIcon className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.total}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Users</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.active}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ShieldCheckIcon className="h-8 w-8 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Administrators</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.admins}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserIcon className="h-8 w-8 text-indigo-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Inactive Users</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.inactive}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {summary.inactive > 0 ? `${summary.inactive} inactive users` : 'All users are active'}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
 
         {/* Filters */}
         <Card>

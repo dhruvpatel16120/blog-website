@@ -241,20 +241,38 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {[
-          { label: 'Total', value: summary.total, color: 'bg-gray-100 dark:bg-gray-800' },
-          { label: 'Pending', value: summary.pending, color: 'bg-yellow-100 dark:bg-yellow-900/20' },
-          { label: 'Responded', value: summary.responded, color: 'bg-green-100 dark:bg-green-900/20' },
-          { label: 'High Priority', value: summary.highPriority || 0, color: 'bg-orange-100 dark:bg-orange-900/20' },
-          { label: 'Archived', value: summary.archived, color: 'bg-blue-100 dark:bg-blue-900/20' },
-        ].map((card, idx) => (
-          <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-200 dark:border-gray-700`}>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{card.label}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contacts Management</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Manage and respond to user inquiries
+            </p>
           </div>
-        ))}
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-4">
+          {[
+            { label: 'Total Contacts', value: summary.total, icon: EnvelopeIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+            { label: 'Pending', value: summary.pending, icon: ClockIcon, color: 'bg-yellow-900 dark:bg-yellow-800', textColor: 'text-white' },
+            { label: 'Responded', value: summary.responded, icon: CheckCircleIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+            { label: 'Spam', value: summary.spam, icon: ExclamationTriangleIcon, color: 'bg-red-900 dark:bg-red-800', textColor: 'text-white' },
+            { label: 'Archived', value: summary.archived, icon: ArchiveBoxIcon, color: 'bg-gray-700 dark:bg-gray-600', textColor: 'text-white' },
+            { label: 'High Priority', value: summary.highPriority, icon: ExclamationTriangleIcon, color: 'bg-orange-900 dark:bg-orange-800', textColor: 'text-white' },
+          ].map((card, idx) => (
+            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}

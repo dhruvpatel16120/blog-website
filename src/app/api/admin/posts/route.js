@@ -110,6 +110,20 @@ export async function GET(request) {
       }),
     ]);
 
+    // Calculate summary statistics from the full dataset (not paginated)
+    const [totalPosts, publishedPosts, draftPosts, featuredPosts, scheduledPosts] = await Promise.all([
+      prisma.post.count(),
+      prisma.post.count({ where: { published: true } }),
+      prisma.post.count({ where: { published: false } }),
+      prisma.post.count({ where: { featured: true } }),
+      prisma.post.count({ 
+        where: { 
+          published: false, 
+          publishedAt: { gt: new Date() } 
+        } 
+      }),
+    ]);
+
     const data = items.map(post => ({
       id: post.id,
       title: post.title,
@@ -130,7 +144,20 @@ export async function GET(request) {
       featured: post.featured,
     }));
 
-    return NextResponse.json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
+    return NextResponse.json({ 
+      data, 
+      total, 
+      page, 
+      limit, 
+      totalPages: Math.ceil(total / limit),
+      summary: {
+        total: totalPosts,
+        published: publishedPosts,
+        draft: draftPosts,
+        featured: featuredPosts,
+        scheduled: scheduledPosts,
+      },
+    });
 
   } catch (error) {
     console.error('Error fetching posts:', error);

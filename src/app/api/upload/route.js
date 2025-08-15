@@ -74,29 +74,49 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
-    const category = formData.get('category') || 'images'; // Default to images
+    const requestedCategory = (formData.get('category') || 'images').toString(); // Default to images
     const userId = formData.get('userId'); // Optional user ID for tracking
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Get file type configuration
-    const fileConfig = getFileTypeConfig(file);
-    if (!fileConfig) {
+    // Get detected file type configuration
+    const detectedConfig = getFileTypeConfig(file);
+    if (!detectedConfig) {
       return NextResponse.json({ 
         error: 'Unsupported file type. Allowed types: images (jpg, png, webp, gif, svg), documents (pdf, doc, docx, txt)' 
       }, { status: 400 });
     }
 
-    // Validate file
-    const validation = validateFile(file, fileConfig);
+    // Determine target category/config: honor requestedCategory if valid for the file, otherwise fallback to detected
+    let targetCategory = detectedConfig.directory;
+    let targetConfig = detectedConfig;
+    
+    // Special-case alias
+    const normalizedRequested = requestedCategory === 'avatar' ? 'cover-images' : requestedCategory;
+    
+    if (normalizedRequested && FILE_TYPES[normalizedRequested]) {
+      const requestedCfg = { category: normalizedRequested, ...FILE_TYPES[normalizedRequested] };
+      const ext = path.extname(file.name).toLowerCase();
+      if (requestedCfg.types.includes(file.type) || requestedCfg.extensions.includes(ext)) {
+        const v = validateFile(file, requestedCfg);
+        if (!v.valid) {
+          return NextResponse.json({ error: v.error }, { status: 400 });
+        }
+        targetConfig = requestedCfg;
+        targetCategory = requestedCfg.directory;
+      }
+    }
+
+    // Validate against final target config
+    const validation = validateFile(file, targetConfig);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Determine upload directory based on category or file type
-    const uploadCategory = category === 'avatar' ? 'cover-images' : fileConfig.directory;
+    // Determine upload directory
+    const uploadCategory = targetCategory;
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', uploadCategory);
     
     // Create directory if it doesn't exist
@@ -111,13 +131,23 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    // Return the public URL
+    // Return URLs using NEXTAUTH_URL as base
     const publicUrl = `/uploads/${uploadCategory}/${fileName}`;
+    const baseUrl = process.env.NEXTAUTH_URL || '';
+    let absoluteUrl = publicUrl;
+    try {
+      if (baseUrl) {
+        absoluteUrl = new URL(publicUrl, baseUrl).toString();
+      }
+    } catch (_e) {
+      absoluteUrl = publicUrl;
+    }
 
     // activity removed
 
     return NextResponse.json({ 
-      url: publicUrl,
+      url: absoluteUrl,
+      path: publicUrl,
       fileName: fileName,
       originalName: file.name,
       fileSize: file.size,

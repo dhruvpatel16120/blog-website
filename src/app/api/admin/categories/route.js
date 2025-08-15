@@ -46,7 +46,35 @@ export async function GET(request) {
       }),
     ]);
 
-    return NextResponse.json({ data: items, total, page, limit, totalPages: Math.ceil(total / limit) });
+    // Calculate summary statistics from the full dataset (not paginated)
+    const [totalCategories, activeCategories, unusedCategories, totalPosts] = await Promise.all([
+      prisma.category.count(),
+      prisma.category.count({ 
+        where: { 
+          posts: { some: {} } 
+        } 
+      }),
+      prisma.category.count({ 
+        where: { 
+          posts: { none: {} } 
+        } 
+      }),
+      prisma.post.count({ where: { published: true } }),
+    ]);
+
+    return NextResponse.json({ 
+      data: items, 
+      total, 
+      page, 
+      limit, 
+      totalPages: Math.ceil(total / limit),
+      summary: {
+        total: totalCategories,
+        active: activeCategories,
+        unused: unusedCategories,
+        totalPosts: totalPosts,
+      },
+    });
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, Button } from '@/components/ui';
+import { Card, Button, Toast, ToastContainer } from '@/components/ui';
 import { 
   PlusIcon,
   PencilIcon,
@@ -34,7 +34,18 @@ export default function AdminPosts() {
   const [error, setError] = useState('');
   const [summary, setSummary] = useState({ total: 0, published: 0, draft: 0, featured: 0, scheduled: 0 });
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [confirmError, setConfirmError] = useState('');
+  const [toasts, setToasts] = useState([]);
+  const [toastCounter, setToastCounter] = useState(0);
+
+  const addToast = useCallback((message, type = 'info') => {
+    const newToast = { id: toastCounter, message, type };
+    setToasts(prev => [...prev, newToast]);
+    setToastCounter(prev => prev + 1);
+  }, [toastCounter]);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   useEffect(() => {
     if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
@@ -42,16 +53,11 @@ export default function AdminPosts() {
     }
   }, [session?.user?.type, status, router]);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [page]);
-
-  const fetchPosts = async () => {
-    const controller = new AbortController();
+  const fetchPosts = useCallback(async () => {
     try {
       setLoadingPosts(true);
       setError('');
-      const response = await fetch(`/api/admin/posts?page=${page}&limit=${pageSize}`, { signal: controller.signal });
+      const response = await fetch(`/api/admin/posts?page=${page}&limit=${pageSize}`);
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.error || 'Failed to fetch posts');
@@ -59,29 +65,47 @@ export default function AdminPosts() {
       const data = await response.json();
       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       setPosts(list);
-      
-      // Calculate summary
-      const total = list.length;
-      const published = list.filter(p => p.status === 'published').length;
-      const draft = list.filter(p => p.status === 'draft').length;
-      const featured = list.filter(p => p.featured).length;
-      const scheduled = list.filter(p => p.status === 'draft' && p.publishedAt && new Date(p.publishedAt) > new Date()).length;
-      
-      setSummary({ total, published, draft, featured, scheduled });
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Error fetching posts:', error);
-        setError(error.message || 'Failed to fetch posts');
+
+      // Use API summary data if available, otherwise calculate from current page
+      if (data.summary) {
+        setSummary(data.summary);
+      } else {
+        // Fallback: calculate from current page data (not recommended)
+        const total = list.length;
+        const published = list.filter(p => p.status === 'published').length;
+        const draft = list.filter(p => p.status === 'draft').length;
+        const featured = list.filter(p => p.featured).length;
+        const scheduled = list.filter(p => p.status === 'draft' && p.publishedAt && new Date(p.publishedAt) > new Date()).length;
+
+        setSummary({ total, published, draft, featured, scheduled });
       }
+      
+      // Show success message if posts were loaded
+      if (list.length > 0) {
+        addToast(`Successfully loaded ${list.length} posts`, 'success');
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setError(error.message || 'Failed to fetch posts');
+      addToast(error.message || 'Failed to fetch posts', 'error');
     } finally {
       setLoadingPosts(false);
     }
-    return () => controller.abort();
-  };
+  }, [page, pageSize, addToast]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  // Add toast when page changes
+  useEffect(() => {
+    if (page > 1) {
+      addToast(`Showing page ${page} of posts`, 'info');
+    }
+  }, [page, addToast]);
 
   const handleDeletePost = async (postId) => {
     setConfirmDeleteId(postId);
-    setConfirmError('');
   };
 
   const doDelete = async () => {
@@ -91,13 +115,22 @@ export default function AdminPosts() {
       const response = await fetch(`/api/admin/posts/${confirmDeleteId}`, { method: 'DELETE' });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to delete post');
+        if (err.error === 'Cannot delete post with existing comments') {
+          addToast('Cannot delete post with existing comments. Please remove all comments first.', 'error');
+          setConfirmDeleteId(null);
+          return;
+        } else {
+          throw new Error(err.error || 'Failed to delete post');
+        }
       }
+      
+      // Success - remove post from state and show success message
       setPosts(posts.filter(post => post.id !== confirmDeleteId));
       setConfirmDeleteId(null);
+      addToast('Post deleted successfully!', 'success');
     } catch (error) {
       console.error('Error deleting post:', error);
-      setConfirmError(error.message || 'Error deleting post');
+      addToast(error.message || 'Error deleting post', 'error');
     }
   };
 
@@ -110,6 +143,23 @@ export default function AdminPosts() {
     
     return matchesSearch && matchesStatus;
   });
+
+  // Add toast when search or filter changes
+  useEffect(() => {
+    if (searchTerm || filterStatus !== 'all') {
+      const filteredCount = filteredPosts.length;
+      if (filteredCount !== posts.length) {
+        addToast(`Showing ${filteredCount} of ${posts.length} posts`, 'info');
+      }
+    }
+  }, [searchTerm, filterStatus, filteredPosts.length, posts.length, addToast]);
+
+  // Add toast when status filter changes
+  useEffect(() => {
+    if (filterStatus !== 'all') {
+      addToast(`Filtered by status: ${filterStatus}`, 'info');
+    }
+  }, [filterStatus, addToast]);
 
   if (loading) {
     return (
@@ -148,19 +198,19 @@ export default function AdminPosts() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         {[
-          { label: 'Total Posts', value: summary.total, color: 'bg-gray-100 dark:bg-gray-800', icon: DocumentTextIcon },
-          { label: 'Published', value: summary.published, color: 'bg-green-100 dark:bg-green-900/20', icon: CheckCircleIcon },
-          { label: 'Drafts', value: summary.draft, color: 'bg-yellow-100 dark:bg-yellow-900/20', icon: ClockIcon },
-          { label: 'Featured', value: summary.featured, color: 'bg-purple-100 dark:bg-purple-900/20', icon: StarIcon },
-          { label: 'Scheduled', value: summary.scheduled, color: 'bg-blue-100 dark:bg-blue-900/20', icon: ClockIcon },
+          { label: 'Total Posts', value: summary.total, icon: DocumentTextIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
+          { label: 'Published', value: summary.published, icon: CheckCircleIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
+          { label: 'Drafts', value: summary.draft, icon: ClockIcon, color: 'bg-yellow-900 dark:bg-yellow-800', textColor: 'text-white' },
+          { label: 'Featured', value: summary.featured, icon: StarIcon, color: 'bg-purple-900 dark:bg-purple-800', textColor: 'text-white' },
+          { label: 'Scheduled', value: summary.scheduled, icon: ClockIcon, color: 'bg-blue-900 dark:bg-blue-800', textColor: 'text-white' },
         ].map((card, idx) => (
-          <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-200 dark:border-gray-700`}>
+          <div key={`summary-${card.label.toLowerCase().replace(/\s+/g, '-')}`} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{card.label}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+                <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
+                <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
               </div>
-              <card.icon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+              <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
             </div>
           </div>
         ))}
@@ -262,8 +312,8 @@ export default function AdminPosts() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredPosts.map((post) => (
-            <Card key={post.id}>
+          {filteredPosts.map((post, index) => (
+            <Card key={`post-${post.id}-${index}`}>
               <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -354,11 +404,6 @@ export default function AdminPosts() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Are you sure you want to delete this post? This action cannot be undone.
             </p>
-            {confirmError && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-800 dark:text-red-200 text-sm">{confirmError}</p>
-              </div>
-            )}
             <div className="flex justify-end space-x-3">
               <Button 
                 variant="outline" 
@@ -377,6 +422,11 @@ export default function AdminPosts() {
           </div>
         </div>
       )}
+      <ToastContainer 
+        toasts={toasts} 
+        onClose={removeToast}
+        position="bottom-center"
+      />
     </AdminLayout>
   );
 }

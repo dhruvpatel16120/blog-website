@@ -20,6 +20,12 @@ export async function GET(request) {
       approvedComments,
       totalCategories,
       totalTags,
+      totalContacts,
+      pendingContacts,
+      respondedContacts,
+      spamContacts,
+      archivedContacts,
+      highPriorityContacts,
     ] = await Promise.all([
       prisma.post.count(),
       prisma.post.count({ where: { published: true } }),
@@ -29,34 +35,17 @@ export async function GET(request) {
       prisma.comment.count({ where: { approved: true } }),
       prisma.category.count(),
       prisma.tag.count(),
+      prisma.contact.count(),
+      prisma.contact.count({ where: { status: 'PENDING' } }),
+      prisma.contact.count({ where: { status: 'RESPONDED' } }),
+      prisma.contact.count({ where: { status: 'SPAM' } }),
+      prisma.contact.count({ where: { status: 'ARCHIVED' } }),
+      prisma.contact.count({ where: { priority: { in: ['HIGH', 'URGENT'] } } }),
     ]);
-
-    // Get recent comments
-    const recentComments = await prisma.comment.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            fullName: true,
-            avatar: true,
-          },
-        },
-        post: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-          },
-        },
-      },
-    });
 
     // Get recent posts
     const recentPosts = await prisma.post.findMany({
-      take: 5,
+      take: 8,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -72,19 +61,41 @@ export async function GET(request) {
       },
     });
 
+    // Get all categories with post counts
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: {
+          select: {
+            posts: true,
+          },
+        },
+      },
+    });
+
     return NextResponse.json({
       stats: {
         totalPosts,
         publishedPosts,
+        draftPosts: Math.max(totalPosts - publishedPosts, 0),
         totalUsers,
         totalComments,
         pendingComments,
         approvedComments,
         totalCategories,
         totalTags,
+        totalContacts,
+        pendingContacts,
+        respondedContacts,
+        spamContacts,
+        archivedContacts,
+        highPriorityContacts,
+        recentPosts,
+        categories,
       },
-      recentComments,
-      recentPosts,
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
