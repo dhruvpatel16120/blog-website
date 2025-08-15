@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![TechBlog Banner](https://images.unsplash.com/photo-1519332950545-b0a34f7fb7e0?q=80&w=1400&auto=format&fit=crop&style=border-radius:12px)
+![TechBlog Banner](/)
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&style=for-the-badge)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.1.0-61DAFB?logo=react&style=for-the-badge)](https://reactjs.org/)
@@ -1181,7 +1181,7 @@ SOFTWARE.
 - **GitHub**: [@dhruvpatel16120](https://github.com/dhruvpatel16120)
 - **LinkedIn**: [dhruvpatel16120](https://www.linkedin.com/in/dhruvpatel16120/)
 - **Portfolio**: [dhruvpatelofficial.vercel.app](https://dhruvpatelofficial.vercel.app/)
-- **Email**: [contact@dhruvpatel.dev](mailto:contact@dhruvpatel.dev)
+- **Email**: [digitaldhruv21@gmail.com](mailto:digitaldhruv21@gmail.com)
 
 ### 🌐 Project Links
 
@@ -1202,12 +1202,6 @@ SOFTWARE.
 <div align="center">
 
 **Made with ❤️ using Next.js, Prisma, and Tailwind CSS**
-
-[![GitHub stars](https://img.shields.io/github/stars/dhruvpatel16120/blog-website-main?style=social)](https://github.com/dhruvpatel16120/blog-website-main/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/dhruvpatel16120/blog-website-main?style=social)](https://github.com/dhruvpatel16120/blog-website-main/network)
-[![GitHub issues](https://img.shields.io/github/issues/dhruvpatel16120/blog-website-main)](https://github.com/dhruvpatel16120/blog-website-main/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/dhruvpatel16120/blog-website-main)](https://github.com/dhruvpatel16120/blog-website-main/pulls)
-
 **If you find this project helpful, please give it a ⭐ star on GitHub!**
 
 </div>  
