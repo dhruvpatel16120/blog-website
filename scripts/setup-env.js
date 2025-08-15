@@ -242,6 +242,10 @@ async function setupEnv() {
     const enableComments = await confirmAction('Enable user comments?');
     const enableUserProfiles = await confirmAction('Enable user profiles?');
     
+    logSection('🔧 Maintenance Mode');
+    const enableMaintenanceMode = await confirmAction('Enable maintenance mode by default?');
+    const maintenanceMessage = await question(`${colors.white}Maintenance message (default: Site is under maintenance): ${colors.reset}`) || 'Site is under maintenance';
+    
     logSection('📝 Editor Configuration');
     
     const editorOptions = [
@@ -359,6 +363,10 @@ ENABLE_COMMENTS=${enableComments}
 ENABLE_USER_PROFILES=${enableUserProfiles}
 MAX_FILE_SIZE=${maxFileSize}
 
+# Maintenance Mode
+MAINTENANCE_MODE=${enableMaintenanceMode}
+MAINTENANCE_MESSAGE="${maintenanceMessage}"
+
 # Editor Configuration
 EDITOR_TYPE="${editorType}"
 NEXT_PUBLIC_TINYMCE_API_KEY="${tinymceApiKey}"
@@ -382,6 +390,7 @@ NODE_ENV=${environment}
     console.log(`${colors.cyan}Admin Sessions:${colors.reset} ${Math.round(adminSessionMaxAge / 3600)} hours`);
     console.log(`${colors.cyan}File Upload:${colors.reset} ${enableFileUpload ? 'Enabled' : 'Disabled'}`);
     console.log(`${colors.cyan}Analytics:${colors.reset} ${enableAnalytics ? 'Enabled' : 'Disabled'}`);
+    console.log(`${colors.cyan}Maintenance Mode:${colors.reset} ${enableMaintenanceMode ? 'Enabled' : 'Disabled'}`);
     console.log(`${colors.cyan}Editor:${colors.reset} ${editorType}`);
     
     logSection('🔧 Next Steps');

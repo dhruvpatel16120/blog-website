@@ -1,231 +1,1213 @@
-# TechBlog — Modern Blog Platform (Next.js 15 + Prisma)
+# 🚀 TechBlog — Modern Blog Platform
 
-> A production‑ready, full‑stack blog platform with authentication, comments, admin panel, categories & tags, search, and beautiful UI.
+> A production-ready, full-stack blog platform built with Next.js 15, featuring authentication, comments, admin panel, categories & tags, search functionality, and a beautiful responsive UI.
 
-<p align="center">
-  <a href="https://techblog-website.vercel.app/" target="_blank" rel="noopener noreferrer">
-    <img alt="TechBlog Banner" src="https://images.unsplash.com/photo-1519332950545-b0a34f7fb7e0?q=80&w=1400&auto=format&fit=crop" style="max-width: 100%; border-radius: 12px;"/>
-  </a>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://nextjs.org/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Next.js-15-black?logo=next.js" alt="Next.js"/>
-  </a>
-  <a href="https://www.prisma.io/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma" alt="Prisma"/>
-  </a>
-  <a href="https://www.postgresql.org/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/PostgreSQL-DB-336791?logo=postgresql&logoColor=white" alt="PostgreSQL"/>
-  </a>
-  <a href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/TailwindCSS-3-38B2AC?logo=tailwindcss&logoColor=white" alt="TailwindCSS"/>
-  </a>
-  <a href="https://authjs.dev/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/NextAuth.js-Auth-000000?logo=auth0&logoColor=white" alt="NextAuth"/>
-  </a>
-</p>
+![TechBlog Banner](https://images.unsplash.com/photo-1519332950545-b0a34f7fb7e0?q=80&w=1400&auto=format&fit=crop&style=border-radius:12px)
 
-<p align="center">
-  <a href="https://techblog-website.vercel.app/" target="_blank" rel="noopener noreferrer"><b>Live Site</b></a> ·
-  <a href="https://github.com/dhruvpatel16120" target="_blank" rel="noopener noreferrer"><b>GitHub</b></a> ·
-  <a href="https://www.linkedin.com/in/dhruvpatel16120/" target="_blank" rel="noopener noreferrer"><b>LinkedIn</b></a> ·
-  <a href="https://dhruvpatelofficial.vercel.app/" target="_blank" rel="noopener noreferrer"><b>Portfolio</b></a>
-</p>
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&style=for-the-badge)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.1.0-61DAFB?logo=react&style=for-the-badge)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&style=for-the-badge)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&style=for-the-badge)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-336791?logo=postgresql&logoColor=white&style=for-the-badge)](https://www.postgresql.org/)
+[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3-38B2AC?logo=tailwindcss&logoColor=white&style=for-the-badge)](https://tailwindcss.com/)
+[![NextAuth.js](https://img.shields.io/badge/NextAuth.js-Auth-000000?logo=auth0&logoColor=white&style=for-the-badge)](https://authjs.dev/)
 
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](https://github.com/dhruvpatel16120/blog-website-main/pulls)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/dhruvpatel16120/blog-website-main/graphs/commit-activity)
 
-## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Screens & Flows](#screens--flows)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Database & Prisma](#database--prisma)
-- [Run & Build](#run--build)
-- [Project Structure](#project-structure)
-- [FAQ](#faq)
-- [Contributing](#contributing)
-- [License & Disclaimer](#license--disclaimer)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-View%20Site-blue?style=for-the-badge&logo=vercel)](https://techblog-website.vercel.app/)
+[![GitHub](https://img.shields.io/badge/GitHub-View%20Source-black?style=for-the-badge&logo=github)](https://github.com/dhruvpatel16120/blog-website-main)
 
+</div>
 
-## Overview
-TechBlog is a modern, content‑focused blog platform built with Next.js (App Router) and Prisma. It offers a polished reading experience, powerful admin tools for content and community management, and a robust public UI with categories, tags, search, and comments.
+---
 
-- Live: [`techblog-website.vercel.app`](https://techblog-website.vercel.app/)
-- Author GitHub: [`@dhruvpatel16120`](https://github.com/dhruvpatel16120)
-- Portfolio: [`dhruvpatelofficial.vercel.app`](https://dhruvpatelofficial.vercel.app/)
-- LinkedIn: [`/in/dhruvpatel16120/`](https://www.linkedin.com/in/dhruvpatel16120/)
+## 📋 Table of Contents
 
+- [🌟 Introduction](#-introduction)
+- [🎯 About](#-about)
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [📱 Preview](#-preview)
+- [🌐 URL Structure](#-url-structure)
+- [📁 Project Structure](#-project-structure)
+- [⚙️ Installation Guide](#️-installation-guide)
+- [🗄️ Database Setup](#️-database-setup)
+- [🔧 Tools & Dependencies](#-tools--dependencies)
+- [🚀 Build & Usage](#-build--usage)
+- [📚 Documentation](#-documentation)
+- [❓ FAQ](#-faq)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [⚠️ Disclaimer](#️-disclaimer)
+- [👨‍💻 Credits](#-credits)
+- [📞 Contact](#-contact)
 
-## Features
-- **Public**
-  - Beautiful home page with Featured, Trending, Explore Topics, Latest
-  - Category and Tag pages with fully working pagination and filters
-  - Blog listing with sorting, search, and page controls
-  - Post page with reading progress, TOC, social share, and comments
-  - Contact page with validated form and backend persistence
-- **Comments**
-  - Authenticated users can add, edit, reply, delete their comments
-  - Rate limits, length validation, reply limits
-  - Admin moderation capabilities
-- **Admin Panel**
-  - Dashboard stats (users, posts, comments, categories, tags)
-  - Manage Posts, Categories, Tags, Users
-  - Comment management (approve/reject/delete)
-  - Contact management (filter, review, respond, delete with restrictions)
-- **Authentication**
-  - NextAuth session with roles (user/admin)
-  - Middleware‑based route protection for `/admin` and admin APIs
-- **Performance & UX**
-  - Responsive layout, dark mode aware styling
-  - Image optimization with proper `sizes`
-  - Fast refresh and statically optimized pages where applicable
+---
 
+## 🌟 Introduction
 
-## Tech Stack
-- Framework: **Next.js 15 (App Router)**
-- Language: **TypeScript/JavaScript (ESNext)**
-- Styling: **Tailwind CSS**, **Heroicons**
-- Auth: **NextAuth.js**
-- Database: **PostgreSQL** with **Prisma ORM**
-- Email (optional, ready to add): **Nodemailer/SMTP**
-- Hosting: **Vercel** (recommended)
+**TechBlog** is a modern, feature-rich blog platform designed for developers, content creators, and tech enthusiasts. Built with cutting-edge technologies, it provides a seamless experience for both readers and content managers.
 
+### 🎯 Key Highlights
 
-## Architecture
-- App Router with server components for data‑fetching and UI composition
-- Prisma schema models for Post, Category, Tag, Comment, Like, Contact, User, Admin
-- API routes under `src/app/api/**` for CRUD, moderation, and utility endpoints
-- Middleware for maintenance mode and admin protection
+- **Modern Architecture**: Built with Next.js 15 App Router for optimal performance
+- **Full-Stack Solution**: Complete backend with PostgreSQL and Prisma ORM
+- **Beautiful UI**: Responsive design with Tailwind CSS and dark mode support
+- **Admin Panel**: Comprehensive content management system
+- **Authentication**: Secure user authentication with NextAuth.js
+- **SEO Optimized**: Built-in SEO features and meta tags
+- **Performance**: Optimized for speed with static generation and caching
 
+---
 
-## Screens & Flows
-- **Home**
-  - Search → `/blog?search=query`
-  - Explore Topics → `/categories/{slug}`
-- **Categories & Tags**
-  - Pagination (First/Prev/Numbered/Next/Last)
-  - Sort variants and in‑page search (category page)
-- **Blog**
-  - Listing with filters (sort, search)
-  - Detail with comments and related UI
-- **Admin**
-  - Comments, Contacts, Posts, Users, Categories, Tags
-  - Auth guard redirects to `/admin/login` when not authenticated
+## 🎯 About
 
+TechBlog is more than just a blog platform—it's a complete content management system designed for modern web applications. Whether you're a developer looking to share technical insights, a company wanting to maintain a knowledge base, or an individual building a personal brand, TechBlog provides all the tools you need.
 
-## Getting Started
-**Prerequisites**
-- Node.js 18+
-- PostgreSQL 13+
-- pnpm, npm, or yarn
+### 🎨 Design Philosophy
 
-**Clone & Install**
-```bash
-# Clone
-git clone <your-repo-url>
-cd blog-website-main
+- **User-Centric**: Every feature is designed with the end-user in mind
+- **Performance First**: Optimized for speed and accessibility
+- **Scalable**: Built to grow with your content and audience
+- **Maintainable**: Clean, well-documented code that's easy to extend
 
-# Install deps
-npm install
-# or: pnpm install / yarn
+---
+
+## ✨ Features
+
+### 🌐 Public Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Homepage** | Beautiful landing page with featured posts, trending content, and category exploration | ✅ |
+| **Blog Listing** | Advanced filtering, sorting, and search functionality | ✅ |
+| **Post Reading** | Rich text rendering, reading progress, table of contents, and social sharing | ✅ |
+| **Categories & Tags** | Organized content with pagination and filtering | ✅ |
+| **Search** | Real-time search with debouncing and result highlighting | ✅ |
+| **Contact Form** | Validated contact form with spam protection | ✅ |
+| **Responsive Design** | Mobile-first design that works on all devices | ✅ |
+
+### 💬 Community Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **User Authentication** | Secure login/signup with email verification | ✅ |
+| **Comments System** | Nested comments with moderation capabilities | ✅ |
+| **User Profiles** | Customizable user profiles with avatars | ✅ |
+| **Like System** | Like posts and comments | ✅ |
+| **Rate Limiting** | Protection against spam and abuse | ✅ |
+
+### 🔧 Admin Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Dashboard** | Analytics and overview of site statistics | ✅ |
+| **Post Management** | Create, edit, schedule, and publish posts | ✅ |
+| **User Management** | Manage users, roles, and permissions | ✅ |
+| **Comment Moderation** | Approve, reject, or delete comments | ✅ |
+| **Category & Tag Management** | Organize content with categories and tags | ✅ |
+| **Contact Management** | Handle contact form submissions | ✅ |
+| **File Management** | Upload and manage images and documents | ✅ |
+
+### 🚀 Performance Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Static Generation** | Pre-rendered pages for optimal performance | ✅ |
+| **Image Optimization** | Automatic image optimization and lazy loading | ✅ |
+| **Caching** | Intelligent caching strategies | ✅ |
+| **SEO Optimization** | Meta tags, structured data, and sitemaps | ✅ |
+| **Dark Mode** | Theme switching with system preference detection | ✅ |
+
+---
+
+## 🛠️ Tech Stack
+
+### 🎯 Core Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Next.js** | 15.4.5 | React framework with App Router |
+| **React** | 19.1.0 | UI library |
+| **TypeScript** | 5.0+ | Type safety and development experience |
+| **Prisma** | 6.14.0 | Database ORM |
+| **PostgreSQL** | 13+ | Primary database |
+
+### 🎨 Frontend
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Tailwind CSS** | 4.0+ | Utility-first CSS framework |
+| **Headless UI** | 2.2.7 | Accessible UI components |
+| **Heroicons** | 2.2.0 | Beautiful SVG icons |
+| **Framer Motion** | 12.23.12 | Animation library |
+| **React Hook Form** | 7.62.0 | Form handling |
+
+### 🔐 Authentication & Security
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **NextAuth.js** | 4.24.11 | Authentication framework |
+| **bcryptjs** | 3.0.2 | Password hashing |
+| **jsonwebtoken** | 9.0.2 | JWT handling |
+
+### 📝 Content & Rich Text
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **TinyMCE** | 6.3.0 | Rich text editor |
+| **React Markdown** | 10.1.0 | Markdown rendering |
+| **Prism.js** | 1.30.0 | Syntax highlighting |
+
+### 🛠️ Development Tools
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **ESLint** | 9.0+ | Code linting |
+| **PostCSS** | 4.0+ | CSS processing |
+| **Turbopack** | Latest | Fast bundler |
+
+---
+
+## 📱 Preview
+
+### 🖥️ Desktop View
+
+<div align="center">
+
+![Desktop Homepage](https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1400&auto=format&fit=crop&style=border-radius:12px)
+
+*Modern, clean homepage with featured content and navigation*
+
+</div>
+
+### 📱 Mobile View
+
+<div align="center">
+
+![Mobile View](https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=800&auto=format&fit=crop&style=border-radius:12px)
+
+*Responsive design optimized for mobile devices*
+
+</div>
+
+### 🎨 Admin Panel
+
+<div align="center">
+
+![Admin Dashboard](https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1400&auto=format&fit=crop&style=border-radius:12px)
+
+*Comprehensive admin dashboard with analytics and management tools*
+
+</div>
+
+---
+
+## 🌐 URL Structure
+
+### 📄 Public Routes
+
+```
+/                           # Homepage
+/blog                       # Blog listing with filters
+/blog/[slug]                # Individual blog post
+/categories                 # Categories listing
+/categories/[slug]          # Category-specific posts
+/tags                       # Tags listing
+/tags/[slug]                # Tag-specific posts
+/search                     # Search results
+/about                      # About page
+/contact                    # Contact form
+/profile                    # User profile
 ```
 
-**Create `.env`**
-```bash
-# Database
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DBNAME?schema=public"
+### 🔧 Admin Routes
 
-# NextAuth
-NEXTAUTH_SECRET="your-strong-secret"
+```
+/admin                      # Admin dashboard
+/admin/login                # Admin login
+/admin/posts                # Post management
+/admin/posts/new            # Create new post
+/admin/posts/[id]/edit      # Edit post
+/admin/categories           # Category management
+/admin/tags                 # Tag management
+/admin/users                # User management
+/admin/comments             # Comment moderation
+/admin/contacts             # Contact management
+/admin/files                # File management
+/admin/analytics            # Analytics dashboard
+```
+
+### 🔌 API Routes
+
+```
+/api/auth/*                 # Authentication endpoints
+/api/posts                  # Post CRUD operations
+/api/categories             # Category operations
+/api/tags                   # Tag operations
+/api/comments               # Comment operations
+/api/contact                # Contact form submission
+/api/admin/*                # Admin-specific APIs
+/api/upload                 # File upload handling
+```
+
+---
+
+## 📁 Project Structure
+
+```
+blog-website-main/
+├── 📁 src/
+│   ├── 📁 app/                    # Next.js App Router
+│   │   ├── 📁 (public)/           # Public routes
+│   │   │   ├── 📄 page.js         # Homepage
+│   │   │   ├── 📁 blog/           # Blog pages
+│   │   │   ├── 📁 categories/     # Category pages
+│   │   │   ├── 📁 tags/           # Tag pages
+│   │   │   ├── 📁 about/          # About page
+│   │   │   ├── 📁 contact/        # Contact page
+│   │   │   └── 📁 profile/        # User profile
+│   │   ├── 📁 admin/              # Admin panel
+│   │   │   ├── 📄 layout.js       # Admin layout
+│   │   │   ├── 📄 page.js         # Dashboard
+│   │   │   ├── 📁 posts/          # Post management
+│   │   │   ├── 📁 categories/     # Category management
+│   │   │   ├── 📁 tags/           # Tag management
+│   │   │   ├── 📁 users/          # User management
+│   │   │   ├── 📁 comments/       # Comment moderation
+│   │   │   └── 📁 contacts/       # Contact management
+│   │   └── 📁 api/                # API routes
+│   │       ├── 📁 auth/           # Authentication APIs
+│   │       ├── 📁 admin/          # Admin APIs
+│   │       ├── 📁 posts/          # Post APIs
+│   │       ├── 📁 categories/     # Category APIs
+│   │       ├── 📁 tags/           # Tag APIs
+│   │       ├── 📁 comments/       # Comment APIs
+│   │       └── 📁 contact/        # Contact APIs
+│   ├── 📁 components/             # React components
+│   │   ├── 📁 blog/               # Blog-specific components
+│   │   ├── 📁 admin/              # Admin components
+│   │   ├── 📁 ui/                 # Reusable UI components
+│   │   ├── 📁 layout/             # Layout components
+│   │   ├── 📁 forms/              # Form components
+│   │   ├── 📁 auth/               # Authentication components
+│   │   └── 📁 contact/            # Contact components
+│   ├── 📁 lib/                    # Utility libraries
+│   │   ├── 📄 db.js               # Database configuration
+│   │   ├── 📄 auth.js             # Authentication utilities
+│   │   ├── 📄 utils.js            # General utilities
+│   │   ├── 📄 constants.js        # Application constants
+│   │   └── 📄 validation.js       # Validation schemas
+│   ├── 📁 hooks/                  # Custom React hooks
+│   ├── 📁 styles/                 # Global styles
+│   └── 📄 middleware.js           # Next.js middleware
+├── 📁 prisma/                     # Database schema
+│   └── 📄 schema.prisma           # Prisma schema definition
+├── 📁 public/                     # Static assets
+│   └── 📁 uploads/                # User uploads
+├── 📁 scripts/                    # Utility scripts
+│   ├── 📁 dummy_data/             # Seed data scripts
+│   ├── 📄 create-admin.js         # Admin user creation
+│   └── 📄 setup-env.js            # Environment setup
+├── 📄 package.json                # Dependencies and scripts
+├── 📄 next.config.mjs             # Next.js configuration
+├── 📄 tailwind.config.js          # Tailwind CSS configuration
+└── 📄 README.md                   # This file
+```
+
+---
+
+## ⚙️ Installation Guide
+
+### 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v18.0.0 or higher)
+- **npm** or **yarn** or **pnpm**
+- **PostgreSQL** (v13.0 or higher)
+- **Git**
+
+### 🔧 Step-by-Step Installation
+
+#### 1. Clone the Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/dhruvpatel16120/blog-website-main.git
+
+# Navigate to the project directory
+cd blog-website-main
+```
+
+#### 2. Install Dependencies
+
+```bash
+# Install dependencies using npm
+npm install
+
+# Or using yarn
+yarn install
+
+# Or using pnpm
+pnpm install
+```
+
+#### 3. Environment Setup
+
+Use the interactive setup script to configure your environment:
+
+```bash
+# Run the setup wizard
+npm run setup
+```
+
+This will guide you through:
+- Database configuration (Railway, Supabase, Neon, etc.)
+- Email setup (Gmail, Outlook, custom SMTP)
+- TinyMCE editor configuration
+- Maintenance mode settings
+- Security and authentication setup
+
+Alternatively, create a `.env.local` file manually:
+
+```bash
+# Copy the example environment file
+cp .env.example .env.local
+```
+
+#### 4. Configure Environment Variables
+
+Edit `.env.local` with your configuration:
+
+```env
+# Database Configuration
+DATABASE_URL="postgresql://username:password@localhost:5432/techblog?schema=public"
+
+# NextAuth Configuration
+NEXTAUTH_SECRET="your-super-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
 
-# Optional (email notifications)
-SMTP_HOST="smtp.example.com"
+# Email Configuration (Optional)
+SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
-SMTP_USER="apikey-or-username"
-SMTP_PASS="smtp-password"
-EMAIL_FROM="TechBlog <no-reply@yourdomain.com>"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+EMAIL_FROM="TechBlog <noreply@yourdomain.com>"
+
+# Application Configuration
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+MAINTENANCE_MODE="false"
+MAINTENANCE_MESSAGE="Site is under maintenance"
+
+# TinyMCE Editor (Optional)
+NEXT_PUBLIC_TINYMCE_API_KEY="your-tinymce-api-key"
+
 ```
 
+#### 5. Database Setup
 
-## Database & Prisma
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Push the schema to your database
+npm run db:push
+
+# (Optional) Run migrations
+npm run db:migrate
+```
+
+#### 6. Create Admin User
+
+```bash
+# Create an admin user
+npm run create-admin
+```
+
+#### 7. Seed Data (Optional)
+
+```bash
+# Seed all data (categories, tags, users, posts)
+npm run seed:all
+
+# Or seed individually
+npm run seed:categories
+npm run seed:tags
+npm run seed:users
+npm run seed:posts
+```
+
+#### 8. Start Development Server
+
+```bash
+# Start the development server
+npm run dev
+```
+
+Your application will be available at `http://localhost:3000`
+
+---
+
+## 🚀 Quick Setup Guides
+
+### 🗄️ Railway PostgreSQL Setup
+
+1. **Create Railway Account**
+   - Visit [railway.app](https://railway.app)
+   - Sign up with GitHub or Google
+
+2. **Create New Project**
+   - Click "New Project"
+   - Select "Provision PostgreSQL"
+
+3. **Get Database URL**
+   - Click on your PostgreSQL database
+   - Go to "Connect" tab
+   - Copy the "Postgres Connection URL"
+
+4. **Configure in Setup Script**
+   ```bash
+   npm run setup
+   # Select "PostgreSQL (Railway/Heroku/AWS)"
+   # Paste your Railway DATABASE_URL
+   ```
+
+### 📧 Email Setup Guide
+
+#### Gmail (Recommended for Development)
+
+1. **Enable 2-Factor Authentication**
+   - Go to Google Account settings
+   - Enable 2FA on your account
+
+2. **Generate App Password**
+   - Go to Security > App Passwords
+   - Select "Mail" and "Other (Custom name)"
+   - Copy the generated password
+
+3. **Configure in Setup Script**
+   ```bash
+   npm run setup
+   # Select "Gmail (Recommended for development)"
+   # Use your Gmail address and App Password
+   ```
+
+#### Custom SMTP Server
+
+```env
+EMAIL_SERVER_HOST="smtp.yourprovider.com"
+EMAIL_SERVER_PORT="587"
+EMAIL_SERVER_USER="your-email@domain.com"
+EMAIL_SERVER_PASSWORD="your-password"
+EMAIL_FROM="noreply@yourdomain.com"
+```
+
+### 📝 TinyMCE Editor Setup
+
+1. **Get Free API Key**
+   - Visit [tiny.cloud](https://www.tiny.cloud/auth/signup/)
+   - Create a free account
+   - Get your API key from dashboard
+
+2. **Configure in Setup Script**
+   ```bash
+   npm run setup
+   # Select "TinyMCE (Recommended)"
+   # Enter your API key when prompted
+   ```
+
+3. **Manual Configuration**
+   ```env
+   NEXT_PUBLIC_TINYMCE_API_KEY="your-api-key-here"
+   ```
+
+### 🔧 Maintenance Mode
+
+The application includes a maintenance mode feature:
+
+```env
+# Enable/disable maintenance mode
+MAINTENANCE_MODE="true"
+MAINTENANCE_MESSAGE="Site is under maintenance"
+```
+
+**Usage:**
+- Set `MAINTENANCE_MODE="true"` to enable maintenance mode
+- Customize the message with `MAINTENANCE_MESSAGE`
+- Users will see a maintenance page instead of the site
+
+---
+
+## 🗄️ Database Setup
+
+### 📊 Database Schema
+
+The application uses PostgreSQL with Prisma ORM. Here's an overview of the main models:
+
+#### 👥 User Management
+
+```sql
+-- Users table
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  fullName TEXT NOT NULL,
+  password TEXT NOT NULL,
+  avatar TEXT,
+  bio TEXT,
+  website TEXT,
+  location TEXT,
+  emailVerified TIMESTAMP,
+  role TEXT DEFAULT 'USER',
+  isActive BOOLEAN DEFAULT true,
+  lastLogin TIMESTAMP,
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Admins table
+CREATE TABLE admins (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  fullName TEXT NOT NULL,
+  password TEXT NOT NULL,
+  avatar TEXT,
+  role TEXT DEFAULT 'ADMIN',
+  permissions TEXT,
+  isActive BOOLEAN DEFAULT true,
+  lastLogin TIMESTAMP,
+  loginAttempts INTEGER DEFAULT 0,
+  lockedUntil TIMESTAMP,
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 📝 Content Management
+
+```sql
+-- Posts table
+CREATE TABLE posts (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  excerpt TEXT,
+  content TEXT NOT NULL,
+  coverImage TEXT,
+  published BOOLEAN DEFAULT false,
+  featured BOOLEAN DEFAULT false,
+  viewCount INTEGER DEFAULT 0,
+  readTime INTEGER,
+  wordCount INTEGER,
+  charCount INTEGER,
+  authorId TEXT NOT NULL,
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP DEFAULT NOW(),
+  publishedAt TIMESTAMP,
+  seoTitle TEXT,
+  seoDescription TEXT,
+  seoImage TEXT,
+  metaKeywords TEXT,
+  contentType TEXT DEFAULT 'html'
+);
+
+-- Categories table
+CREATE TABLE categories (
+  id TEXT PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  color TEXT,
+  icon TEXT,
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Tags table
+CREATE TABLE tags (
+  id TEXT PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  color TEXT,
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 💬 Community Features
+
+```sql
+-- Comments table
+CREATE TABLE comments (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  authorId TEXT NOT NULL,
+  postId TEXT NOT NULL,
+  parentId TEXT,
+  approved BOOLEAN DEFAULT false,
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Likes table
+CREATE TABLE likes (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  postId TEXT,
+  commentId TEXT,
+  createdAt TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 🔧 Database Commands
+
 ```bash
 # Generate Prisma client
 npx prisma generate
 
-# Create DB schema (dev)
-npx prisma migrate dev -n init
+# Push schema changes
+npx prisma db push
 
-# (Optional) Visualize
+# Create migration
+npx prisma migrate dev --name init
+
+# Reset database
+npx prisma migrate reset
+
+# Open Prisma Studio
 npx prisma studio
+
+# Seed database
+npm run seed:all
 ```
-
-
-## Run & Build
-```bash
-# Dev
-npm run dev
-
-# Prod build
-npm run build
-npm start
-```
-
-
-## Project Structure
-```
-src/
-  app/
-    (public)/
-      page.js                 # Home
-      blog/                   # Blog listing & post pages
-      categories/             # Categories listing + [slug]
-      tags/                   # Tags listing + [slug]
-      about/                  # About page
-      contact/                # Contact page
-    admin/                    # Admin panel pages
-    api/                      # API routes (auth, comments, admin, contact, etc.)
-  components/
-    blog/                     # Blog UI (cards, comments, etc.)
-    admin/                    # Admin layout and components
-    forms/                    # Contact form
-  lib/                        # db (Prisma), auth, utils
-  prisma/
-    schema.prisma             # Prisma models
-```
-
-
-## FAQ
-- **Why do I see maintenance warnings?**
-  - Maintenance mode is controlled via `MAINTENANCE_MODE` env in middleware. Ensure it’s set correctly for your environment.
-- **Does the contact form send emails?**
-  - Currently it stores submissions in DB (Contacts). SMTP hooks can be added for auto‑reply/admin alerts. Open an issue if you want this implemented by default.
-- **Pagination/search throws errors in server console?**
-  - We standardized dynamic routes to avoid mixed param names. If you added custom routes, ensure consistent `[slug]` naming per path.
-
-
-## Contributing
-PRs welcome! Please:
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feat/awesome`
-3. Commit with conventional messages
-4. Open a PR with screenshots/notes
-
-
-## License & Disclaimer
-- This project’s content and code are provided for educational and demonstration purposes. Please review and choose a license appropriate for your usage before redistribution.
-- External links:
-  - GitHub: [`@dhruvpatel16120`](https://github.com/dhruvpatel16120)
-  - LinkedIn: [`dhruvpatel16120`](https://www.linkedin.com/in/dhruvpatel16120/)
-  - Portfolio: [`dhruvpatelofficial.vercel.app`](https://dhruvpatelofficial.vercel.app/)
-  - Live: [`techblog-website.vercel.app`](https://techblog-website.vercel.app/)
-
-> Logos and product names are trademarks of their respective owners.
 
 ---
 
-Made with ❤️ using Next.js, Prisma, and Tailwind.
-Created By Dhruv Patel  
+## 🔧 Tools & Dependencies
+
+### 📦 Core Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `next` | 15.4.5 | React framework |
+| `react` | 19.1.0 | UI library |
+| `react-dom` | 19.1.0 | React DOM |
+| `@prisma/client` | 6.13.0 | Database client |
+| `next-auth` | 4.24.11 | Authentication |
+
+### 🎨 UI & Styling
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `tailwindcss` | 4.0+ | CSS framework |
+| `@headlessui/react` | 2.2.7 | UI components |
+| `@heroicons/react` | 2.2.0 | Icons |
+| `framer-motion` | 12.23.12 | Animations |
+| `clsx` | 2.1.1 | Conditional classes |
+
+### 📝 Forms & Validation
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `react-hook-form` | 7.62.0 | Form handling |
+| `@hookform/resolvers` | 5.2.1 | Form validation |
+| `zod` | 4.0.16 | Schema validation |
+
+### 🔐 Security & Auth
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `bcryptjs` | 3.0.2 | Password hashing |
+| `jsonwebtoken` | 9.0.2 | JWT handling |
+| `@next-auth/prisma-adapter` | 1.0.7 | Auth adapter |
+
+### 📧 Email & Communication
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `nodemailer` | 6.10.1 | Email sending |
+| `dot-env` | 0.0.1 | Environment variables |
+
+### 🛠️ Development Tools
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `eslint` | 9.0+ | Code linting |
+| `@eslint/eslintrc` | 3.0+ | ESLint configuration |
+| `eslint-config-next` | 15.4.5 | Next.js ESLint config |
+
+---
+
+## 🚀 Build & Usage
+
+### 🔧 Development
+
+```bash
+# Start development server
+npm run dev
+
+# Run with Turbopack (faster)
+npm run dev -- --turbopack
+
+# Lint code
+npm run lint
+
+# Type check (if using TypeScript)
+npm run type-check
+```
+
+### 🏗️ Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Analyze bundle size
+npm run analyze
+```
+
+### 📊 Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run setup` | Setup environment |
+| `npm run create-admin` | Create admin user |
+| `npm run seed:all` | Seed all data |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:push` | Push schema to database |
+| `npm run db:studio` | Open Prisma Studio |
+
+### 🌐 Deployment
+
+#### Vercel (Recommended)
+
+1. **Connect Repository**
+   ```bash
+   # Install Vercel CLI
+   npm i -g vercel
+
+   # Deploy
+   vercel
+   ```
+
+2. **Environment Variables**
+   - Set all environment variables in Vercel dashboard
+   - Ensure `DATABASE_URL` points to production database
+   - Set `NEXTAUTH_URL` to your production domain
+
+3. **Database Setup**
+   ```bash
+   # Run migrations
+   npx prisma migrate deploy
+
+   # Seed data (if needed)
+   npm run seed:all
+   ```
+
+#### Other Platforms
+
+The application can be deployed to any platform that supports Node.js:
+
+- **Netlify**: Configure build settings for Next.js
+- **Railway**: Direct deployment with PostgreSQL
+- **DigitalOcean**: App Platform deployment
+- **AWS**: Elastic Beanstalk or ECS
+
+---
+
+## 📚 Documentation
+
+### 🎯 Getting Started
+
+1. **Quick Start**: Follow the [Installation Guide](#️-installation-guide)
+2. **Configuration**: Set up [Environment Variables](#environment-variables)
+3. **Database**: Configure [Database Setup](#️-database-setup)
+4. **Deployment**: Deploy to [Production](#-deployment)
+
+### 🔧 Configuration
+
+#### Environment Variables
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/db` |
+| `NEXTAUTH_SECRET` | Yes | Secret for NextAuth.js | `your-secret-key` |
+| `NEXTAUTH_URL` | Yes | Application URL | `http://localhost:3000` |
+| `SMTP_HOST` | No | SMTP server host | `smtp.gmail.com` |
+| `SMTP_PORT` | No | SMTP server port | `587` |
+| `SMTP_USER` | No | SMTP username | `your-email@gmail.com` |
+| `SMTP_PASS` | No | SMTP password | `your-app-password` |
+| `EMAIL_FROM` | No | From email address | `noreply@yourdomain.com` |
+
+#### Customization
+
+1. **Styling**: Modify `tailwind.config.js` for custom themes
+2. **Components**: Edit components in `src/components/`
+3. **API Routes**: Customize API endpoints in `src/app/api/`
+4. **Database**: Update schema in `prisma/schema.prisma`
+
+### 🔌 API Reference
+
+#### Authentication Endpoints
+
+```javascript
+// Sign in
+POST /api/auth/signin
+{
+  "email": "user@example.com",
+  "password": "password"
+}
+
+// Sign up
+POST /api/auth/register
+{
+  "username": "username",
+  "email": "user@example.com",
+  "password": "password",
+  "fullName": "Full Name"
+}
+```
+
+#### Post Endpoints
+
+```javascript
+// Get all posts
+GET /api/posts?page=1&limit=10&category=tech
+
+// Get single post
+GET /api/posts/[slug]
+
+// Create post (admin only)
+POST /api/admin/posts
+{
+  "title": "Post Title",
+  "content": "Post content",
+  "excerpt": "Post excerpt",
+  "published": true
+}
+```
+
+#### Comment Endpoints
+
+```javascript
+// Get comments for post
+GET /api/comments?postId=post-id
+
+// Create comment
+POST /api/comments
+{
+  "content": "Comment content",
+  "postId": "post-id"
+}
+```
+
+### 🎨 Component Library
+
+The application includes a comprehensive component library:
+
+#### UI Components
+
+```javascript
+import { Button, Card, Input, Modal, Toast } from '@/components/ui'
+
+// Usage examples
+<Button variant="primary" size="lg">Click me</Button>
+<Card className="p-6">Content</Card>
+<Input placeholder="Enter text" />
+<Modal isOpen={isOpen} onClose={onClose}>Content</Modal>
+<Toast message="Success!" type="success" />
+```
+
+#### Blog Components
+
+```javascript
+import { BlogCard, BlogGrid, Comments, SocialShare } from '@/components/blog'
+
+// Usage examples
+<BlogGrid posts={posts} />
+<BlogCard post={post} />
+<Comments postId={postId} />
+<SocialShare url={url} title={title} />
+```
+
+---
+
+## ❓ FAQ
+
+### 🤔 General Questions
+
+**Q: What is TechBlog?**
+A: TechBlog is a modern, full-stack blog platform built with Next.js 15, featuring authentication, comments, admin panel, and a beautiful responsive UI.
+
+**Q: Is TechBlog free to use?**
+A: Yes, TechBlog is open-source and free to use. You can deploy it on your own infrastructure or use hosting platforms like Vercel.
+
+**Q: What databases are supported?**
+A: Currently, TechBlog supports PostgreSQL. The application uses Prisma ORM, which makes it easy to add support for other databases.
+
+### 🔧 Technical Questions
+
+**Q: How do I set up the database?**
+A: Use the interactive setup script: `npm run setup`. This will guide you through database configuration for Railway, Supabase, Neon, or local PostgreSQL. Follow the [Database Setup](#️-database-setup) guide for manual setup.
+
+**Q: How do I create an admin user?**
+A: Run `npm run create-admin` after setting up your environment variables. This will prompt you to create an admin account.
+
+**Q: How do I configure email and TinyMCE?**
+A: Use `npm run setup` to configure email providers (Gmail, Outlook, custom SMTP) and TinyMCE editor. See the [Quick Setup Guides](#-quick-setup-guides) section for detailed instructions.
+
+**Q: How do I customize the theme?**
+A: Modify the `tailwind.config.js` file and CSS variables in `src/styles/` to customize colors, fonts, and other design elements.
+
+**Q: How do I add new features?**
+A: The codebase is well-structured and documented. You can add new components in `src/components/`, API routes in `src/app/api/`, and pages in `src/app/`.
+
+### 🚀 Deployment Questions
+
+**Q: Can I deploy to Vercel?**
+A: Yes! TechBlog is optimized for Vercel deployment. Follow the [Deployment](#-deployment) guide for step-by-step instructions.
+
+**Q: How do I set up environment variables in production?**
+A: Set all required environment variables in your hosting platform's dashboard. See the [Configuration](#-configuration) section for details.
+
+**Q: How do I handle database migrations in production?**
+A: Use `npx prisma migrate deploy` to run migrations in production. Always backup your database before running migrations.
+
+### 🐛 Troubleshooting
+
+**Q: I'm getting database connection errors**
+A: Check your `DATABASE_URL` environment variable and ensure your PostgreSQL server is running and accessible.
+
+**Q: Authentication is not working**
+A: Verify your `NEXTAUTH_SECRET` and `NEXTAUTH_URL` environment variables are set correctly.
+
+**Q: Images are not loading**
+A: Check your image domains in `next.config.mjs` and ensure your image URLs are accessible.
+
+**Q: Admin panel is not accessible**
+A: Ensure you've created an admin user using `npm run create-admin` and are logged in with admin credentials.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Here's how you can help:
+
+### 🎯 How to Contribute
+
+1. **Fork the Repository**
+   ```bash
+   git clone https://github.com/your-username/blog-website-main.git
+   cd blog-website-main
+   ```
+
+2. **Create a Feature Branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+
+3. **Make Your Changes**
+   - Write clean, well-documented code
+   - Follow the existing code style
+   - Add tests for new features
+   - Update documentation as needed
+
+4. **Commit Your Changes**
+   ```bash
+   git commit -m "feat: add amazing feature"
+   ```
+
+5. **Push to Your Fork**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+6. **Create a Pull Request**
+   - Provide a clear description of your changes
+   - Include screenshots if applicable
+   - Reference any related issues
+
+### 📋 Contribution Guidelines
+
+#### Code Style
+
+- Use **ESLint** and **Prettier** for code formatting
+- Follow **Conventional Commits** for commit messages
+- Write **TypeScript** when possible
+- Add **JSDoc** comments for functions and components
+
+#### Pull Request Process
+
+1. **Description**: Provide a clear description of your changes
+2. **Testing**: Ensure all tests pass
+3. **Documentation**: Update README and other docs as needed
+4. **Screenshots**: Include screenshots for UI changes
+5. **Review**: Address any feedback from maintainers
+
+#### Issue Reporting
+
+When reporting issues, please include:
+
+- **Description**: Clear description of the problem
+- **Steps to Reproduce**: Step-by-step instructions
+- **Expected Behavior**: What you expected to happen
+- **Actual Behavior**: What actually happened
+- **Environment**: OS, browser, Node.js version
+- **Screenshots**: Visual evidence if applicable
+
+### 🏷️ Issue Labels
+
+- `bug` - Something isn't working
+- `enhancement` - New feature or request
+- `documentation` - Improvements to documentation
+- `good first issue` - Good for newcomers
+- `help wanted` - Extra attention is needed
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+### 📜 License Summary
+
+```
+MIT License
+
+Copyright (c) 2024 Dhruv Patel
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## ⚠️ Disclaimer
+
+### 📋 Important Notes
+
+- **Educational Purpose**: This project is created for educational and demonstration purposes
+- **No Warranty**: The software is provided "as is" without warranty of any kind
+- **Use at Your Own Risk**: Users are responsible for their own implementation and usage
+- **Third-Party Services**: The project may use third-party services that have their own terms of service
+
+### 🔒 Security Considerations
+
+- **Environment Variables**: Never commit sensitive information like API keys or database credentials
+- **Database Security**: Use strong passwords and secure database configurations
+- **Authentication**: Implement proper security measures for user authentication
+- **Input Validation**: Always validate and sanitize user inputs
+- **Regular Updates**: Keep dependencies updated to patch security vulnerabilities
+
+### 📊 Performance Considerations
+
+- **Image Optimization**: Use appropriate image formats and sizes
+- **Caching**: Implement proper caching strategies for better performance
+- **Database Indexing**: Optimize database queries with proper indexing
+- **Bundle Size**: Monitor and optimize JavaScript bundle sizes
+
+---
+
+## 👨‍💻 Credits
+
+### 🎨 Design & Development
+
+**Created by:** [Dhruv Patel](https://github.com/dhruvpatel16120)
+
+### 🛠️ Technologies Used
+
+- **Next.js** - React framework
+- **Prisma** - Database ORM
+- **Tailwind CSS** - Styling framework
+- **NextAuth.js** - Authentication
+- **PostgreSQL** - Database
+- **Framer Motion** - Animations
+
+### 🎯 Inspiration & Resources
+
+- **Next.js Documentation** - [nextjs.org](https://nextjs.org/docs)
+- **Prisma Documentation** - [prisma.io](https://www.prisma.io/docs)
+- **Tailwind CSS** - [tailwindcss.com](https://tailwindcss.com)
+- **NextAuth.js** - [authjs.dev](https://authjs.dev)
+
+### 📚 Learning Resources
+
+- **React Documentation** - [reactjs.org](https://reactjs.org/docs)
+- **TypeScript Handbook** - [typescriptlang.org](https://www.typescriptlang.org/docs)
+- **PostgreSQL Tutorial** - [postgresqltutorial.com](https://www.postgresqltutorial.com)
+
+### 🎨 Icons & Assets
+
+- **Heroicons** - Beautiful hand-crafted SVG icons
+- **Unsplash** - High-quality stock photos
+- **Figma** - Design and prototyping tool
+
+---
+
+## 📞 Contact
+
+### 👨‍💻 Developer
+
+**Dhruv Patel**
+- **GitHub**: [@dhruvpatel16120](https://github.com/dhruvpatel16120)
+- **LinkedIn**: [dhruvpatel16120](https://www.linkedin.com/in/dhruvpatel16120/)
+- **Portfolio**: [dhruvpatelofficial.vercel.app](https://dhruvpatelofficial.vercel.app/)
+- **Email**: [contact@dhruvpatel.dev](mailto:contact@dhruvpatel.dev)
+
+### 🌐 Project Links
+
+- **Live Demo**: [techblog-website.vercel.app](https://techblog-website.vercel.app/)
+- **Repository**: [github.com/dhruvpatel16120/blog-website-main](https://github.com/dhruvpatel16120/blog-website-main)
+- **Issues**: [GitHub Issues](https://github.com/dhruvpatel16120/blog-website-main/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dhruvpatel16120/blog-website-main/discussions)
+
+### 💬 Support
+
+- **Documentation**: Check this README and the code comments
+- **Issues**: Report bugs and request features on GitHub
+- **Discussions**: Ask questions and share ideas
+- **Email**: For private inquiries, use the contact form on the live site
+
+---
+
+<div align="center">
+
+**Made with ❤️ using Next.js, Prisma, and Tailwind CSS**
+
+[![GitHub stars](https://img.shields.io/github/stars/dhruvpatel16120/blog-website-main?style=social)](https://github.com/dhruvpatel16120/blog-website-main/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/dhruvpatel16120/blog-website-main?style=social)](https://github.com/dhruvpatel16120/blog-website-main/network)
+[![GitHub issues](https://img.shields.io/github/issues/dhruvpatel16120/blog-website-main)](https://github.com/dhruvpatel16120/blog-website-main/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/dhruvpatel16120/blog-website-main)](https://github.com/dhruvpatel16120/blog-website-main/pulls)
+
+**If you find this project helpful, please give it a ⭐ star on GitHub!**
+
+</div>  
