@@ -29,8 +29,6 @@ const navigation = [
   { name: 'Comments', href: '/admin/comments', icon: ChatBubbleLeftRightIcon },
   { name: 'Contacts', href: '/admin/contacts', icon: EnvelopeIcon },
   { name: 'Files', href: '/admin/files', icon: PhotoIcon },
-  // Removed Analytics and Audit from navigation
-  // Settings removed
 ];
 
 export default function AdminLayout({ children, title = 'Admin Panel', adminSession: adminSessionProp }) {
@@ -224,7 +222,7 @@ export default function AdminLayout({ children, title = 'Admin Panel', adminSess
             </nav>
             
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to the Admin Panel</h1>
             </div>
             {children}
           </div>

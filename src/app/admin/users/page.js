@@ -63,10 +63,10 @@ export default function AdminUsers() {
   const [successMessage, setSuccessMessage] = useState(null);
 
   useEffect(() => {
-    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.role !== 'ADMIN')) {
+    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
       router.push('/admin/login');
     }
-  }, [session?.user?.role, status, router]);
+  }, [session?.user?.type, status, router]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -82,9 +82,18 @@ export default function AdminUsers() {
       const response = await fetch(`/api/admin/users?${queryParams}`);
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.users);
+        const usersList = data.data || [];
+        setUsers(usersList);
         setPagination(prev => ({ ...prev, total: data.total }));
-        if (data.summary) setSummary(data.summary);
+        
+        // Calculate summary from users data
+        const total = usersList.length;
+        const active = usersList.filter(u => u.isActive).length;
+        const inactive = usersList.filter(u => !u.isActive).length;
+        const admins = usersList.filter(u => u.role === 'ADMIN').length;
+        const regularUsers = usersList.filter(u => u.role === 'USER').length;
+        
+        setSummary({ total, active, inactive, pending: 0, admins, users: regularUsers });
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -198,7 +207,7 @@ export default function AdminUsers() {
     );
   }
 
-  if (session?.user?.role !== 'ADMIN') {
+  if (session?.user?.type !== 'admin') {
     return null;
   }
 
@@ -503,7 +512,7 @@ export default function AdminUsers() {
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            ) : users.length > 0 ? (
+            ) : (users && users.length > 0) ? (
               <div className="space-y-4">
                 {users.map((user) => {
                   const statusConfig = getStatusConfig(user.isActive);
@@ -545,20 +554,19 @@ export default function AdminUsers() {
                                 {user.email}
                               </p>
                                                              {user.avatar && (
-                                 <Image
-                                   src={user.avatar} 
-                                   alt={user.fullName}
-                                   width={48}
-                                   height={48}
-                                   className="w-12 h-12 rounded-full mt-2"
-                                   onError={() => {
-                                     // Fallback to a default avatar if the generated one fails to load
-                                     // This state swap is necessary because onError cannot directly update the src prop
-                                     // of the Image component. The src prop is set once on mount.
-                                     // A more robust solution would involve a state variable for the src.
-                                   }}
-                                 />
-                               )}
+                               <Image
+                                 src={user.avatar} 
+                                 alt={user.fullName}
+                                 width={48}
+                                 height={48}
+                                 className="w-12 h-12 rounded-full mt-2"
+                                 unoptimized
+                                 onError={(e) => {
+                                   // Hide the image if it fails to load
+                                   e.target.style.display = 'none';
+                                 }}
+                               />
+                             )}
                             </div>
                             
                             <div>
@@ -702,7 +710,7 @@ export default function AdminUsers() {
             )}
 
             {/* Pagination */}
-            {pagination.total > pagination.limit && (
+            {pagination.total && pagination.total > pagination.limit && (
               <div className="flex justify-between items-center mt-6">
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}

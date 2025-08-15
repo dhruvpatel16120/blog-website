@@ -14,11 +14,11 @@ export const FILE_TYPES = {
     maxSize: 10 * 1024 * 1024, // 10MB
     directory: 'documents'
   },
-  avatars: {
+  'cover-images': {
     types: ['image/jpeg', 'image/png', 'image/webp'],
     extensions: ['.jpg', '.jpeg', '.png', '.webp'],
     maxSize: 2 * 1024 * 1024, // 2MB
-    directory: 'avatars'
+    directory: 'cover-images'
   }
 };
 

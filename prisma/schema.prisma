@@ -87,6 +87,7 @@ model Post {
   seoDescription String?
   seoImage    String?
   metaKeywords String?
+  contentType String    @default("html") // 'html', 'markdown', 'normal'
 
   author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categories PostCategory[]

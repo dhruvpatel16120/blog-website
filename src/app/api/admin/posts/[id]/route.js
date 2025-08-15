@@ -43,6 +43,7 @@ export async function GET(request, { params }) {
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
       author: post.author,
+      authorId: post.authorId,
       categories: post.categories.map(pc => pc.category),
       tags: post.tags.map(pt => pt.tag),
       _count: post._count,
@@ -52,8 +53,10 @@ export async function GET(request, { params }) {
       seoImage: post.seoImage,
       metaKeywords: post.metaKeywords,
       readTime: post.readTime,
+      readingTime: post.readTime,
       wordCount: post.wordCount,
       charCount: post.charCount,
+      contentType: post.contentType,
     };
 
     return NextResponse.json({ data });
@@ -101,6 +104,8 @@ export async function PATCH(request, { params }) {
       customSlug,
       categories,
       tags,
+      contentType,
+      authorId,
     } = body;
 
     const data = {
@@ -117,6 +122,8 @@ export async function PATCH(request, { params }) {
       ...(publishedAt != null ? { publishedAt: publishedAt ? new Date(publishedAt) : null } : {}),
       ...(wordCount != null ? { wordCount: Number(wordCount) } : {}),
       ...(charCount != null ? { charCount: Number(charCount) } : {}),
+      ...(contentType != null ? { contentType } : {}),
+      ...(authorId != null ? { authorId } : {}),
     };
 
     // Map readingTime -> readTime or recalc if content is provided
@@ -126,12 +133,22 @@ export async function PATCH(request, { params }) {
       data.readTime = Math.ceil(String(content).split(/\s+/).length / 200);
     }
 
+    // Validate authorId if provided
+    if (authorId != null) {
+      const requestedAuthor = await prisma.user.findFirst({
+        where: { id: authorId, isActive: true }
+      });
+      if (!requestedAuthor) {
+        return NextResponse.json({ error: 'Invalid author ID provided' }, { status: 400 });
+      }
+    }
+
     // Handle slug updates
     if (customSlug && typeof customSlug === 'string') {
       const baseSlug = slugifyTitle(customSlug);
       let slug = baseSlug || slugifyTitle(title || '');
       let counter = 1;
-      while (await prisma.post.findFirst({ where: { slug, NOT: { id } } })) {
+      while (await prisma.post.findFirst({ where: { slug, NOT: { id: id } } })) {
         slug = `${baseSlug}-${counter++}`;
       }
       data.slug = slug;
@@ -139,7 +156,7 @@ export async function PATCH(request, { params }) {
       const baseSlug = slugifyTitle(title);
       let slug = baseSlug;
       let counter = 1;
-      while (await prisma.post.findFirst({ where: { slug, NOT: { id } } })) {
+      while (await prisma.post.findFirst({ where: { slug, NOT: { id: id } } })) {
         slug = `${baseSlug}-${counter++}`;
       }
       data.slug = slug;
@@ -196,6 +213,7 @@ export async function PATCH(request, { params }) {
       readTime: post.readTime,
       wordCount: post.wordCount,
       charCount: post.charCount,
+      contentType: post.contentType,
     };
 
     // audit removed

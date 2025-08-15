@@ -1,35 +1,37 @@
 "use client";
 
-import { Suspense } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import PostEditor from '@/components/admin/PostEditor';
 
-// Force dynamic rendering for this route
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default function NewPostPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6"></div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-              <div className="space-y-4">
-                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
+      router.push('/admin/login');
+    }
+  }, [session?.user?.type, status, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    }>
-      <AdminLayout title="Create New Post">
-        <PostEditor mode="create" />
-      </AdminLayout>
-    </Suspense>
+    );
+  }
+
+  if (session?.user?.type !== 'admin') {
+    return null;
+  }
+
+  return (
+    <AdminLayout title="Create New Post" adminSession={session.user}>
+      <PostEditor mode="create" />
+    </AdminLayout>
   );
 }
 

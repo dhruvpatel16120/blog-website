@@ -11,6 +11,7 @@ const nextConfig = {
       'images.unsplash.com',
       'picsum.photos',
       'ui-avatars.com',
+      'api.dicebear.com',
       ...extraDomains,
     ],
   },

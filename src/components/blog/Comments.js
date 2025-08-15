@@ -68,19 +68,6 @@ const Comments = ({ postId, postSlug }) => {
   const [commentCount, setCommentCount] = useState(0);
   const [lastCommentTime, setLastCommentTime] = useState(0);
 
-  useEffect(() => {
-    fetchComments();
-  }, [postId, fetchComments]);
-
-  // Reset comment count every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCommentCount(0);
-    }, 60000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
   const fetchComments = useCallback(async () => {
     try {
       const response = await fetch(`/api/comments?postId=${postId}`);
@@ -94,6 +81,19 @@ const Comments = ({ postId, postSlug }) => {
       setLoading(false);
     }
   }, [postId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  // Reset comment count every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCommentCount(0);
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmitComment = useCallback(async (e) => {
     e.preventDefault();

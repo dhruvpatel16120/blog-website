@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { writeFile, mkdir, unlink } from 'fs/promises';
+import { writeFile, mkdir, unlink, access, stat } from 'fs/promises';
 import path from 'path';
 // activity/audit removed
 
@@ -18,11 +18,11 @@ const FILE_TYPES = {
     maxSize: 10 * 1024 * 1024, // 10MB
     directory: 'documents'
   },
-  avatars: {
+  'cover-images': {
     types: ['image/jpeg', 'image/png', 'image/webp'],
     extensions: ['.jpg', '.jpeg', '.png', '.webp'],
     maxSize: 2 * 1024 * 1024, // 2MB
-    directory: 'avatars'
+    directory: 'cover-images'
   }
 };
 
@@ -75,38 +75,56 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
-    const category = formData.get('category') || 'images'; // Default to images
+    const requestedCategory = (formData.get('category') || 'images').toString(); 
     const userId = formData.get('userId'); // Optional user ID for tracking
     
     console.log('Upload request received:', {
       fileName: file?.name,
       fileType: file?.type,
       fileSize: file?.size,
-      category
+      requestedCategory
     });
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Get file type configuration
-    const fileConfig = getFileTypeConfig(file);
-    console.log('File config result:', fileConfig);
+    // Get file type configuration (base on actual mime/extension)
+    const detectedConfig = getFileTypeConfig(file);
+    console.log('File config result:', detectedConfig, 'requested:', requestedCategory);
     
-    if (!fileConfig) {
+    if (!detectedConfig) {
       return NextResponse.json({ 
         error: 'Unsupported file type. Allowed types: images (jpg, png, webp, gif, svg), documents (pdf, doc, docx, txt)' 
       }, { status: 400 });
     }
 
-    // Validate file
-    const validation = validateFile(file, fileConfig);
+    // Determine target category/config: honor requestedCategory if valid for the file, otherwise fallback to detected
+    let targetCategory = detectedConfig.directory;
+    let targetConfig = detectedConfig;
+    
+    // If requestedCategory is valid and matches the file type, use it
+    if (requestedCategory && FILE_TYPES[requestedCategory]) {
+      const requestedConfig = { category: requestedCategory, ...FILE_TYPES[requestedCategory] };
+      // Check if the file type is compatible with the requested category
+      if (requestedConfig.types.includes(file.type) || requestedConfig.extensions.includes(path.extname(file.name).toLowerCase())) {
+        const validationForRequested = validateFile(file, requestedConfig);
+        if (!validationForRequested.valid) {
+          return NextResponse.json({ error: validationForRequested.error }, { status: 400 });
+        }
+        targetCategory = requestedConfig.directory;
+        targetConfig = requestedConfig;
+      }
+    }
+    
+    // Validate against the final target config
+    const validation = validateFile(file, targetConfig);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Determine upload directory based on category or file type
-    const uploadCategory = category === 'avatar' ? 'avatars' : fileConfig.directory;
+    // Determine upload directory
+    const uploadCategory = targetCategory;
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', uploadCategory);
     
     // Create directory if it doesn't exist
@@ -115,19 +133,41 @@ export async function POST(request) {
     // Generate unique filename
     const fileName = generateUniqueFilename(file.name, uploadCategory);
     const filePath = path.join(uploadsDir, fileName);
+    
+    console.log('Upload details:', {
+      uploadCategory,
+      uploadsDir,
+      fileName,
+      filePath
+    });
 
     // Convert file to buffer and save
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    // Return the public URL
+    // Return the public URL - use absolute URL for proper display in blog posts
     const publicUrl = `/uploads/${uploadCategory}/${fileName}`;
+    
+    // For TinyMCE and blog posts, we need to ensure the URL is properly formatted
+    // The URL should work from any page in the application
+    const absoluteUrl = publicUrl.startsWith('/') ? publicUrl : `/${publicUrl}`;
+    
+    console.log('Upload completed successfully:', {
+      originalName: file.name,
+      fileName: fileName,
+      uploadCategory: uploadCategory,
+      publicUrl: publicUrl,
+      absoluteUrl: absoluteUrl,
+      filePath: filePath,
+      fileSize: file.size,
+      fileType: file.type
+    });
 
     // activity removed
 
     return NextResponse.json({ 
-      url: publicUrl,
+      url: absoluteUrl,
       fileName: fileName,
       originalName: file.name,
       fileSize: file.size,
@@ -138,7 +178,23 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    
+    // Provide more specific error messages
+    if (error.code === 'ENOSPC') {
+      return NextResponse.json({ error: 'Disk space full' }, { status: 500 });
+    }
+    if (error.code === 'EACCES') {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 500 });
+    }
+    if (error.code === 'ENOENT') {
+      return NextResponse.json({ error: 'Directory not found' }, { status: 500 });
+    }
+    
+    return NextResponse.json({ 
+      error: 'Upload failed', 
+      details: error.message,
+      code: error.code 
+    }, { status: 500 });
   }
 }
 
@@ -177,6 +233,49 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
+  }
+}
+
+// GET endpoint to test file accessibility
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const filePath = searchParams.get('path');
+    
+    if (!filePath) {
+      return NextResponse.json({ error: 'File path is required' }, { status: 400 });
+    }
+    
+    // Security check: ensure the file is within the uploads directory
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    const fullPath = path.join(process.cwd(), 'public', filePath);
+    
+    if (!fullPath.startsWith(uploadsDir)) {
+      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+    }
+    
+    // Check if file exists
+    try {
+      await access(fullPath);
+      const stats = await stat(fullPath);
+      return NextResponse.json({ 
+        exists: true,
+        size: stats.size,
+        path: filePath,
+        fullPath: fullPath
+      });
+    } catch (error) {
+      return NextResponse.json({ 
+        exists: false,
+        error: error.message,
+        path: filePath,
+        fullPath: fullPath
+      });
+    }
+    
+  } catch (error) {
+    console.error('File check error:', error);
+    return NextResponse.json({ error: 'File check failed' }, { status: 500 });
   }
 }
 

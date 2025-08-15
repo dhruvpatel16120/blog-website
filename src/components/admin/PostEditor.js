@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { useSession } from 'next-auth/react';
 import { Button, Input, Badge, Card, Modal, Toast } from '@/components/ui';
 import { 
   EyeIcon, 
@@ -17,12 +18,14 @@ import {
   FolderIcon,
   CogIcon,
   CheckIcon,
-  PlusIcon
+  PlusIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 
 const Editor = dynamic(() => import('@tinymce/tinymce-react').then(m => m.Editor), { ssr: false });
 
 export default function PostEditor({ mode = 'create', postId }) {
+  const { data: session, status: sessionStatus } = useSession();
   // ... existing state variables ...
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -45,7 +48,11 @@ export default function PostEditor({ mode = 'create', postId }) {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [uploading, setUploading] = useState(false);
-
+  const [contentType, setContentType] = useState('html'); // 'html', 'markdown', 'normal'
+  const [selectedAuthor, setSelectedAuthor] = useState('');
+  const [allUsers, setAllUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  
   // New advanced features
   const [showImageManager, setShowImageManager] = useState(false);
   const [customSlug, setCustomSlug] = useState('');
@@ -63,18 +70,42 @@ export default function PostEditor({ mode = 'create', postId }) {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const autoSaveRef = useRef(null);
+  // Cover image picker from files
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
+  const [pickerFiles, setPickerFiles] = useState([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerCategory, setPickerCategory] = useState('cover-images'); // 'cover-images' | 'images'
+  const [pickerSearch, setPickerSearch] = useState('');
 
   // Fetch post data for edit mode
   useEffect(() => {
     if (mode === 'edit' && postId) {
       fetchPost();
     }
-  }, [mode, postId, fetchPost]);
+  }, [mode, postId]);
 
   // Fetch categories and tags
   useEffect(() => {
     fetchCategoriesAndTags();
-  }, [fetchCategoriesAndTags]);
+  }, []);
+
+  // Fetch users for author selector
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Set default author when creating new post
+  useEffect(() => {
+    if (mode === 'create' && allUsers.length > 0 && !selectedAuthor) {
+      // Find the current admin user and set them as default author
+      const currentAdmin = allUsers.find(user => 
+        user.email === session?.user?.email || user.username === session?.user?.username
+      );
+      if (currentAdmin) {
+        setSelectedAuthor(currentAdmin.id);
+      }
+    }
+  }, [mode, allUsers, selectedAuthor, session]);
 
   // Handle unsaved changes warning
   useEffect(() => {
@@ -112,7 +143,7 @@ export default function PostEditor({ mode = 'create', postId }) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [mode, postId, hasUnsavedChanges, submit]);
+  }, [mode, postId, hasUnsavedChanges]);
 
   const fetchPost = useCallback(async () => {
     try {
@@ -145,6 +176,17 @@ export default function PostEditor({ mode = 'create', postId }) {
         setReadingTime(post.readingTime || 0);
         setWordCount(post.wordCount || 0);
         setCharCount(post.charCount || 0);
+        setContentType(post.contentType || 'html');
+        setSelectedAuthor(post.authorId || '');
+        
+        // Set editor mode based on content type
+        if (post.contentType === 'markdown') {
+          setEditorMode('markdown');
+        } else if (post.contentType === 'html') {
+          setEditorMode('rich');
+        } else {
+          setEditorMode('normal');
+        }
         
         // Calculate stats from content
         if (post.content) {
@@ -163,7 +205,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       showToastMessage('Network error: Failed to fetch post', 'error');
       setLoading(false);
     }
-  }, [postId, showToastMessage]);
+  }, [postId]);
 
   const fetchCategoriesAndTags = useCallback(async () => {
     try {
@@ -189,7 +231,26 @@ export default function PostEditor({ mode = 'create', postId }) {
       console.error('Fetch error:', error);
       showToastMessage('Failed to fetch categories and tags', 'error');
     }
-  }, [showToastMessage]);
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setUsersLoading(true);
+      const res = await fetch('/api/admin/users');
+      if (res.ok) {
+        const data = await res.json();
+        setAllUsers(data.data || []);
+      } else {
+        console.error('Failed to fetch users:', res.status);
+        showToastMessage('Failed to fetch users', 'error');
+      }
+    } catch (error) {
+      console.error('Fetch users error:', error);
+      showToastMessage('Failed to fetch users', 'error');
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
 
   // New advanced functions
   const calculateStats = (text) => {
@@ -241,7 +302,7 @@ export default function PostEditor({ mode = 'create', postId }) {
     setTimeout(() => setShowToast(false), 3000);
   }, []);
 
-  const handleImageUpload = async (file) => {
+  const handleImageUpload = async (file, targetCategory = 'images') => {
     try {
       // Validate file
       if (!file) return null;
@@ -261,7 +322,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       setUploading(true);
       const form = new FormData();
       form.append('file', file);
-      form.append('category', 'images');
+      form.append('category', targetCategory);
       
       const res = await fetch('/api/admin/upload', { 
         method: 'POST', 
@@ -292,7 +353,7 @@ export default function PostEditor({ mode = 'create', postId }) {
   };
 
   const handleBulkImageUpload = async (files) => {
-    const uploadPromises = Array.from(files).map(file => handleImageUpload(file));
+    const uploadPromises = Array.from(files).map(file => handleImageUpload(file, 'images'));
     const results = await Promise.all(uploadPromises);
     const successful = results.filter(url => url);
     showToastMessage(`${successful.length} images uploaded successfully`);
@@ -305,7 +366,7 @@ export default function PostEditor({ mode = 'create', postId }) {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const url = await handleImageUpload(file);
+        const url = await handleImageUpload(file, 'cover-images');
         if (url) {
           setCoverImage(url);
           showToastMessage('Cover image uploaded successfully');
@@ -315,6 +376,36 @@ export default function PostEditor({ mode = 'create', postId }) {
     input.click();
   };
 
+  // Fetch files for cover image picker
+  const fetchPickerFiles = useCallback(async () => {
+    try {
+      setPickerLoading(true);
+      const params = new URLSearchParams({
+        category: pickerCategory,
+        limit: '50',
+      });
+      if (pickerSearch) params.set('search', pickerSearch);
+      const res = await fetch(`/api/admin/files?${params.toString()}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to load files');
+      }
+      const data = await res.json();
+      setPickerFiles(Array.isArray(data.files) ? data.files : []);
+    } catch (e) {
+      console.error('Failed to fetch files for picker', e);
+      setPickerFiles([]);
+    } finally {
+      setPickerLoading(false);
+    }
+  }, [pickerCategory, pickerSearch]);
+
+  useEffect(() => {
+    if (showCoverPicker) {
+      fetchPickerFiles();
+    }
+  }, [showCoverPicker, pickerCategory, pickerSearch, fetchPickerFiles]);
+
   const handleSeoImageUpload = async () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -322,7 +413,7 @@ export default function PostEditor({ mode = 'create', postId }) {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const url = await handleImageUpload(file);
+        const url = await handleImageUpload(file, 'images');
         if (url) {
           setSeoImage(url);
           showToastMessage('SEO image uploaded successfully');
@@ -338,7 +429,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .trim('-');
+      .replace(/^-+|-+$/g, '');
   };
 
   const handleTitleChange = (newTitle) => {
@@ -422,7 +513,7 @@ export default function PostEditor({ mode = 'create', postId }) {
       return false;
     }
     return true;
-  }, [title, content, categories, tags, excerpt, seoTitle, seoDescription, coverImage, seoImage, showToastMessage]);
+  }, [title, content, categories, tags, excerpt, seoTitle, seoDescription, coverImage, seoImage]);
 
   const isValidUrl = (value) => {
     if (!value || typeof value !== 'string') return false;
@@ -437,11 +528,18 @@ export default function PostEditor({ mode = 'create', postId }) {
   };
 
   const submit = useCallback(async () => {
+    if (!title || !content) {
+      showToastMessage('Title and content are required', 'error');
+      return;
+    }
+
+    // If no author selected, backend will ensure an author mapping for admin
+
     if (!validateForm()) return;
     
     const payload = {
       title: title.trim(),
-      content: editorMode === 'markdown' ? markdownContent : content,
+      content: contentType === 'markdown' ? markdownContent : content,
       excerpt: excerpt.trim(),
       coverImage: coverImage.trim(),
       published,
@@ -455,7 +553,9 @@ export default function PostEditor({ mode = 'create', postId }) {
       metaKeywords: metaKeywords.trim(),
       readingTime,
       wordCount,
-      charCount
+      charCount,
+      contentType, // Add content type to payload
+      authorId: selectedAuthor || undefined, // Add author ID to payload
     };
 
     if (scheduledDate && scheduledTime && !published) {
@@ -488,7 +588,7 @@ export default function PostEditor({ mode = 'create', postId }) {
           if (mode === 'edit') {
             window.location.href = '/admin/posts';
           } else {
-            window.location.href = `/admin/posts/${result.data?.id || ''}`;
+            window.location.href = `/admin/posts/${result.data?.id || ''}/edit`;
           }
         }, 1500);
       } else {
@@ -501,7 +601,7 @@ export default function PostEditor({ mode = 'create', postId }) {
     } finally {
       setLoading(false);
     }
-  }, [mode, postId, title, content, markdownContent, excerpt, coverImage, published, featured, categories, tags, seoTitle, seoDescription, seoImage, customSlug, metaKeywords, readingTime, wordCount, charCount, scheduledDate, scheduledTime, editorMode, validateForm, showToastMessage]);
+  }, [mode, postId, title, content, markdownContent, excerpt, coverImage, published, featured, categories, tags, seoTitle, seoDescription, seoImage, customSlug, metaKeywords, readingTime, wordCount, charCount, scheduledDate, scheduledTime, editorMode, contentType, selectedAuthor]);
 
   const schedule = async () => {
     if (!scheduledDate || !scheduledTime) {
@@ -602,74 +702,78 @@ export default function PostEditor({ mode = 'create', postId }) {
     <div className="space-y-6">
       {/* Header with Stats */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <div>
-              <h1 className="text-3xl font-bold">
-                {mode === 'edit' ? 'Edit Post' : 'Create New Post'}
-              </h1>
-              <p className="text-blue-100 mt-2">
-                Advanced content editor with professional features
-              </p>
-              {mode === 'edit' && (
-                <div className="space-y-2 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-blue-200 text-sm">Status:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {published ? 'Published' : 'Draft'}
+            <h1 className="text-3xl font-bold">
+              {mode === 'edit' ? 'Edit Post' : 'Create New Post'}
+            </h1>
+            <p className="text-blue-100 mt-2">
+              Advanced content editor with professional features
+            </p>
+            {mode === 'edit' && (
+              <div className="space-y-2 mt-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-blue-200 text-sm">Status:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {published ? 'Published' : 'Draft'}
+                  </span>
+                  {featured && (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Featured
                     </span>
-                    {featured && (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        Featured
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-blue-200">
-                    URL: yourdomain.com/blog/{customSlug || generateSlug(title)}
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
+                <div className="text-xs text-blue-200">
+                  URL: yourdomain.com/blog/{customSlug || generateSlug(title)}
+                </div>
+              </div>
+            )}
             <div className="flex items-center space-x-4 mt-3 text-xs text-blue-200">
               <span>⌘+S to save</span>
               <span>⌘+Enter to publish</span>
               <span>⌘+Shift+P to preview</span>
             </div>
           </div>
-                      <div className="flex items-center space-x-4 text-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{wordCount}</div>
-                <div className="text-blue-200">Words</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{readingTime}</div>
-                <div className="text-blue-200">Min Read</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{charCount}</div>
-                <div className="text-blue-200">Characters</div>
-              </div>
-              {mode === 'edit' && postId && (
-                <div className="text-center">
-                  <div className="text-2xl font-bold">#{postId}</div>
-                  <div className="text-blue-200">Post ID</div>
-                </div>
-              )}
+          
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold">{wordCount}</div>
+              <div className="text-blue-200">Words</div>
             </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{readingTime}</div>
+              <div className="text-blue-200">Min Read</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{charCount}</div>
+              <div className="text-blue-200">Characters</div>
+            </div>
+            {mode === 'edit' && postId && (
+              <div className="text-center">
+                <div className="text-2xl font-bold">#{postId}</div>
+                <div className="text-blue-200">Post ID</div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Auto-save Status and Post Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {lastSaved && (
-          <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <CheckIcon className="h-5 w-5 text-green-600" />
-              <span className="text-green-800 dark:text-green-200">
-                Last saved: {lastSaved.toLocaleTimeString()}
-              </span>
+          <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <CheckIcon className="h-6 w-6 text-green-600" />
+              <div>
+                <span className="text-green-800 dark:text-green-200 font-medium">
+                  Last saved: {lastSaved.toLocaleTimeString()}
+                </span>
+                <div className="text-sm text-green-600 dark:text-green-400">
+                  Auto-save is enabled
+                </div>
+              </div>
             </div>
             <label className="flex items-center space-x-2">
               <input
@@ -684,25 +788,29 @@ export default function PostEditor({ mode = 'create', postId }) {
         )}
         
         {/* Post Statistics */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-blue-800 dark:text-blue-200 text-sm font-medium">Post Statistics</span>
-            <span className="text-blue-600 dark:text-blue-400 text-xs">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-blue-800 dark:text-blue-200 text-sm font-semibold">Post Statistics</span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              hasUnsavedChanges 
+                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' 
+                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+            }`}>
               {hasUnsavedChanges ? 'Modified' : 'Saved'}
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
+          <div className="grid grid-cols-3 gap-3 text-sm">
             <div className="text-center">
-              <div className="font-semibold text-blue-700 dark:text-blue-300">{wordCount}</div>
+              <div className="font-bold text-blue-700 dark:text-blue-300 text-lg">{wordCount}</div>
               <div className="text-blue-600 dark:text-blue-400">Words</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-blue-700 dark:text-blue-300">{readingTime}</div>
-              <div className="text-blue-600 dark:text-blue-400">Min</div>
+              <div className="font-bold text-blue-700 dark:text-blue-300 text-lg">{readingTime}</div>
+              <div className="text-blue-600 dark:text-blue-400">Min Read</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-blue-700 dark:text-blue-300">{charCount}</div>
-              <div className="text-blue-600 dark:text-blue-400">Chars</div>
+              <div className="font-bold text-blue-700 dark:text-blue-300 text-lg">{charCount}</div>
+              <div className="text-blue-600 dark:text-blue-400">Characters</div>
             </div>
           </div>
         </div>
@@ -750,6 +858,29 @@ export default function PostEditor({ mode = 'create', postId }) {
                   Content Editor
                 </h3>
                 <div className="flex items-center space-x-2">
+                  {/* Content Type Selector */}
+                  <div className="flex items-center space-x-2 mr-4">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Type:</span>
+                    <select
+                      value={contentType}
+                      onChange={(e) => {
+                        setContentType(e.target.value);
+                        if (e.target.value === 'markdown') {
+                          setEditorMode('markdown');
+                        } else if (e.target.value === 'html') {
+                          setEditorMode('rich');
+                        } else {
+                          setEditorMode('normal');
+                        }
+                      }}
+                      className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="html">HTML (Rich Text)</option>
+                      <option value="markdown">Markdown</option>
+                      <option value="normal">Normal Text</option>
+                    </select>
+                  </div>
+                  
                   <Button
                     variant={editorMode === 'rich' ? 'primary' : 'outline'}
                     size="sm"
@@ -786,7 +917,7 @@ export default function PostEditor({ mode = 'create', postId }) {
                     </Button>
                   )}
                   <div className="ml-4 text-sm text-gray-600 dark:text-gray-400">
-                    Current: {editorMode === 'rich' ? 'Rich Text Editor' : 'Markdown Editor'}
+                    Current: {editorMode === 'rich' ? 'Rich Text Editor' : editorMode === 'markdown' ? 'Markdown Editor' : 'Normal Text Editor'}
                   </div>
                 </div>
               </div>
@@ -827,6 +958,10 @@ export default function PostEditor({ mode = 'create', postId }) {
                       images_reuse_filename: false,
                       images_file_types: 'jpeg,jpg,jpe,png,webp,gif,svg',
                       file_picker_types: 'image',
+                      relative_urls: false,
+                      remove_script_host: false,
+                      convert_urls: false,
+                      document_base_url: '/',
                       file_picker_callback: (cb) => {
                         const input = document.createElement('input');
                         input.type = 'file';
@@ -844,7 +979,14 @@ export default function PostEditor({ mode = 'create', postId }) {
                               throw new Error(err.error || 'Upload failed');
                             }
                             const data = await res.json();
-                            cb(data.url, { title: file.name });
+                            // Ensure the URL is absolute
+                            const imageUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+                            console.log('File picker upload result:', {
+                              originalUrl: data.url,
+                              finalUrl: imageUrl,
+                              filename: file.name
+                            });
+                            cb(imageUrl, { title: file.name });
                           } catch (err) {
                             console.error('File picker upload error', err);
                           }
@@ -852,26 +994,44 @@ export default function PostEditor({ mode = 'create', postId }) {
                         input.click();
                       },
                       images_upload_handler: async (blobInfo) => {
-                        const blob = blobInfo.blob();
-                        const form = new FormData();
-                        form.append('file', blob, blobInfo.filename());
-                        form.append('category', 'images');
-                        const res = await fetch('/api/admin/upload', {
-                          method: 'POST',
-                          body: form,
-                        });
-                        if (!res.ok) {
-                          const err = await res.json().catch(() => ({}));
-                          throw new Error(err.error || 'Upload failed');
+                        try {
+                          const blob = blobInfo.blob();
+                          const form = new FormData();
+                          form.append('file', blob, blobInfo.filename());
+                          form.append('category', 'images');
+                          const res = await fetch('/api/admin/upload', {
+                            method: 'POST',
+                            body: form,
+                          });
+                          if (!res.ok) {
+                            const err = await res.json().catch(() => ({}));
+                            throw new Error(err.error || 'Upload failed');
+                          }
+                          const data = await res.json();
+                          if (!data?.url) {
+                            throw new Error('Invalid upload response');
+                          }
+                          // Ensure the URL is absolute
+                          const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+                          console.log('TinyMCE image upload result:', {
+                            originalUrl: data.url,
+                            finalUrl: finalUrl,
+                            filename: blobInfo.filename()
+                          });
+                          return finalUrl;
+                        } catch (error) {
+                          console.error('Image upload error:', error);
+                          throw error;
                         }
-                        const data = await res.json();
-                        if (!data?.url) {
-                          throw new Error('Invalid upload response');
-                        }
-                        return data.url;
                       },
                       image_advtab: true,
                       image_caption: true,
+                      image_dimensions: true,
+                      image_class_list: [
+                        { title: 'Responsive', value: 'img-fluid' },
+                        { title: 'Thumbnail', value: 'img-thumbnail' },
+                        { title: 'Rounded', value: 'rounded' }
+                      ],
                       quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
                       extended_valid_elements: 'img[class|src|alt|title|width|height|style],table[style|class],thead,tbody,tfoot,tr,td[colspan|rowspan|style|class],th[colspan|rowspan|style|class],caption,colgroup,col[span|width|style|class]',
                       // Remove configs tied to disabled plugins
@@ -991,6 +1151,49 @@ export default function PostEditor({ mode = 'create', postId }) {
             </div>
           </Card>
 
+          {/* Author Selection */}
+          <Card className="p-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <UserIcon className="h-5 w-5 mr-2" />
+                Author
+              </h3>
+              
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Select Author
+                </label>
+                <select
+                  value={selectedAuthor}
+                  onChange={(e) => {
+                    setSelectedAuthor(e.target.value);
+                    setHasUnsavedChanges(true);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={usersLoading}
+                >
+                  <option value="">Select an author...</option>
+                  {allUsers.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.fullName} ({user.username})
+                    </option>
+                  ))}
+                </select>
+                {usersLoading && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Loading users...
+                  </div>
+                )}
+                {selectedAuthor && (
+                  <div className="text-sm text-green-600 dark:text-green-400">
+                    ✓ Author selected
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
           {/* Categories and Tags */}
           <Card className="p-6">
             <div className="space-y-4">
@@ -1071,15 +1274,26 @@ export default function PostEditor({ mode = 'create', postId }) {
                   value={coverImage} 
                   onChange={(e) => handleCoverImageChange(e.target.value)} 
                 />
-                <Button 
-                  variant="outline" 
-                  onClick={handleCoverImageUpload}
-                  disabled={uploading}
-                  className="w-full"
-                >
-                  <PhotoIcon className="h-4 w-4 mr-2" />
-                  {uploading ? 'Uploading...' : 'Upload Image'}
-                </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCoverImageUpload}
+                    disabled={uploading}
+                  >
+                    <PhotoIcon className="h-4 w-4 mr-2" />
+                    {uploading ? 'Uploading...' : 'Upload Image'}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setPickerCategory('cover-images');
+                      setShowCoverPicker(true);
+                    }}
+                  >
+                    <FolderIcon className="h-4 w-4 mr-2" />
+                    Pick from Files
+                  </Button>
+                </div>
                 {coverImage && (
                   <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
                     <Image 
@@ -1218,15 +1432,18 @@ export default function PostEditor({ mode = 'create', postId }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-6 border-t border-gray-200 dark:border-gray-700 gap-4">
         <div className="flex items-center space-x-4">
           <Button variant="outline" onClick={() => setShowExitConfirm(true)} type="button">
             Cancel
           </Button>
           {hasUnsavedChanges && (
-            <span className="text-sm text-amber-600 dark:text-amber-400">
-              You have unsaved changes
-            </span>
+            <div className="flex items-center space-x-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                You have unsaved changes
+              </span>
+            </div>
           )}
         </div>
         
@@ -1238,7 +1455,7 @@ export default function PostEditor({ mode = 'create', postId }) {
           <Button 
             onClick={submit} 
             disabled={!title.trim() || !content.trim() || loading}
-            className="min-w-[120px]"
+            className="min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white"
             type="button"
           >
             {loading ? (
@@ -1247,7 +1464,10 @@ export default function PostEditor({ mode = 'create', postId }) {
                 {mode === 'edit' ? 'Updating...' : 'Publishing...'}
               </div>
             ) : (
-              mode === 'edit' ? 'Update Post' : 'Publish Post'
+              <div className="flex items-center">
+                <CheckIcon className="h-4 w-4 mr-2" />
+                {mode === 'edit' ? 'Update Post' : 'Publish Post'}
+              </div>
             )}
           </Button>
         </div>
@@ -1345,6 +1565,81 @@ export default function PostEditor({ mode = 'create', postId }) {
                   </div>
                 </div>
               ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Cover Image Picker Modal */}
+      <Modal
+        isOpen={showCoverPicker}
+        onClose={() => setShowCoverPicker(false)}
+        title="Select Cover Image"
+        size="4xl"
+      >
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <select
+                value={pickerCategory}
+                onChange={(e) => setPickerCategory(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="cover-images">Cover Images</option>
+                <option value="images">Images</option>
+              </select>
+              <Button variant="outline" size="sm" onClick={fetchPickerFiles} disabled={pickerLoading}>
+                {pickerLoading ? 'Loading...' : 'Refresh'}
+              </Button>
+            </div>
+            <div className="flex-1 max-w-sm">
+              <Input
+                placeholder="Search files..."
+                value={pickerSearch}
+                onChange={(e) => setPickerSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {pickerLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : pickerFiles.length === 0 ? (
+            <div className="text-center py-12">
+              <FolderIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">No files found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {pickerFiles
+                .filter(f => f.fileType === 'image')
+                .map((file, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setCoverImage(file.url);
+                      setHasUnsavedChanges(true);
+                      setShowCoverPicker(false);
+                      showToastMessage('Cover image selected');
+                    }}
+                    type="button"
+                    className="group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-800">
+                      <Image src={file.url} alt={file.originalName} width={400} height={400} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-2 text-left">
+                      <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{file.originalName}</p>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowCoverPicker(false)} type="button">
+              Close
+            </Button>
           </div>
         </div>
       </Modal>

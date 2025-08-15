@@ -47,8 +47,8 @@ export default async function BlogPage({ searchParams }) {
       { title: { contains: search, mode: 'insensitive' } },
       { excerpt: { contains: search, mode: 'insensitive' } },
       { content: { contains: search, mode: 'insensitive' } },
-      { author: { fullName: { contains: search, mode: 'insensitive' } } },
-      { author: { username: { contains: search, mode: 'insensitive' } } },
+      { author: { is: { fullName: { contains: search, mode: 'insensitive' } } } },
+      { author: { is: { username: { contains: search, mode: 'insensitive' } } } },
     ];
   }
 

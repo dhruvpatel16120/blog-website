@@ -11,12 +11,14 @@ import ReadingProgress from '@/components/blog/ReadingProgress';
 import Comments from '@/components/blog/Comments';
 import Link from 'next/link';
 import Image from 'next/image';
+import HTMLRenderer from '@/components/blog/HTMLRenderer';
 
 export default async function PostPage({ params }) {
-  const slug = params.slug;
+  const { slug } = await params;
   const p = await prisma.post.findUnique({
     where: { slug },
     include: {
+      author: { select: { id: true, username: true, fullName: true, email: true, avatar: true } },
       categories: { include: { category: true } },
       tags: { include: { tag: true } },
       _count: {
@@ -32,12 +34,13 @@ export default async function PostPage({ params }) {
     title: p.title,
     content: p.content,
     excerpt: p.excerpt,
-    author: p.authorId,
+    author: p.author,
     date: p.publishedAt,
     coverImage: p.coverImage,
     tags: p.tags?.map(t => t.tag.name) || [],
     categories: p.categories?.map(c => c.category.name) || [],
     commentCount: p._count.comments,
+    contentType: p.contentType || 'html', // Default to HTML if not specified
   } : null;
 
   if (!post) {
@@ -71,7 +74,7 @@ export default async function PostPage({ params }) {
         <article>
           <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>{post.title}</h1>
           <div className="flex flex-wrap gap-4 items-center mb-6 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            <span>By {post.author}</span>
+            <span>By {post.author?.fullName || post.author?.username || 'Unknown Author'}</span>
             <span>{formatDate(post.date)}</span>
             <span>{calculateReadingTime(post.content)} min read</span>
             <span>{post.commentCount} comments</span>
@@ -92,7 +95,15 @@ export default async function PostPage({ params }) {
               />
             ) : null}
           </div>
-          <MarkdownRenderer content={post.content} />
+          {post.contentType === 'markdown' ? (
+            <MarkdownRenderer content={post.content} />
+          ) : post.contentType === 'html' ? (
+            <HTMLRenderer content={post.content} />
+          ) : (
+            <div className="prose max-w-none dark:prose-invert">
+              <div className="whitespace-pre-wrap">{post.content}</div>
+            </div>
+          )}
           <SocialShare title={post.title} slug={post.slug} />
           <div className="mt-8 flex flex-wrap gap-2">
             {post.tags && post.tags.map((tag) => (
@@ -110,7 +121,7 @@ export default async function PostPage({ params }) {
           ) : <span />}
         </div>
       </div>
-      <Comments postId={post.id} postSlug={post.slug} />
+      {post && <Comments postId={post.id} postSlug={post.slug} />}
       <RelatedPosts post={post} allPosts={allPosts} />
     </>
   );

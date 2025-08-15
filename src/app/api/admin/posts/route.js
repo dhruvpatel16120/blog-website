@@ -162,6 +162,13 @@ export async function POST(request) {
       seoDescription,
       seoImage,
       publishedAt,
+      customSlug,
+      metaKeywords,
+      readingTime,
+      wordCount,
+      charCount,
+      contentType,
+      authorId: requestedAuthorId,
     } = body;
 
     if (!title || !content) {
@@ -169,17 +176,30 @@ export async function POST(request) {
     }
 
     // Generate unique slug
-    const baseSlug = slugifyTitle(title);
+    const baseSlug = customSlug ? slugifyTitle(customSlug) : slugifyTitle(title);
     let slug = baseSlug;
     let counter = 1;
     while (await prisma.post.findUnique({ where: { slug } })) {
       slug = `${baseSlug}-${counter++}`;
     }
 
-    // Ensure an author User exists for this admin
-    const authorId = await ensureAuthorUserForAdmin(session);
-    if (!authorId) {
-      return NextResponse.json({ error: 'Unable to resolve author' }, { status: 500 });
+    // Determine author ID - use requested authorId if provided, otherwise ensure an author User exists for this admin
+    let authorId;
+    if (requestedAuthorId) {
+      // Verify the requested author exists and is a valid user
+      const requestedAuthor = await prisma.user.findFirst({
+        where: { id: requestedAuthorId, isActive: true }
+      });
+      if (!requestedAuthor) {
+        return NextResponse.json({ error: 'Invalid author ID provided' }, { status: 400 });
+      }
+      authorId = requestedAuthorId;
+    } else {
+      // Fall back to automatic author resolution
+      authorId = await ensureAuthorUserForAdmin(session);
+      if (!authorId) {
+        return NextResponse.json({ error: 'Unable to resolve author' }, { status: 500 });
+      }
     }
 
     // Create in transaction to ensure relations stay consistent
@@ -195,10 +215,14 @@ export async function POST(request) {
           featured: Boolean(featured),
           authorId,
           publishedAt: published ? new Date() : (publishedAt ? new Date(publishedAt) : null),
-          readTime: Math.ceil(String(content).split(/\s+/).length / 200),
+          readTime: readingTime || Math.ceil(String(content).split(/\s+/).length / 200),
           seoTitle: seoTitle || title,
           seoDescription: seoDescription || excerpt || '',
           seoImage: seoImage || coverImage || null,
+          metaKeywords: metaKeywords || null,
+          wordCount: wordCount || String(content).split(/\s+/).filter(word => word.length > 0).length,
+          charCount: charCount || String(content).length,
+          contentType: contentType || 'html',
         },
       });
 
@@ -211,20 +235,6 @@ export async function POST(request) {
       return created;
     });
 
-    // Relations
-    if (Array.isArray(categories) && categories.length) {
-      await prisma.postCategory.createMany({
-        data: categories.map((categoryId) => ({ postId: post.id, categoryId })),
-        skipDuplicates: true,
-      });
-    }
-    if (Array.isArray(tags) && tags.length) {
-      await prisma.postTag.createMany({
-        data: tags.map((tagId) => ({ postId: post.id, tagId })),
-        skipDuplicates: true,
-      });
-    }
-
     const created = await prisma.post.findUnique({
       where: { id: post.id },
       include: {
@@ -236,11 +246,35 @@ export async function POST(request) {
 
     // audit removed
 
-    return NextResponse.json({
-      ...created,
+    const mapped = {
+      id: created.id,
+      title: created.title,
+      slug: created.slug,
+      excerpt: created.excerpt,
+      content: created.content,
+      published: created.published,
+      featured: created.featured,
+      coverImage: created.coverImage,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+      author: created.author,
+      authorId: created.authorId,
       categories: created.categories.map(pc => pc.category),
       tags: created.tags.map(pt => pt.tag),
-    }, { status: 201 });
+      publishedAt: created.publishedAt,
+      seoTitle: created.seoTitle,
+      seoDescription: created.seoDescription,
+      seoImage: created.seoImage,
+      metaKeywords: created.metaKeywords,
+      readTime: created.readTime,
+      wordCount: created.wordCount,
+      charCount: created.charCount,
+      contentType: created.contentType,
+      // alias for client expectations
+      readingTime: created.readTime,
+    };
+
+    return NextResponse.json({ data: mapped }, { status: 201 });
   } catch (error) {
     console.error('Error creating post:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
