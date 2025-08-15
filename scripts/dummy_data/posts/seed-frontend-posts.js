@@ -8,8 +8,7 @@
 */
 
 const SeedingUtils = require('../utils/seeding-utils');
-
-const prisma = new PrismaClient();
+const bcrypt = require('bcryptjs');
 
 function slugify(title) {
   return title
@@ -67,11 +66,11 @@ const POSTS = [
 ];
 
 async function ensureAuthorUser() {
-  const firstUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
+  const firstUser = await SeedingUtils.prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
   if (firstUser) return firstUser;
 
   const hashedPassword = await bcrypt.hash('seed@12345', 12);
-  return prisma.user.create({
+  return SeedingUtils.prisma.user.create({
     data: {
       username: 'seed-author',
       email: 'author@example.com',
@@ -89,7 +88,7 @@ async function upsertCategory(slug) {
     .split('-')
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(' ');
-  return prisma.category.upsert({ where: { slug }, update: {}, create: { slug, name } });
+  return SeedingUtils.prisma.category.upsert({ where: { slug }, update: {}, create: { slug, name } });
 }
 
 async function upsertTag(slug) {
@@ -97,14 +96,14 @@ async function upsertTag(slug) {
     .split('-')
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(' ');
-  return prisma.tag.upsert({ where: { slug }, update: { name }, create: { slug, name } });
+  return SeedingUtils.prisma.tag.upsert({ where: { slug }, update: { name }, create: { slug, name } });
 }
 
 async function uniqueSlug(base) {
   let candidate = base;
   let i = 1;
   /* eslint-disable no-await-in-loop */
-  while (await prisma.post.findUnique({ where: { slug: candidate } })) {
+  while (await SeedingUtils.prisma.post.findUnique({ where: { slug: candidate } })) {
     i += 1;
     candidate = `${base}-${i}`;
   }
