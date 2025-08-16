@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![TechBlog Banner](/)
+![TechBlog logo](/preview/logo.png)
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&style=for-the-badge)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.1.0-61DAFB?logo=react&style=for-the-badge)](https://reactjs.org/)
@@ -178,7 +178,7 @@ TechBlog is more than just a blog platform—it's a complete content management 
 
 <div align="center">
 
-![Desktop Homepage](https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1400&auto=format&fit=crop&style=border-radius:12px)
+![Desktop Homepage](/preview/desktop.png)
 
 *Modern, clean homepage with featured content and navigation*
 
@@ -188,7 +188,7 @@ TechBlog is more than just a blog platform—it's a complete content management 
 
 <div align="center">
 
-![Mobile View](https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=800&auto=format&fit=crop&style=border-radius:12px)
+![Mobile View](/preview/mobile.png)
 
 *Responsive design optimized for mobile devices*
 
@@ -198,7 +198,7 @@ TechBlog is more than just a blog platform—it's a complete content management 
 
 <div align="center">
 
-![Admin Dashboard](https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1400&auto=format&fit=crop&style=border-radius:12px)
+![Admin Dashboard](/preview/admin.png)
 
 *Comprehensive admin dashboard with analytics and management tools*
 
