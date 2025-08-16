@@ -98,7 +98,6 @@ TechBlog is more than just a blog platform—it's a complete content management 
 | **User Authentication** | Secure login/signup with email verification | ✅ |
 | **Comments System** | Nested comments with moderation capabilities | ✅ |
 | **User Profiles** | Customizable user profiles with avatars | ✅ |
-| **Like System** | Like posts and comments | ✅ |
 | **Rate Limiting** | Protection against spam and abuse | ✅ |
 
 ### 🔧 Admin Features
@@ -467,8 +466,8 @@ Your application will be available at `http://localhost:3000`
 
 3. **Get Database URL**
    - Click on your PostgreSQL database
-   - Go to "Connect" tab
-   - Copy the "Postgres Connection URL"
+   - Go to "variables" tab
+   - Copy the "DATABASE_PUBLIC_URL"
 
 4. **Configure in Setup Script**
    ```bash
@@ -486,7 +485,7 @@ Your application will be available at `http://localhost:3000`
    - Enable 2FA on your account
 
 2. **Generate App Password**
-   - Go to Security > App Passwords
+   - Go to Security > App Passwords or search App passwords
    - Select "Mail" and "Other (Custom name)"
    - Copy the generated password
 
@@ -511,7 +510,7 @@ EMAIL_FROM="noreply@yourdomain.com"
 
 1. **Get Free API Key**
    - Visit [tiny.cloud](https://www.tiny.cloud/auth/signup/)
-   - Create a free account
+   - Create a free account with github
    - Get your API key from dashboard
 
 2. **Configure in Setup Script**
