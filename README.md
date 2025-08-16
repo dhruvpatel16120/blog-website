@@ -947,58 +947,303 @@ import { BlogCard, BlogGrid, Comments, SocialShare } from '@/components/blog'
 
 ## ❓ FAQ
 
-### 🤔 General Questions
+<div align="center">
 
-**Q: What is TechBlog?**
-A: TechBlog is a modern, full-stack blog platform built with Next.js 15, featuring authentication, comments, admin panel, and a beautiful responsive UI.
+![FAQ Banner](https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1200&auto=format&fit=crop&style=border-radius:12px)
 
-**Q: Is TechBlog free to use?**
-A: Yes, TechBlog is open-source and free to use. You can deploy it on your own infrastructure or use hosting platforms like Vercel.
+*Frequently Asked Questions - Get answers to common questions about TechBlog*
 
-**Q: What databases are supported?**
-A: Currently, TechBlog supports PostgreSQL. The application uses Prisma ORM, which makes it easy to add support for other databases.
+</div>
 
-### 🔧 Technical Questions
+---
 
-**Q: How do I set up the database?**
-A: Use the interactive setup script: `npm run setup`. This will guide you through database configuration for Railway, Supabase, Neon, or local PostgreSQL. Follow the [Database Setup](#️-database-setup) guide for manual setup.
+### 🚀 **Getting Started**
 
-**Q: How do I create an admin user?**
-A: Run `npm run create-admin` after setting up your environment variables. This will prompt you to create an admin account.
+<details>
+<summary><strong>🤔 What is TechBlog?</strong></summary>
 
-**Q: How do I configure email and TinyMCE?**
-A: Use `npm run setup` to configure email providers (Gmail, Outlook, custom SMTP) and TinyMCE editor. See the [Quick Setup Guides](#-quick-setup-guides) section for detailed instructions.
+TechBlog is a modern, full-stack blog platform built with Next.js 15, featuring authentication, comments, admin panel, and a beautiful responsive UI. It's designed for developers, content creators, and tech enthusiasts who want a professional blogging solution.
 
-**Q: How do I customize the theme?**
-A: Modify the `tailwind.config.js` file and CSS variables in `src/styles/` to customize colors, fonts, and other design elements.
+</details>
 
-**Q: How do I add new features?**
-A: The codebase is well-structured and documented. You can add new components in `src/components/`, API routes in `src/app/api/`, and pages in `src/app/`.
+<details>
+<summary><strong>💸 Is TechBlog free to use?</strong></summary>
 
-### 🚀 Deployment Questions
+**Yes!** TechBlog is completely open-source and free to use. You can:
+- Deploy it on your own infrastructure
+- Use it for personal or commercial projects
+- Modify and customize as needed
+- Contribute to the project
 
-**Q: Can I deploy to Vercel?**
-A: Yes! TechBlog is optimized for Vercel deployment. Follow the [Deployment](#-deployment) guide for step-by-step instructions.
+</details>
 
-**Q: How do I set up environment variables in production?**
-A: Set all required environment variables in your hosting platform's dashboard. See the [Configuration](#-configuration) section for details.
+<details>
+<summary><strong>🗄️ What databases are supported?</strong></summary>
 
-**Q: How do I handle database migrations in production?**
-A: Use `npx prisma migrate deploy` to run migrations in production. Always backup your database before running migrations.
+Currently, TechBlog supports **PostgreSQL** as the primary database. The application uses Prisma ORM, which makes it easy to add support for other databases in the future.
 
-### 🐛 Troubleshooting
+**Supported PostgreSQL providers:**
+- Railway
+- Supabase
+- Neon
+- Heroku
+- AWS RDS
+- Local PostgreSQL
 
-**Q: I'm getting database connection errors**
-A: Check your `DATABASE_URL` environment variable and ensure your PostgreSQL server is running and accessible.
+</details>
 
-**Q: Authentication is not working**
-A: Verify your `NEXTAUTH_SECRET` and `NEXTAUTH_URL` environment variables are set correctly.
+---
 
-**Q: Images are not loading**
-A: Check your image domains in `next.config.mjs` and ensure your image URLs are accessible.
+### 🔧 **Technical Setup**
 
-**Q: Admin panel is not accessible**
-A: Ensure you've created an admin user using `npm run create-admin` and are logged in with admin credentials.
+<details>
+<summary><strong>🗄️ How do I set up the database?</strong></summary>
+
+**Recommended: Use the interactive setup script**
+```bash
+npm run setup
+```
+
+This will guide you through database configuration for:
+- Railway, Supabase, Neon
+- Local PostgreSQL
+- Custom database providers
+
+**Manual setup:** Follow the [Database Setup](#️-database-setup) guide.
+
+</details>
+
+<details>
+<summary><strong>👑 How do I create an admin user?</strong></summary>
+
+After setting up your environment variables:
+
+```bash
+npm run create-admin
+```
+
+This will prompt you to:
+- Enter admin username
+- Set admin email
+- Create secure password
+- Configure permissions
+
+</details>
+
+<details>
+<summary><strong>📧 How do I configure email and TinyMCE?</strong></summary>
+
+**Use the setup wizard:**
+```bash
+npm run setup
+```
+
+**Email providers supported:**
+- Gmail (with App Password)
+- Outlook/Hotmail
+- Yahoo Mail
+- Custom SMTP servers
+
+**TinyMCE setup:**
+1. Get free API key from [tiny.cloud](https://www.tiny.cloud)
+2. Enter key during setup
+3. Or manually add to `.env`:
+   ```env
+   NEXT_PUBLIC_TINYMCE_API_KEY="your-api-key"
+   ```
+
+</details>
+
+<details>
+<summary><strong>🎨 How do I customize the theme?</strong></summary>
+
+**Customize Tailwind CSS:**
+- Modify `tailwind.config.js` for custom themes
+- Edit CSS variables in `src/styles/`
+- Update color schemes and fonts
+
+**Component customization:**
+- Edit components in `src/components/ui/`
+- Modify layout components
+- Update branding and logos
+
+</details>
+
+---
+
+### 🚀 **Deployment & Hosting**
+
+<details>
+<summary><strong>☁️ Can I deploy to Vercel?</strong></summary>
+
+**Yes, but with limitations!** 
+
+✅ **What works:**
+- Basic blog functionality
+- Static pages and API routes
+- Authentication and user management
+
+⚠️ **What may not work:**
+- File uploads (use external storage)
+- Email services (use external providers)
+- Long-running database operations
+
+**Recommendation:** Use Vercel for development/testing, consider VPS for production.
+
+</details>
+
+<details>
+<summary><strong>🔑 How do I set up environment variables in production?</strong></summary>
+
+**Vercel:**
+1. Go to Project Settings > Environment Variables
+2. Add all variables from your `.env` file
+3. Ensure `NEXTAUTH_URL` matches your domain
+
+**Other platforms:**
+- Set variables in your hosting dashboard
+- Use platform-specific environment management
+- Consider using `.env.production` for production settings
+
+</details>
+
+<details>
+<summary><strong>🔄 How do I handle database migrations in production?</strong></summary>
+
+**Safe migration process:**
+```bash
+# Backup your database first
+# Run migrations
+npx prisma migrate deploy
+
+# Verify changes
+npx prisma studio
+```
+
+**Best practices:**
+- Always backup before migrating
+- Test migrations on staging first
+- Use `--dry-run` to preview changes
+- Monitor migration logs
+
+</details>
+
+---
+
+### 🐛 **Troubleshooting**
+
+<details>
+<summary><strong>❌ Database connection errors</strong></summary>
+
+**Common causes:**
+- Invalid `DATABASE_URL` format
+- Database server not running
+- Firewall blocking connections
+- Incorrect credentials
+
+**Solutions:**
+1. Verify your connection string format
+2. Check database server status
+3. Test connection with `psql` or database client
+4. Verify network access and credentials
+
+</details>
+
+<details>
+<summary><strong>🔐 Authentication not working</strong></summary>
+
+**Check these variables:**
+```env
+NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+**Common issues:**
+- Missing or invalid `NEXTAUTH_SECRET`
+- Incorrect `NEXTAUTH_URL` (must match your domain)
+- Database connection problems
+- Session configuration issues
+
+</details>
+
+<details>
+<summary><strong>🖼️ Images not loading</strong></summary>
+
+**Check image configuration:**
+1. Verify domains in `next.config.mjs`
+2. Ensure image URLs are accessible
+3. Check file permissions and paths
+4. Verify image format support
+
+**For external images:**
+- Add domain to `next.config.mjs`
+- Ensure CORS is properly configured
+- Check image hosting service status
+
+</details>
+
+<details>
+<summary><strong>👑 Admin panel not accessible</strong></summary>
+
+**Verification steps:**
+1. ✅ Created admin user with `npm run create-admin`
+2. ✅ Logged in with admin credentials
+3. ✅ Admin role properly assigned
+4. ✅ No middleware blocking access
+
+**If still having issues:**
+- Check browser console for errors
+- Verify session cookies
+- Check admin route protection
+- Review authentication middleware
+
+</details>
+
+---
+
+### 💡 **Pro Tips**
+
+<details>
+<summary><strong>🚀 Performance optimization</strong></summary>
+
+- Use Next.js Image component for optimized images
+- Implement proper caching strategies
+- Optimize database queries with indexes
+- Use static generation where possible
+- Monitor bundle sizes and optimize imports
+
+</details>
+
+<details>
+<summary><strong>🔒 Security best practices</strong></summary>
+
+- Regularly update dependencies
+- Use strong, unique secrets
+- Implement rate limiting
+- Validate all user inputs
+- Use HTTPS in production
+- Regular security audits
+
+</details>
+
+<details>
+<summary><strong>📱 Mobile optimization</strong></summary>
+
+- Test on various devices
+- Optimize touch interactions
+- Ensure responsive design
+- Test performance on slow networks
+- Validate mobile SEO
+
+</details>
+
+---
+
+<div align="center">
+
+**Still have questions?** [Open an issue](https://github.com/dhruvpatel16120/blog-website-main/issues) or [start a discussion](https://github.com/dhruvpatel16120/blog-website-main/discussions) on GitHub!
+
+</div>
 
 ---
 
@@ -1118,6 +1363,27 @@ SOFTWARE.
 - **No Warranty**: The software is provided "as is" without warranty of any kind
 - **Use at Your Own Risk**: Users are responsible for their own implementation and usage
 - **Third-Party Services**: The project may use third-party services that have their own terms of service
+
+### 🚨 Deployment Platform Limitations
+
+**⚠️ IMPORTANT: Some functionality may not work properly on Vercel and other serverless platforms**
+
+- **File Uploads**: May have issues with serverless functions and temporary storage
+- **Email Services**: SMTP connections may timeout on serverless platforms
+- **Database Operations**: Long-running queries may be interrupted
+- **Real-time Features**: WebSocket connections are not supported on serverless
+
+**✅ Recommended Deployment Options:**
+- **Local Development**: Full functionality guaranteed
+- **VPS/Dedicated Server**: Optimal performance and reliability
+- **Railway/Render**: Better support for Node.js applications
+- **DigitalOcean App Platform**: Good balance of features and reliability
+
+**🔧 Vercel Workarounds:**
+- Use external file storage (AWS S3, Cloudinary)
+- Implement email via external services (SendGrid, Mailgun)
+- Optimize database queries for serverless execution
+- Consider using Vercel's Edge Functions for better performance
 
 ### 🔒 Security Considerations
 
