@@ -337,10 +337,10 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 # Clone the repository
-git clone https://github.com/dhruvpatel16120/blog-website-main.git
+git clone https://github.com/dhruvpatel16120/blog-website.git
 
 # Navigate to the project directory
-cd blog-website-main
+cd blog-website
 ```
 
 #### 2. Install Dependencies
@@ -1010,8 +1010,8 @@ We welcome contributions from the community! Here's how you can help:
 
 1. **Fork the Repository**
    ```bash
-   git clone https://github.com/your-username/blog-website-main.git
-   cd blog-website-main
+   git clone https://github.com/dhruvpatel16120/blog-website.git
+   cd blog-website
    ```
 
 2. **Create a Feature Branch**
@@ -1180,7 +1180,6 @@ SOFTWARE.
 - **GitHub**: [@dhruvpatel16120](https://github.com/dhruvpatel16120)
 - **LinkedIn**: [dhruvpatel16120](https://www.linkedin.com/in/dhruvpatel16120/)
 - **Portfolio**: [dhruvpatelofficial.vercel.app](https://dhruvpatelofficial.vercel.app/)
-- **Email**: [digitaldhruv21@gmail.com](mailto:digitaldhruv21@gmail.com)
 
 ### 🌐 Project Links
 
@@ -1201,6 +1200,6 @@ SOFTWARE.
 <div align="center">
 
 **Made with ❤️ using Next.js, Prisma, and Tailwind CSS**
-**If you find this project helpful, please give it a ⭐ star on GitHub!**
+### If you find this project helpful, please give it a ⭐ star on GitHub! 
 
 </div>  
