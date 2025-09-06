@@ -125,13 +125,13 @@ export default function SocialShare({ title, slug, excerpt = '' }) {
       </div>
 
       {/* Share URL display */}
-      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="mt-4 p-3 rounded-lg bg-[var(--card)] text-[var(--foreground)] border-gray-300 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={shareUrl}
             readOnly
-            className="flex-1 bg-transparent text-sm text-gray-600 dark:text-gray-400 border-none outline-none"
+            className="flex-1 bg-transparent text-sm bg-[var(--card)] text-[var(--foreground)] border-none outline-none"
             aria-label="Share URL"
           />
           <button

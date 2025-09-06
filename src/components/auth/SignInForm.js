@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Button, Input } from '@/components/ui';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import AuthError from './AuthError';
 
@@ -63,7 +64,15 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="relative w-full max-w-md mx-auto">
+      {/* Back Arrow Button - fixed to top left of page */}
+      <Link
+        href="/"
+        className="fixed top-6 left-6 z-50 bg-white dark:bg-gray-800 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+        aria-label="Back to Home"
+      >
+        <ArrowLeftIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+      </Link>
       <Suspense fallback={null}>
         <AuthError />
       </Suspense>

@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { FaTwitter, FaLinkedin, FaGithub, FaEnvelope, FaYoutube, FaDiscord } from 'react-icons/fa'
+import { useTheme } from '@/lib/theme';
 
 const Footer = () => {
+  const { theme } = useTheme(); // Get current theme
   const currentYear = new Date().getFullYear()
 
   // Newsletter removed
@@ -79,7 +81,11 @@ const Footer = () => {
                 <a
                   key={social.name}
                   href={social.href}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-800 hover:bg-blue-600 dark:hover:bg-blue-500 text-gray-300 hover:text-white shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-9 h-9 flex items-center justify-center rounded-full shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500
+                    ${theme === 'dark'
+                      ? 'bg-gray-700 text-white hover:bg-blue-500 hover:text-white'
+                      : 'bg-gray-200 text-gray-800 hover:bg-blue-600 hover:text-white'
+                    }`}
                   aria-label={social.name}
                   target="_blank"
                   rel="noopener noreferrer"

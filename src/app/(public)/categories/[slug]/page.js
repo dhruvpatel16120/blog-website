@@ -154,12 +154,12 @@ export default async function CategoryPage({ params, searchParams }) {
               name="search"
               placeholder="Search within this category..."
               defaultValue={search}
-              className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-[var(--card)] text-[var(--foreground)]"
             />
             <select
               name="sort"
               defaultValue={sort}
-              className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-[var(--card)] text-[var(--foreground)]"
             >
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>

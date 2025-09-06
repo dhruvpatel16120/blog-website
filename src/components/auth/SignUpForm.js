@@ -4,7 +4,8 @@ import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input } from '@/components/ui';
-import { EyeIcon, EyeSlashIcon, UserIcon, GlobeAltIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import AuthError from './AuthError';
 
@@ -97,13 +98,21 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="relative w-full max-w-md mx-auto">
+      {/* Back Arrow Button - fixed to top left of page */}
+      <Link
+        href="/"
+        className="fixed top-6 left-6 z-50 bg-white dark:bg-gray-800 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+        aria-label="Back to Home"
+      >
+        <ArrowLeftIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+      </Link>
       <Suspense fallback={null}>
         <AuthError />
       </Suspense>
       <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 border border-gray-200 dark:border-gray-700">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-3xl font-bold text-white">
             Create Account
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -119,7 +128,6 @@ export default function SignUpForm() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <UserIcon className="h-5 w-5 text-gray-400" />
               </div>
               <Input
                 id="username"
@@ -253,7 +261,7 @@ export default function SignUpForm() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <GlobeAltIcon className="h-5 w-5 text-gray-400" />
+              
               </div>
               <Input
                 id="website"
@@ -274,7 +282,7 @@ export default function SignUpForm() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MapPinIcon className="h-5 w-5 text-gray-400" />
+              
               </div>
               <Input
                 id="location"

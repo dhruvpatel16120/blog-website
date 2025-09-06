@@ -220,7 +220,8 @@ export default async function BlogPage({ searchParams }) {
         </p>
 
         {/* Search and Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6"
+             style={{ background: 'var(--card)' }}>
           <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" method="GET">
             {/* Search */}
             <div className="relative">
@@ -230,7 +231,7 @@ export default async function BlogPage({ searchParams }) {
                 name="search"
                 placeholder="Search posts..."
                 defaultValue={search}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--card)] text-[var(--foreground)]"
               />
             </div>
 
@@ -238,7 +239,7 @@ export default async function BlogPage({ searchParams }) {
             <select
               name="category"
               defaultValue={category}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--card)] text-[var(--foreground)]"
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -252,7 +253,7 @@ export default async function BlogPage({ searchParams }) {
             <select
               name="tag"
               defaultValue={tag}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--card)] text-[var(--foreground)]"
             >
               <option value="">All Tags</option>
               {tags.map((t) => (
@@ -266,7 +267,7 @@ export default async function BlogPage({ searchParams }) {
             <select
               name="sort"
               defaultValue={sort}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--card)] text-[var(--foreground)]"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -422,4 +423,4 @@ export default async function BlogPage({ searchParams }) {
       )}
     </>
   );
-} 
+}

@@ -118,7 +118,7 @@ export default async function Home() {
               <input
                 name="search"
                 placeholder="Search articles, topics, or tags..."
-                className="flex-1 px-4 py-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-md border border-gray-300 dark:border-gray-700 bg-[var(--card)] text-[var(--foreground)]"
               />
               <Button as="button" type="submit" variant="outline">Search</Button>
             </div>
