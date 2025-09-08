@@ -775,6 +775,19 @@ npm start
 npm run analyze
 ```
 
+#### Create build (fix: "Could not find a production build in the '.next' directory")
+
+If you see this error when starting the server, it means the production build hasn't been created yet. Run:
+
+```bash
+npm run build && npm start
+```
+
+Notes:
+- Ensure your environment variables (e.g., `DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`) are set.
+- The build script already runs `prisma generate`. Make sure your database is reachable in production.
+- Re-run `npm run build` after dependency or code changes before `npm start`.
+
 ### 📊 Available Scripts
 
 | Script | Description |
