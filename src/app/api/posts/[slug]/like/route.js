@@ -35,9 +35,30 @@ export async function GET(request, { params }) {
       liked = !!existingLike;
     }
 
+    // Fetch the users who liked this post
+    const likes = await prisma.like.findMany({
+      where: { postId: post.id },
+      orderBy: { createdAt: 'desc' },
+      take: 60,
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatar: true,
+            bio: true,
+          },
+        },
+      },
+    });
+
+    const likedUsers = likes.map((l) => l.user).filter(Boolean);
+
     return NextResponse.json({
       liked,
       likesCount: post._count.likes,
+      likedUsers,
     });
   } catch (error) {
     console.error('Error checking like status:', error);
@@ -118,14 +139,35 @@ export async function POST(request, { params }) {
       liked = true;
     }
 
-    const likesCount = await prisma.like.count({
-      where: { postId: post.id },
-    });
+    const [likesCount, updatedLikes] = await Promise.all([
+      prisma.like.count({
+        where: { postId: post.id },
+      }),
+      prisma.like.findMany({
+        where: { postId: post.id },
+        orderBy: { createdAt: 'desc' },
+        take: 60,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              avatar: true,
+              bio: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const likedUsers = updatedLikes.map((l) => l.user).filter(Boolean);
 
     return NextResponse.json({
       success: true,
       liked,
       likesCount,
+      likedUsers,
     });
   } catch (error) {
     console.error('Error toggling like:', error);
