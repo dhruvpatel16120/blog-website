@@ -3,35 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { Card, CardContent, Button } from "@/components/ui";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Button,
-  Input,
-  Textarea,
-} from "@/components/ui";
-import {
-  UserCircleIcon,
   EnvelopeIcon,
   GlobeAltIcon,
   MapPinIcon,
   CalendarIcon,
-  CameraIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
   ArrowTopRightOnSquareIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 
-export default function ProfilePage() {
+export default function CurrentUserProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [publishedPosts, setPublishedPosts] = useState([]);
 
   const isAuthenticated = status === "authenticated" && session?.user?.id;
 
@@ -42,445 +34,230 @@ export default function ProfilePage() {
   }, [status, router]);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!isAuthenticated) return;
+    if (!isAuthenticated) return;
+
+    const fetchProfileAndPosts = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/me`, { cache: "no-store" });
+        const res = await fetch("/api/me", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
-        setUser(data);
+        const meData = await res.json();
+        setProfile(meData);
+
+        // Fetch their published articles if user
+        if (meData?.username) {
+          const publicRes = await fetch(`/api/users/${encodeURIComponent(meData.username)}`, { cache: "no-store" });
+          if (publicRes.ok) {
+            const publicData = await publicRes.json();
+            setPublishedPosts(publicData.user?.posts || []);
+          }
+        }
       } catch (e) {
         toast.error(e.message || "Error loading profile");
       } finally {
         setLoading(false);
       }
     };
-    fetchUser();
+
+    fetchProfileAndPosts();
   }, [isAuthenticated]);
 
-  if (status === "loading" || (isAuthenticated && loading && !user)) {
+  if (status === "loading" || (isAuthenticated && loading && !profile)) {
     return (
-      <div className="max-w-6xl mx-auto py-12 px-4 flex flex-col items-center justify-center min-h-[50vh]">
+      <div className="max-w-5xl mx-auto py-16 px-4 flex flex-col items-center justify-center min-h-[50vh]">
         <div className="w-10 h-10 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-        <p className="mt-4 text-sm text-[var(--muted-foreground)]">Loading your profile...</p>
+        <p className="mt-4 text-sm text-[var(--muted-foreground)]">Loading public profile...</p>
       </div>
     );
   }
 
   if (!isAuthenticated) return null;
 
+  const isOwner = true; // Viewing own profile on /profile
+  const isAdmin = profile?.type === "admin" || profile?.role === "ADMIN";
+
   return (
-    <div className="max-w-6xl mx-auto py-6 sm:py-10 px-4 sm:px-6 space-y-8">
-      {/* Header section */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--foreground)]">
-          Account Settings
-        </h1>
-        <p className="text-sm text-[var(--muted-foreground)] mt-1">
-          Manage your public author profile, personal preferences, and security.
-        </p>
-      </div>
+    <div className="max-w-5xl mx-auto py-6 sm:py-10 px-4 sm:px-6 space-y-8">
+      {/* Profile Header Hero Card */}
+      <Card className="border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] overflow-hidden shadow-sm">
+        {/* Banner */}
+        <div className="h-32 sm:h-44 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
+          {isAdmin && (
+            <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-xs text-white text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5 border border-white/20">
+              <ShieldCheckIcon className="w-4 h-4 text-amber-300" />
+              <span>Platform Staff</span>
+            </div>
+          )}
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Profile Card Preview */}
-        <div className="lg:col-span-1">
-          <Card className="border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-sm sticky top-24 overflow-hidden">
-            {/* Top decorative gradient band */}
-            <div className="h-24 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
+        {/* Profile Info Row */}
+        <CardContent className="px-6 pb-6 pt-0 relative">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-16 mb-4">
+            {/* Avatar */}
+            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-[var(--card)] bg-[var(--background)] overflow-hidden shadow-md relative shrink-0">
+              <Image
+                src={profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(profile?.username || profile?.fullName || "user")}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+                alt={profile?.fullName || profile?.username || "Avatar"}
+                width={128}
+                height={128}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
+            </div>
 
-            <CardContent className="pt-0 -mt-12 px-6 pb-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-24 h-24 rounded-full border-4 border-[var(--card)] bg-[var(--background)] overflow-hidden shadow-md relative">
-                  {user?.avatar ? (
-                    <Image
-                      src={user.avatar}
-                      alt="User avatar"
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[var(--muted)] text-[var(--foreground)] text-2xl font-bold">
-                      {(user?.fullName || user?.username || "U").charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+            {/* Action buttons */}
+            <div className="flex items-center gap-2.5">
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs cursor-pointer">
+                    <ShieldCheckIcon className="w-4 h-4 text-[var(--primary)]" />
+                    <span>Admin Dashboard</span>
+                  </Button>
+                </Link>
+              )}
 
-                <h2 className="mt-3 text-lg font-bold text-[var(--foreground)]">
-                  {user?.fullName || user?.username}
-                </h2>
-                <p className="text-xs font-mono text-[var(--muted-foreground)]">
-                  @{user?.username}
-                </p>
+              {isOwner && (
+                <Link href="/profile/settings">
+                  <Button variant="primary" size="sm" className="gap-1.5 text-xs cursor-pointer font-medium">
+                    <Cog6ToothIcon className="w-4 h-4" />
+                    <span>Edit Profile &amp; Settings</span>
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
 
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
-                  {user?.role || "MEMBER"}
-                </div>
+          {/* User Names & Bio */}
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">
+                  {profile?.fullName || profile?.username}
+                </h1>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
+                  {profile?.role || "MEMBER"}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-mono text-[var(--muted-foreground)]">
+                @{profile?.username}
+              </p>
+            </div>
+
+            {profile?.bio && (
+              <p className="text-xs sm:text-sm text-[var(--foreground)]/90 leading-relaxed max-w-2xl">
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Metadata Pills */}
+            <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-[var(--muted-foreground)] pt-1">
+              <div className="flex items-center gap-1.5">
+                <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                <span>{profile?.email}</span>
               </div>
 
-              {/* Bio & Links */}
-              <div className="mt-6 pt-5 border-t border-[var(--border)] space-y-3 text-sm">
-                {user?.bio ? (
-                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed italic">
-                    &ldquo;{user.bio}&rdquo;
-                  </p>
-                ) : (
-                  <p className="text-xs text-[var(--muted-foreground)] italic">
-                    No bio added yet. Add one in the edit form!
-                  </p>
-                )}
-
-                <div className="pt-2 space-y-2 text-xs text-[var(--muted-foreground)]">
-                  <div className="flex items-center gap-2">
-                    <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                    <span className="truncate">{user?.email}</span>
-                  </div>
-
-                  {user?.location && (
-                    <div className="flex items-center gap-2">
-                      <MapPinIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                      <span>{user.location}</span>
-                    </div>
-                  )}
-
-                  {user?.website && (
-                    <div className="flex items-center gap-2">
-                      <GlobeAltIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                      <a
-                        href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[var(--primary)] hover:underline inline-flex items-center gap-1 truncate"
-                      >
-                        <span>{user.website.replace(/^https?:\/\//, "")}</span>
-                        <ArrowTopRightOnSquareIcon className="w-3 h-3" />
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                    <span>
-                      Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "Recently"}
-                    </span>
-                  </div>
+              {profile?.location && (
+                <div className="flex items-center gap-1.5">
+                  <MapPinIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                  <span>{profile.location}</span>
                 </div>
+              )}
 
-                {/* Stats Grid */}
-                {user?.stats && (
-                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[var(--border)]">
-                    <StatItem label="Articles" value={user.stats.postCount} />
-                    <StatItem label="Comments" value={user.stats.commentCount} />
-                    <StatItem label="Likes" value={user.stats.likeCount} />
-                  </div>
-                )}
+              {profile?.website && (
+                <div className="flex items-center gap-1.5">
+                  <GlobeAltIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                  <a
+                    href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[var(--primary)] hover:underline inline-flex items-center gap-0.5"
+                  >
+                    <span>{profile.website.replace(/^https?:\/\//, "")}</span>
+                    <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5">
+                <CalendarIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                <span>
+                  Member since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "Recently"}
+                </span>
               </div>
-            </CardContent>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[var(--border)] max-w-md">
+              <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
+                <div className="text-lg font-bold text-[var(--foreground)]">{profile?.stats?.postCount ?? 0}</div>
+                <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Articles</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
+                <div className="text-lg font-bold text-[var(--foreground)]">{profile?.stats?.commentCount ?? 0}</div>
+                <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Comments</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
+                <div className="text-lg font-bold text-[var(--foreground)]">{profile?.stats?.likeCount ?? 0}</div>
+                <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Likes Given</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Published Articles Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2">
+            <DocumentTextIcon className="w-5 h-5 text-[var(--primary)]" />
+            <span>Published Articles ({publishedPosts.length})</span>
+          </h2>
+
+          <Link href="/profile/settings">
+            <span className="text-xs text-[var(--primary)] hover:underline font-medium">
+              View Activity &amp; Liked Posts &rarr;
+            </span>
+          </Link>
+        </div>
+
+        {publishedPosts.length === 0 ? (
+          <Card className="border-[var(--border)] bg-[var(--card)] p-8 text-center space-y-3">
+            <DocumentTextIcon className="w-12 h-12 text-[var(--muted-foreground)]/40 mx-auto" />
+            <p className="text-sm font-semibold text-[var(--foreground)]">No published articles yet</p>
+            <p className="text-xs text-[var(--muted-foreground)] max-w-md mx-auto">
+              Articles and tutorials published under your account will be displayed right here on your public profile.
+            </p>
           </Card>
-        </div>
-
-        {/* Edit Form */}
-        <div className="lg:col-span-2 space-y-8">
-          <EditProfileCard user={user} onUpdated={setUser} />
-          <DangerZoneCard />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatItem({ label, value }) {
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/50 p-2.5 text-center">
-      <div className="text-base font-bold text-[var(--foreground)]">{value ?? 0}</div>
-      <div className="text-[10px] font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
-        {label}
-      </div>
-    </div>
-  );
-}
-
-function EditProfileCard({ user, onUpdated }) {
-  const [form, setForm] = useState({
-    fullName: "",
-    username: "",
-    bio: "",
-    website: "",
-    location: "",
-    avatar: "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setForm({
-        fullName: user.fullName || "",
-        username: user.username || "",
-        bio: user.bio || "",
-        website: user.website || "",
-        location: user.location || "",
-        avatar: user.avatar || "",
-      });
-    }
-  }, [user]);
-
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
-  const onAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image file size must be less than 5MB");
-      return;
-    }
-
-    const data = new FormData();
-    data.append("file", file);
-    data.append("category", "avatar");
-
-    try {
-      setUploadingAvatar(true);
-      const res = await fetch("/api/upload", { method: "POST", body: data });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Upload failed");
-      setForm((f) => ({ ...f, avatar: json.url }));
-      toast.success("Avatar uploaded! Remember to click Save.");
-    } catch (e) {
-      toast.error(e.message || "Failed to upload avatar");
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setSaving(true);
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to save profile");
-
-      onUpdated((prev) => ({
-        ...prev,
-        ...json.user,
-      }));
-      toast.success("Profile updated successfully!");
-    } catch (e) {
-      toast.error(e.message || "Error updating profile");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card className="border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-sm">
-      <CardHeader className="border-b border-[var(--border)] pb-4">
-        <CardTitle className="text-lg font-bold text-[var(--foreground)]">
-          Profile Details
-        </CardTitle>
-        <CardDescription className="text-xs text-[var(--muted-foreground)]">
-          Update your public persona and social presence on TechBlog.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <form onSubmit={onSubmit} className="space-y-6">
-          {/* Avatar Upload */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">
-              Profile Photo
-            </label>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full border-2 border-[var(--border)] overflow-hidden relative bg-[var(--muted)] shrink-0">
-                {form.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={form.avatar} alt="Avatar preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-lg font-bold text-[var(--muted-foreground)]">
-                    {(form.fullName || "U").charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--muted)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer shadow-xs">
-                  <CameraIcon className="w-4 h-4 text-[var(--primary)]" />
-                  <span>{uploadingAvatar ? "Uploading..." : "Change avatar"}</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={onAvatarChange}
-                    disabled={uploadingAvatar}
-                  />
-                </label>
-                <p className="text-[11px] text-[var(--muted-foreground)] mt-1">
-                  JPG, PNG or GIF up to 5MB.
-                </p>
-              </div>
-            </div>
-          </div>
-
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Full Name
-              </label>
-              <Input
-                id="fullName"
-                name="fullName"
-                value={form.fullName}
-                onChange={onChange}
-                placeholder="Your full name"
-                required
-                className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Username
-              </label>
-              <Input
-                id="username"
-                name="username"
-                value={form.username}
-                onChange={onChange}
-                placeholder="unique_username"
-                required
-                className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label htmlFor="bio" className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Bio
-              </label>
-              <Textarea
-                id="bio"
-                name="bio"
-                value={form.bio}
-                onChange={onChange}
-                rows={3}
-                placeholder="Share a short bio with the tech community..."
-                className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="website" className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Website
-              </label>
-              <Input
-                id="website"
-                name="website"
-                value={form.website}
-                onChange={onChange}
-                placeholder="https://yourportfolio.dev"
-                type="url"
-                className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                Location
-              </label>
-              <Input
-                id="location"
-                name="location"
-                value={form.location}
-                onChange={onChange}
-                placeholder="City, Country"
-                className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
+            {publishedPosts.map((post) => (
+              <Card key={post.id} className="border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/50 transition-all shadow-xs flex flex-col justify-between">
+                <CardContent className="p-5 space-y-2.5">
+                  {post.categories?.[0]?.category && (
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)]">
+                      {post.categories[0].category.name}
+                    </span>
+                  )}
+                  <Link href={`/blog/${post.slug}`}>
+                    <h3 className="text-base font-bold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors line-clamp-2">
+                      {post.title}
+                    </h3>
+                  </Link>
+                  {post.excerpt && (
+                    <p className="text-xs text-[var(--muted-foreground)] line-clamp-2">
+                      {post.excerpt}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] pt-2 border-t border-[var(--border)]">
+                    <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : "Recent"}</span>
+                    {post.readTime && <span>{post.readTime} min read</span>}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-
-          <div className="flex justify-end pt-3 border-t border-[var(--border)]">
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              className="cursor-pointer px-6 font-medium"
-            >
-              {saving ? "Saving Changes..." : "Save Profile"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-
-function DangerZoneCard() {
-  const [confirm, setConfirm] = useState("");
-  const [busy, setBusy] = useState(false);
-  const router = useRouter();
-
-  const canDelete = confirm.trim().toLowerCase() === "delete my account";
-
-  const onDelete = async () => {
-    if (!canDelete) return;
-    try {
-      setBusy(true);
-      const res = await fetch(`/api/profile`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to delete account");
-      toast.success("Your account has been deleted");
-      router.push("/");
-      router.refresh();
-    } catch (e) {
-      toast.error(e.message || "Failed to delete account");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card className="border-rose-500/30 bg-rose-500/5 text-[var(--foreground)] shadow-xs">
-      <CardHeader className="border-b border-rose-500/20 pb-4">
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-          <ExclamationTriangleIcon className="w-5 h-5" />
-          <CardTitle className="text-base font-bold">Danger Zone</CardTitle>
-        </div>
-        <CardDescription className="text-xs text-[var(--muted-foreground)]">
-          Irreversible account deactivation and data detachment.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4 space-y-4">
-        <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-          Deleting your account will permanently remove your login credentials, anonymize your author identity, and revoke access. To confirm, please type <strong className="text-[var(--foreground)] font-mono">DELETE MY ACCOUNT</strong> below:
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="DELETE MY ACCOUNT"
-            className="flex-1 bg-[var(--background)] border-rose-500/30 focus:border-rose-500 text-xs font-mono"
-          />
-          <Button
-            type="button"
-            disabled={!canDelete || busy}
-            onClick={onDelete}
-            className="bg-rose-600 hover:bg-rose-700 text-white border-rose-600 disabled:opacity-40 cursor-pointer text-xs"
-          >
-            <TrashIcon className="w-4 h-4 mr-1.5" />
-            {busy ? "Deleting..." : "Permanently Delete"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </div>
   );
 }

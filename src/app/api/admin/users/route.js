@@ -94,6 +94,7 @@ export async function GET(request) {
 
     const data = users.map((user) => ({
       ...user,
+      avatar: user.avatar || generateCustomAvatarUrl(user.fullName, user.username),
       postCount: user._count.posts,
       commentCount: user._count.comments,
       _count: undefined,

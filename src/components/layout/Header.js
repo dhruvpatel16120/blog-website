@@ -16,7 +16,8 @@ import {
   EnvelopeIcon,
   TagIcon,
   UserIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 import { Button, Dropdown } from '@/components/ui'
 import { useAuth } from '@/lib/auth-context'
@@ -45,7 +46,8 @@ const Header = ({ scrolled = false }) => {
   ]
 
   const userMenuItems = [
-    { label: 'Profile', icon: <FaUserCircle />, onClick: () => router.push('/profile') },
+    { label: 'Public Profile', icon: <FaUserCircle />, onClick: () => router.push('/profile') },
+    { label: 'Profile Settings', icon: <Cog6ToothIcon className="w-4 h-4" />, onClick: () => router.push('/profile/settings') },
     ...(user?.role === 'ADMIN' || user?.type === 'admin'
       ? [{ label: 'Admin Dashboard', icon: <UserIcon className="w-4 h-4" />, onClick: () => router.push('/admin') }]
       : []),
@@ -53,18 +55,20 @@ const Header = ({ scrolled = false }) => {
   ]
 
   const avatarContent = () => {
-    const initial = (user?.fullName || user?.username || user?.email || 'U').charAt(0).toUpperCase()
-    if (user?.avatar) {
+    const avatarUrl = user?.avatar || (user ? `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.username || user.fullName || "user")}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf` : null)
+    if (avatarUrl) {
       return (
         <Image
-          src={user.avatar}
+          src={avatarUrl}
           alt="avatar"
           width={36}
           height={36}
-          className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+          className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-xs"
+          unoptimized
         />
       )
     }
+    const initial = (user?.fullName || user?.username || user?.email || 'U').charAt(0).toUpperCase()
     return (
       <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700">
         <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{initial}</span>
@@ -312,7 +316,13 @@ const Header = ({ scrolled = false }) => {
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--muted)] text-sm text-[var(--foreground)]"
                         onClick={() => { setIsMenuOpen(false); router.push('/profile'); }}
                       >
-                        <span className="inline-flex items-center gap-2"><FaUserCircle /> Profile</span>
+                        <span className="inline-flex items-center gap-2"><FaUserCircle /> Public Profile</span>
+                      </button>
+                      <button
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--muted)] text-sm text-[var(--foreground)]"
+                        onClick={() => { setIsMenuOpen(false); router.push('/profile/settings'); }}
+                      >
+                        <span className="inline-flex items-center gap-2"><Cog6ToothIcon className="w-4 h-4" /> Profile Settings</span>
                       </button>
                       {(user?.role === 'ADMIN' || user?.type === 'admin') && (
                         <button

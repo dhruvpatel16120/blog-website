@@ -15,18 +15,24 @@ export async function POST(request) {
       );
     }
 
-    const { username, password } = await request.json();
+    const { email, username, password } = await request.json();
+    const identifier = (email || username || '').trim().toLowerCase();
 
-    if (!username || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: 'Admin email and password are required' },
         { status: 400 }
       );
     }
 
-    // Find admin by username
-    const admin = await prisma.admin.findUnique({
-      where: { username: username.trim() },
+    // Find admin by email or username
+    const admin = await prisma.admin.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier },
+        ],
+      },
     });
 
     if (!admin || !admin.password || !admin.isActive) {

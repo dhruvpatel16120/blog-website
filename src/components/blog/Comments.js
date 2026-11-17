@@ -278,21 +278,14 @@ const Comments = ({ postId, postSlug }) => {
       <div className={`border-l-2 border-gray-200 pl-4 mb-4 ${isReply ? 'ml-8' : ''}`}>
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
-            {comment.author.avatar ? (
-              <Image
-                src={comment.author.avatar}
-                alt={comment.author.fullName}
-                width={40}
-                height={40}
-                className="rounded-full"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-semibold">
-                  {comment.author.fullName?.charAt(0) || comment.author.username?.charAt(0)}
-                </span>
-              </div>
-            )}
+            <Image
+              src={comment.author.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(comment.author.username || comment.author.fullName || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+              alt={comment.author.fullName || comment.author.username || 'Author'}
+              width={40}
+              height={40}
+              className="rounded-full object-cover"
+              unoptimized
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">

@@ -482,31 +482,28 @@ export default function AdminUsers() {
                           
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
                             <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Profile</p>
-                              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {user.fullName}
-                              </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">
-                                @{user.username}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {user.email}
-                              </p>
-                                                             {user.avatar && (
-                               <Image
-                                 src={user.avatar} 
-                                 alt={user.fullName}
-                                 width={48}
-                                 height={48}
-                                 className="w-12 h-12 rounded-full mt-2"
-                                 unoptimized
-                                 onError={(e) => {
-                                   // Hide the image if it fails to load
-                                   e.target.style.display = 'none';
-                                 }}
-                               />
-                             )}
-                            </div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Profile</p>
+                              <div className="flex items-center gap-3">
+                                <Image
+                                  src={user.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.username || user.fullName || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`} 
+                                  alt={user.fullName || user.username}
+                                  width={48}
+                                  height={48}
+                                  className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-sm shrink-0"
+                                  unoptimized
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                                    {user.fullName}
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    @{user.username}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {user.email}
+                                  </p>
+                                </div>
+                              </div></div>
                             
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Activity</p>

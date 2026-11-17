@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui';
 export default function EditUserPage() {
@@ -97,6 +98,22 @@ export default function EditUserPage() {
     <AdminLayout title={`Edit User`} adminSession={adminSession}>
       <form onSubmit={onSave} className="max-w-3xl">
         {error && <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+        
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <Image
+            src={form.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(form.username || form.fullName || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+            alt={form.fullName || form.username}
+            width={64}
+            height={64}
+            className="w-16 h-16 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-sm shrink-0"
+            unoptimized
+          />
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-base">{form.fullName || form.username}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">@{form.username} • {form.email}</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Username</label>

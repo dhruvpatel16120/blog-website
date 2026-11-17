@@ -74,15 +74,16 @@ export default function SignUpForm() {
     setLoading(true);
 
     try {
+      const email = formData.email.trim().toLowerCase();
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          fullName: formData.fullName,
+          username: formData.username.trim().toLowerCase(),
+          email,
+          fullName: formData.fullName.trim(),
           password: formData.password,
           bio: formData.bio,
           website: formData.website,
@@ -93,13 +94,14 @@ export default function SignUpForm() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(data.message || 'Account created successfully!');
-        router.push('/auth/signin');
+        toast.success('Account created! Please verify your email to continue.');
+        // Requirement 3: When signup is completed, redirect to verify email page
+        router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
       } else {
         toast.error(data.error || 'Registration failed');
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -134,7 +136,7 @@ export default function SignUpForm() {
               onChange={handleChange}
               required
               placeholder="Alex Johnson"
-              className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+              className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
             />
           </div>
 
@@ -146,22 +148,18 @@ export default function SignUpForm() {
             >
               Username *
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-                <UserIcon className="h-5 w-5" />
-              </div>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                placeholder="alex_dev"
-                minLength={3}
-                className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
+            <Input
+              id="username"
+              name="username"
+              type="text"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              placeholder="alex_dev"
+              minLength={3}
+              leftIcon={<UserIcon className="w-5 h-5" />}
+              className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
           </div>
         </div>
 
@@ -173,21 +171,17 @@ export default function SignUpForm() {
           >
             Email Address *
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-              <EnvelopeIcon className="h-5 w-5" />
-            </div>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="alex@example.com"
-              className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-            />
-          </div>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="alex@example.com"
+            leftIcon={<EnvelopeIcon className="w-5 h-5" />}
+            className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+          />
         </div>
 
         {/* Passwords */}
@@ -199,34 +193,32 @@ export default function SignUpForm() {
             >
               Password *
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-                <LockClosedIcon className="h-5 w-5" />
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleChange}
-                required
-                placeholder="Min. 8 characters"
-                minLength={8}
-                className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={handleChange}
+              required
+              placeholder="Min. 8 characters"
+              minLength={8}
+              leftIcon={<LockClosedIcon className="w-5 h-5" />}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
+              className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
           </div>
 
           <div>
@@ -236,33 +228,31 @@ export default function SignUpForm() {
             >
               Confirm Password *
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-                <LockClosedIcon className="h-5 w-5" />
-              </div>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                placeholder="Re-enter password"
-                className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-              >
-                {showConfirmPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              placeholder="Re-enter password"
+              leftIcon={<LockClosedIcon className="w-5 h-5" />}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              }
+              className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
           </div>
         </div>
 
@@ -281,7 +271,7 @@ export default function SignUpForm() {
             onChange={handleChange}
             rows={2}
             placeholder="A short note about your interests and work..."
-            className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
           />
         </div>
 
@@ -294,20 +284,16 @@ export default function SignUpForm() {
             >
               Website <span className="text-xs text-[var(--muted-foreground)]">(Optional)</span>
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-                <GlobeAltIcon className="h-5 w-5" />
-              </div>
-              <Input
-                id="website"
-                name="website"
-                type="url"
-                value={formData.website}
-                onChange={handleChange}
-                placeholder="https://example.com"
-                className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
+            <Input
+              id="website"
+              name="website"
+              type="url"
+              value={formData.website}
+              onChange={handleChange}
+              placeholder="https://example.com"
+              leftIcon={<GlobeAltIcon className="w-5 h-5" />}
+              className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
           </div>
 
           <div>
@@ -317,20 +303,16 @@ export default function SignUpForm() {
             >
               Location <span className="text-xs text-[var(--muted-foreground)]">(Optional)</span>
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-                <MapPinIcon className="h-5 w-5" />
-              </div>
-              <Input
-                id="location"
-                name="location"
-                type="text"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="San Francisco, CA"
-                className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              />
-            </div>
+            <Input
+              id="location"
+              name="location"
+              type="text"
+              value={formData.location}
+              onChange={handleChange}
+              placeholder="San Francisco, CA"
+              leftIcon={<MapPinIcon className="w-5 h-5" />}
+              className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
           </div>
         </div>
 

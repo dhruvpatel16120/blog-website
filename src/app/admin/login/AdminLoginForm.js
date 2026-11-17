@@ -9,14 +9,14 @@ import {
   EyeSlashIcon, 
   ShieldCheckIcon,
   LockClosedIcon,
-  UserIcon
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import AuthLayout from '@/components/auth/AuthLayout';
 
 export default function AdminLoginForm() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -69,7 +69,7 @@ export default function AdminLoginForm() {
     try {
       const result = await signIn('admin-credentials', {
         redirect: false,
-        username: formData.username.trim(),
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         callbackUrl: '/admin',
       });
@@ -95,31 +95,27 @@ export default function AdminLoginForm() {
       badge="Admin Security Guard"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Username */}
+        {/* Email Field (Requirement 2: Use email for admin auth) */}
         <div>
           <label
-            htmlFor="username"
+            htmlFor="email"
             className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
           >
-            Admin Username
+            Admin Email Address
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-              <UserIcon className="h-5 w-5" />
-            </div>
-            <Input
-              id="username"
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              placeholder="admin_root"
-              className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              disabled={loading}
-              autoFocus
-            />
-          </div>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="admin@techblog.com"
+            leftIcon={<EnvelopeIcon className="w-5 h-5" />}
+            className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            disabled={loading}
+            autoFocus
+          />
         </div>
 
         {/* Password */}
@@ -130,29 +126,28 @@ export default function AdminLoginForm() {
           >
             Master Password
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-              <LockClosedIcon className="h-5 w-5" />
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-              disabled={loading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-            >
-              {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-            </button>
-          </div>
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={handleChange}
+            required
+            placeholder="••••••••"
+            leftIcon={<LockClosedIcon className="w-5 h-5" />}
+            rightElement={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
+            }
+            className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            disabled={loading}
+          />
         </div>
 
         {/* Security Notice */}

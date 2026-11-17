@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 import emailService from '@/lib/email-service';
 import { rateLimitCache } from '@/lib/cache';
+import { generateAvatarUrl } from '@/lib/utils';
 
 export async function POST(request) {
   try {
@@ -90,6 +91,7 @@ export async function POST(request) {
         email: cleanEmail,
         fullName: cleanFullName,
         password: hashedPassword,
+        avatar: generateAvatarUrl(cleanFullName, cleanUsername),
         bio: (bio || '').trim(),
         website: (website || '').trim(),
         location: (location || '').trim(),

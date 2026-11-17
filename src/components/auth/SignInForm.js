@@ -31,21 +31,29 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
+      const email = formData.email.trim().toLowerCase();
+
       // If someone inputs a raw username without @, gently guide them
-      if (formData.email && !formData.email.includes('@')) {
-        toast.error('Please enter a valid email. Administrators log in at /admin/login');
+      if (email && !email.includes('@')) {
+        toast.error('Please enter a valid email address.');
         setLoading(false);
         return;
       }
 
       const result = await signIn('user-credentials', {
-        email: formData.email,
+        email,
         password: formData.password,
         redirect: false,
       });
 
       if (result?.error) {
-        toast.error('Invalid email or password');
+        if (result.error.includes('EMAIL_NOT_VERIFIED')) {
+          toast.error('Your email is not verified yet. Please verify your email before signing in.');
+          router.push(`/auth/verify?email=${encodeURIComponent(email)}&unverified=true`);
+          return;
+        }
+
+        toast.error('Invalid email or password.');
       } else {
         toast.success('Welcome back!');
         const urlParams = new URLSearchParams(window.location.search);
@@ -82,21 +90,17 @@ export default function SignInForm() {
           >
             Email address
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-              <EnvelopeIcon className="h-5 w-5" />
-            </div>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="you@example.com"
-              className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-            />
-          </div>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="you@example.com"
+            leftIcon={<EnvelopeIcon className="w-5 h-5" />}
+            className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+          />
         </div>
 
         <div>
@@ -114,33 +118,31 @@ export default function SignInForm() {
               Forgot password?
             </Link>
           </div>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
-              <LockClosedIcon className="h-5 w-5" />
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? (
-                <EyeSlashIcon className="h-5 w-5" />
-              ) : (
-                <EyeIcon className="h-5 w-5" />
-              )}
-            </button>
-          </div>
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={handleChange}
+            required
+            placeholder="••••••••"
+            leftIcon={<LockClosedIcon className="w-5 h-5" />}
+            rightElement={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="w-5 h-5" />
+                ) : (
+                  <EyeIcon className="w-5 h-5" />
+                )}
+              </button>
+            }
+            className="bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+          />
         </div>
 
         <Button

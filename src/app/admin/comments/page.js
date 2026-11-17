@@ -327,21 +327,14 @@ export default function CommentsPage() {
                               <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Author</p>
                               <div className="flex items-center gap-3">
                                 <div className="flex-shrink-0">
-                                  {comment.author.avatar ? (
-                                    <Image
-                                      src={comment.author.avatar}
-                                      alt={comment.author.fullName}
-                                      width={40}
-                                      height={40}
-                                      className="rounded-full"
-                                    />
-                                  ) : (
-                                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                                      <span className="text-gray-600 font-semibold">
-                                        {comment.author.fullName?.charAt(0) || comment.author.username?.charAt(0)}
-                                      </span>
-                                    </div>
-                                  )}
+                                  <Image
+                                    src={comment.author.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(comment.author.username || comment.author.fullName || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+                                    alt={comment.author.fullName || comment.author.username || 'Author'}
+                                    width={40}
+                                    height={40}
+                                    className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-xs"
+                                    unoptimized
+                                  />
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -491,21 +484,14 @@ export default function CommentsPage() {
                   Author
                 </p>
                 <div className="flex items-center gap-3">
-                  {selectedComment.author.avatar ? (
-                    <Image
-                      src={selectedComment.author.avatar}
-                      alt={selectedComment.author.fullName}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                      <span className="text-gray-600 font-semibold">
-                        {selectedComment.author.fullName?.charAt(0) || selectedComment.author.username?.charAt(0)}
-                      </span>
-                    </div>
-                  )}
+                  <Image
+                    src={selectedComment.author.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(selectedComment.author.username || selectedComment.author.fullName || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+                    alt={selectedComment.author.fullName || selectedComment.author.username || 'Author'}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-xs"
+                    unoptimized
+                  />
                   <div>
                     <p className="text-sm text-gray-900 dark:text-white">
                       {selectedComment.author.fullName || selectedComment.author.username}
