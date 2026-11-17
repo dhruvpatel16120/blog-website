@@ -2,71 +2,197 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { Button, Input } from '@/components/ui';
+import { LockClosedIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = useMemo(() => searchParams.get('token') || '', [searchParams]);
+
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  if (!token) {
+    return (
+      <AuthLayout
+        title="Invalid Link"
+        subtitle="This password reset link is missing a verification token."
+        badge="Security Error"
+      >
+        <div className="text-center py-4 space-y-4">
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Please request a new reset link to proceed with changing your password.
+          </p>
+          <Link href="/auth/forgot-password">
+            <Button variant="primary" className="w-full">
+              Request New Link
+            </Button>
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (password.length < 8) return setMessage('Password must be at least 8 characters.');
-    if (password !== confirm) return setMessage('Passwords do not match.');
+
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (password !== confirm) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+
     setSubmitting(true);
-    setMessage('');
+
     try {
       const res = await fetch('/api/auth/reset/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
       });
+
       const data = await res.json();
+
       if (res.ok) {
-        setMessage('Password updated. Redirecting to sign in...');
-        setTimeout(() => router.push('/auth/signin'), 1500);
+        setSuccess(true);
+        toast.success('Password updated successfully!');
+        setTimeout(() => router.push('/auth/signin'), 2000);
       } else {
-        setMessage(data.error || 'Unable to reset password.');
+        toast.error(data.error || 'Unable to reset password.');
       }
     } catch {
-      setMessage('Something went wrong.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (success) {
+    return (
+      <AuthLayout
+        title="Password Updated"
+        subtitle="Your password has been changed successfully."
+        badge="Success"
+      >
+        <div className="text-center py-4 space-y-4">
+          <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            <CheckCircleIcon className="h-8 w-8" />
+          </div>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Redirecting you to the sign in page in a moment...
+          </p>
+          <Link href="/auth/signin">
+            <Button variant="primary" className="w-full">
+              Sign In Now
+            </Button>
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
-      <form onSubmit={onSubmit} className="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Reset your password</h1>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="New password"
-          required
-          className="w-full mb-3 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <input
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Confirm new password"
-          required
-          className="w-full mb-4 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <button
+    <AuthLayout
+      title="Create new password"
+      subtitle="Choose a secure password that is at least 8 characters long."
+      badge="Password Reset"
+    >
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+          >
+            New Password
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+              <LockClosedIcon className="h-5 w-5" />
+            </div>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={8}
+              className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+            >
+              {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="confirm"
+            className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+          >
+            Confirm New Password
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+              <LockClosedIcon className="h-5 w-5" />
+            </div>
+            <Input
+              id="confirm"
+              name="confirm"
+              type={showConfirm ? 'text' : 'password'}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={8}
+              className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+            >
+              {showConfirm ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        <Button
           type="submit"
+          variant="primary"
+          className="w-full py-2.5 font-medium transition-transform active:scale-[0.99] cursor-pointer"
           disabled={submitting}
-          className="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded"
         >
-          {submitting ? 'Updating...' : 'Update password'}
-        </button>
-        {message && <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">{message}</p>}
+          {submitting ? 'Updating Password...' : 'Save New Password'}
+        </Button>
       </form>
-    </div>
+
+      <div className="mt-6 pt-5 border-t border-[var(--border)] text-center text-sm text-[var(--muted-foreground)]">
+        Remembered your old password?{' '}
+        <Link
+          href="/auth/signin"
+          className="font-semibold text-[var(--primary)] hover:underline"
+        >
+          Back to sign in
+        </Link>
+      </div>
+    </AuthLayout>
   );
 }

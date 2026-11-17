@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-// Legacy cookie guard removed. Use NextAuth instead; keep compatibility header no-op.
+import { rateLimitCache } from '@/lib/cache';
 
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous';
+    const rateLimitKey = `admin_login:${ip}`;
+    const attempts = rateLimitCache.get(rateLimitKey) || 0;
+    if (attempts >= 10) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please wait before retrying.' },
+        { status: 429 }
+      );
+    }
+
     const { username, password } = await request.json();
 
     if (!username || !password) {
@@ -15,9 +25,12 @@ export async function POST(request) {
     }
 
     // Find admin by username
-    const admin = await prisma.admin.findUnique({ where: { username } });
+    const admin = await prisma.admin.findUnique({
+      where: { username: username.trim() },
+    });
 
     if (!admin || !admin.password || !admin.isActive) {
+      rateLimitCache.set(rateLimitKey, attempts + 1, 300000);
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -27,7 +40,7 @@ export async function POST(request) {
     // Check if account is locked
     if (admin.lockedUntil && admin.lockedUntil > new Date()) {
       return NextResponse.json(
-        { error: 'Account is temporarily locked' },
+        { error: 'Account is temporarily locked due to excessive failed attempts.' },
         { status: 423 }
       );
     }
@@ -36,23 +49,25 @@ export async function POST(request) {
     const isPasswordValid = await bcrypt.compare(password, admin.password);
 
     if (!isPasswordValid) {
-      // Increment login attempts
-      const newAttempts = admin.loginAttempts + 1;
+      const newAttempts = (admin.loginAttempts || 0) + 1;
       const updateData = { loginAttempts: newAttempts };
       if (newAttempts >= 5) {
         updateData.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
       }
       await prisma.admin.update({ where: { id: admin.id }, data: updateData });
+      rateLimitCache.set(rateLimitKey, attempts + 1, 300000);
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     // Reset login attempts on successful login
     await prisma.admin.update({
       where: { id: admin.id },
-      data: { lastLogin: new Date(), loginAttempts: 0, lockedUntil: null }
+      data: { lastLogin: new Date(), loginAttempts: 0, lockedUntil: null },
     });
+    rateLimitCache.delete(rateLimitKey);
 
-    const res = NextResponse.json({
+    return NextResponse.json({
+      success: true,
       admin: {
         id: admin.id,
         email: admin.email,
@@ -60,15 +75,13 @@ export async function POST(request) {
         fullName: admin.fullName,
         avatar: admin.avatar,
         role: admin.role,
-        type: 'admin'
-      }
+        type: 'admin',
+      },
     });
-
-    // No legacy cookie; NextAuth session is the source of truth.
-
-    return res;
   } catch (error) {
-    console.error('Admin signin error:', error);
+    console.error('Admin signin API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const dynamic = 'force-dynamic';

@@ -3,11 +3,19 @@
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button, Input } from '@/components/ui';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Button, Input, Textarea } from '@/components/ui';
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  UserIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
+  GlobeAltIcon,
+  MapPinIcon,
+} from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import AuthError from './AuthError';
+import AuthLayout from './AuthLayout';
 
 export default function SignUpForm() {
   const [formData, setFormData] = useState({
@@ -58,7 +66,7 @@ export default function SignUpForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -85,7 +93,7 @@ export default function SignUpForm() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Account created successfully! Please sign in.');
+        toast.success(data.message || 'Account created successfully!');
         router.push('/auth/signin');
       } else {
         toast.error(data.error || 'Registration failed');
@@ -98,54 +106,24 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* Back Arrow Button - fixed to top left of page */}
-      <Link
-        href="/"
-        className="fixed top-6 left-6 z-50 bg-white dark:bg-gray-800 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-        aria-label="Back to Home"
-      >
-        <ArrowLeftIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-      </Link>
+    <AuthLayout
+      title="Join the Community"
+      subtitle="Create an account to publish articles, bookmark stories, and participate in tech discussions."
+      badge="Create Account"
+      maxWidth="max-w-xl"
+    >
       <Suspense fallback={null}>
         <AuthError />
       </Suspense>
-      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 border border-gray-200 dark:border-gray-700">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white">
-            Create Account
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Join our community and start sharing your thoughts
-          </p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username */}
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Username *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              </div>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                placeholder="Choose a username"
-                className="w-full pl-10"
-                minLength={3}
-              />
-            </div>
-          </div>
-
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Full Name */}
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="fullName"
+              className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+            >
               Full Name *
             </label>
             <Input
@@ -155,16 +133,50 @@ export default function SignUpForm() {
               value={formData.fullName}
               onChange={handleChange}
               required
-              placeholder="Enter your full name"
-              className="w-full"
+              placeholder="Alex Johnson"
+              className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
             />
           </div>
 
-          {/* Email */}
+          {/* Username */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email Address *
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+            >
+              Username *
             </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+                <UserIcon className="h-5 w-5" />
+              </div>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                placeholder="alex_dev"
+                minLength={3}
+                className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Email */}
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+          >
+            Email Address *
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+              <EnvelopeIcon className="h-5 w-5" />
+            </div>
             <Input
               id="email"
               name="email"
@@ -172,17 +184,25 @@ export default function SignUpForm() {
               value={formData.email}
               onChange={handleChange}
               required
-              placeholder="Enter your email"
-              className="w-full"
+              placeholder="alex@example.com"
+              className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
             />
           </div>
+        </div>
 
-          {/* Password */}
+        {/* Passwords */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+            >
               Password *
             </label>
             <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+                <LockClosedIcon className="h-5 w-5" />
+              </div>
               <Input
                 id="password"
                 name="password"
@@ -190,30 +210,36 @@ export default function SignUpForm() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                placeholder="Create a password"
-                className="w-full pr-10"
+                placeholder="Min. 8 characters"
                 minLength={8}
+                className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  <EyeSlashIcon className="h-5 w-5" />
                 ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
+                  <EyeIcon className="h-5 w-5" />
                 )}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+            >
               Confirm Password *
             </label>
             <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+                <LockClosedIcon className="h-5 w-5" />
+              </div>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -221,47 +247,56 @@ export default function SignUpForm() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                placeholder="Confirm your password"
-                className="w-full pr-10"
+                placeholder="Re-enter password"
+                className="w-full pl-10 pr-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  <EyeSlashIcon className="h-5 w-5" />
                 ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
+                  <EyeIcon className="h-5 w-5" />
                 )}
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Bio */}
-          <div>
-            <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Bio
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Tell us about yourself..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white"
-            />
-          </div>
+        {/* Bio */}
+        <div>
+          <label
+            htmlFor="bio"
+            className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+          >
+            Bio <span className="text-xs text-[var(--muted-foreground)]">(Optional)</span>
+          </label>
+          <Textarea
+            id="bio"
+            name="bio"
+            value={formData.bio}
+            onChange={handleChange}
+            rows={2}
+            placeholder="A short note about your interests and work..."
+            className="w-full bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
+          />
+        </div>
 
-          {/* Website */}
+        {/* Website & Location */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Website
+            <label
+              htmlFor="website"
+              className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+            >
+              Website <span className="text-xs text-[var(--muted-foreground)]">(Optional)</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+                <GlobeAltIcon className="h-5 w-5" />
               </div>
               <Input
                 id="website"
@@ -269,20 +304,22 @@ export default function SignUpForm() {
                 type="url"
                 value={formData.website}
                 onChange={handleChange}
-                placeholder="https://yourwebsite.com"
-                className="w-full pl-10"
+                placeholder="https://example.com"
+                className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
               />
             </div>
           </div>
 
-          {/* Location */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Location
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
+            >
+              Location <span className="text-xs text-[var(--muted-foreground)]">(Optional)</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--muted-foreground)]">
+                <MapPinIcon className="h-5 w-5" />
               </div>
               <Input
                 id="location"
@@ -290,32 +327,39 @@ export default function SignUpForm() {
                 type="text"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="City, Country"
-                className="w-full pl-10"
+                placeholder="San Francisco, CA"
+                className="w-full pl-10 bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] focus:border-[var(--primary)]"
               />
             </div>
           </div>
+        </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </Button>
-        </form>
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full py-2.5 font-medium transition-transform active:scale-[0.99] cursor-pointer mt-2"
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
+              Creating Account...
+            </span>
+          ) : (
+            'Create Account'
+          )}
+        </Button>
+      </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-          Already have an account?{' '}
-          <Link
-            href="/auth/signin"
-            className="font-medium text-primary hover:text-primary-dark transition-colors"
-          >
-            Sign in
-          </Link>
-        </p>
+      <div className="mt-6 pt-5 border-t border-[var(--border)] text-center text-sm text-[var(--muted-foreground)]">
+        Already have an account?{' '}
+        <Link
+          href="/auth/signin"
+          className="font-semibold text-[var(--primary)] hover:underline"
+        >
+          Sign in
+        </Link>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

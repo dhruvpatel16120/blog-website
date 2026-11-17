@@ -46,6 +46,9 @@ const Header = ({ scrolled = false }) => {
 
   const userMenuItems = [
     { label: 'Profile', icon: <FaUserCircle />, onClick: () => router.push('/profile') },
+    ...(user?.role === 'ADMIN' || user?.type === 'admin'
+      ? [{ label: 'Admin Dashboard', icon: <UserIcon className="w-4 h-4" />, onClick: () => router.push('/admin') }]
+      : []),
     { label: 'Logout', icon: <FaSignOutAlt />, onClick: () => router.push('/auth/signout') }
   ]
 
@@ -159,9 +162,9 @@ const Header = ({ scrolled = false }) => {
             {!isAuthenticated ? (
               <button
                 onClick={() => router.push('/auth/signin')}
-                className="ml-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors
-                           border-indigo-500 text-indigo-400/90 bg-transparent
-                           hover:bg-indigo-500 hover:text-white"
+                className="ml-2 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-sm font-medium transition-all duration-200
+                           border-[var(--primary)] text-[var(--primary)] bg-transparent
+                           hover:bg-[var(--primary)] hover:text-white cursor-pointer shadow-xs active:scale-95"
                 aria-label="Sign In"
               >
                 <UserIcon className="w-4 h-4" />
@@ -272,11 +275,11 @@ const Header = ({ scrolled = false }) => {
                 <span>{item.name}</span>
               </Link>
             ))}
-            <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="pt-2 mt-2 border-t border-[var(--border)]">
               {!isAuthenticated ? (
                 <button
                   onClick={() => { setIsMenuOpen(false); router.push('/auth/signin'); }}
-                  className="w-full justify-center inline-flex items-center gap-2 px-3 py-2 rounded-full border text-sm transition-colors border-indigo-500 text-indigo-400/90 bg-transparent hover:bg-indigo-500 hover:text-white"
+                  className="w-full justify-center inline-flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium transition-colors border-[var(--primary)] text-[var(--primary)] bg-transparent hover:bg-[var(--primary)] hover:text-white"
                 >
                   <UserIcon className="w-4 h-4" />
                   <span>Sign In</span>
@@ -284,18 +287,18 @@ const Header = ({ scrolled = false }) => {
               ) : (
                 <div>
                   <button
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[var(--muted)]"
                     onClick={() => setIsProfileMobileOpen((v) => !v)}
                     aria-expanded={isProfileMobileOpen}
                     aria-controls="mobile-profile-menu"
                   >
                     <div className="flex items-center gap-2">
                       {avatarContent()}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                      <span className="text-sm font-medium text-[var(--foreground)] truncate">
                         {user?.fullName || user?.username || user?.email}
                       </span>
                     </div>
-                    <svg className={`w-4 h-4 text-gray-500 transition-transform ${isProfileMobileOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
+                    <svg className={`w-4 h-4 text-[var(--muted-foreground)] transition-transform ${isProfileMobileOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" /></svg>
                   </button>
                   <div
                     id="mobile-profile-menu"
@@ -304,15 +307,23 @@ const Header = ({ scrolled = false }) => {
                       isProfileMobileOpen && 'grid-rows-[1fr]'
                     )}
                   >
-                    <div className="overflow-hidden flex flex-col">
+                    <div className="overflow-hidden flex flex-col space-y-1">
                       <button
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--muted)] text-sm text-[var(--foreground)]"
                         onClick={() => { setIsMenuOpen(false); router.push('/profile'); }}
                       >
                         <span className="inline-flex items-center gap-2"><FaUserCircle /> Profile</span>
                       </button>
+                      {(user?.role === 'ADMIN' || user?.type === 'admin') && (
+                        <button
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--muted)] text-sm text-[var(--primary)] font-medium"
+                          onClick={() => { setIsMenuOpen(false); router.push('/admin'); }}
+                        >
+                          <span className="inline-flex items-center gap-2"><UserIcon className="w-4 h-4" /> Admin Dashboard</span>
+                        </button>
+                      )}
                       <button
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm text-red-600 dark:text-red-400"
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--muted)] text-sm text-red-600 dark:text-red-400"
                         onClick={() => { setIsMenuOpen(false); router.push('/auth/signout'); }}
                       >
                         <span className="inline-flex items-center gap-2"><FaSignOutAlt /> Logout</span>

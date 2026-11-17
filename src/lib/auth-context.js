@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -32,58 +32,56 @@ export const AuthProvider = ({ children }) => {
     }
   }, [session, status]);
 
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials, provider = 'user-credentials') => {
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn(provider, {
         ...credentials,
         redirect: false,
       });
 
       if (result?.error) {
-        throw new Error(result.error);
+        return { success: false, error: result.error };
       }
 
-      // Wait a moment for session to update, then return user data
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Get the updated session after login
-      const response = await fetch('/api/auth/session');
+      // Small tick for NextAuth session client state to re-evaluate
+      const response = await fetch('/api/auth/session', { cache: 'no-store' });
       const sessionData = await response.json();
-      
-      return { success: true, user: sessionData.user };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
 
-  const logout = async () => {
+      if (sessionData?.user) {
+        setUser(sessionData.user);
+      }
+
+      return { success: true, user: sessionData?.user };
+    } catch (error) {
+      return { success: false, error: error.message || 'Authentication failed' };
+    }
+  }, []);
+
+  const logout = useCallback(async (redirectUrl = '/') => {
     try {
+      setUser(null);
       await signOut({ redirect: false });
-      router.push('/');
+      router.push(redirectUrl);
     } catch (error) {
       console.error('Logout error:', error);
+      router.push(redirectUrl);
     }
-  };
+  }, [router]);
 
-  const isAdmin = () => {
-    return user?.role === 'ADMIN';
-  };
+  const isAdmin = useCallback(() => {
+    return user?.role === 'ADMIN' || user?.type === 'admin';
+  }, [user]);
 
-  const isModerator = () => {
-    return user?.role === 'ADMIN';
-  };
-
-  const hasPermission = (permission) => {
+  const hasPermission = useCallback((permission) => {
     switch (permission) {
       case 'admin':
         return isAdmin();
-
       case 'user':
         return !!user;
       default:
         return false;
     }
-  };
+  }, [isAdmin, user]);
 
   const value = {
     user,
@@ -91,7 +89,6 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAdmin,
-    isModerator,
     hasPermission,
     isAuthenticated: !!user,
   };

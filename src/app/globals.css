@@ -49,12 +49,13 @@
 }
 
 /* Dark mode styles */
-[data-theme="dark"] {
+[data-theme="dark"],
+.dark {
   --background: #0a0a0a;
   --foreground: #ededed;
-  --card: #0a0a0a;
+  --card: #121212;
   --card-foreground: #ededed;
-  --popover: #0a0a0a;
+  --popover: #121212;
   --popover-foreground: #ededed;
   --primary: #3b82f6;
   --primary-foreground: #0a0a0a;
@@ -66,19 +67,19 @@
   --accent-foreground: #ededed;
   --destructive: #dc2626;
   --destructive-foreground: #ededed;
-  --border: #1e293b;
-  --input: #1e293b;
+  --border: #262626;
+  --input: #262626;
   --ring: #3b82f6;
 }
 
-/* System preference fallback */
+/* System preference fallback when neither class nor attribute is explicitly set */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
+  :root:not([data-theme="light"]):not(.light) {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --card: #0a0a0a;
+    --card: #121212;
     --card-foreground: #ededed;
-    --popover: #0a0a0a;
+    --popover: #121212;
     --popover-foreground: #ededed;
     --primary: #3b82f6;
     --primary-foreground: #0a0a0a;
@@ -90,17 +91,18 @@
     --accent-foreground: #ededed;
     --destructive: #dc2626;
     --destructive-foreground: #ededed;
-    --border: #1e293b;
-    --input: #1e293b;
+    --border: #262626;
+    --input: #262626;
     --ring: #3b82f6;
   }
 }
 
-/* Base body color is now set from layout body class; keep fallback */
+/* Base body color is set from layout body class; smooth transition between themes */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom scrollbar */
@@ -123,11 +125,11 @@ body {
 
 /* Component styles */
 .btn {
-  @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  @apply inline-flex items-center justify-center rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer;
 }
 
 .btn-primary {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs;
 }
 
 .btn-secondary {
@@ -143,7 +145,7 @@ body {
 }
 
 .btn-sm {
-  @apply h-9 px-3;
+  @apply h-8 px-3 text-xs;
 }
 
 .btn-md {
@@ -151,11 +153,11 @@ body {
 }
 
 .btn-lg {
-  @apply h-11 px-8;
+  @apply h-11 px-8 text-base;
 }
 
 .card {
-  @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  @apply rounded-xl border border-border bg-card text-card-foreground shadow-xs transition-colors;
 }
 
 .card-header {
@@ -163,7 +165,7 @@ body {
 }
 
 .card-title {
-  @apply text-2xl font-semibold leading-none tracking-tight;
+  @apply text-xl font-bold leading-none tracking-tight text-foreground;
 }
 
 .card-description {
@@ -179,7 +181,11 @@ body {
 }
 
 .input {
-  @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground transition-colors;
+}
+
+.textarea {
+  @apply flex min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground transition-colors;
 }
 
 .badge {
@@ -195,7 +201,7 @@ body {
 }
 
 .badge-outline {
-  @apply text-foreground;
+  @apply text-foreground border-border;
 }
 
 /* Layout utilities */
