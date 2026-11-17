@@ -187,6 +187,23 @@ export async function POST(request) {
       },
     });
 
+    // Track user comment activity
+    try {
+      await prisma.userActivity.create({
+        data: {
+          userId: authorId,
+          type: 'COMMENT_POST',
+          postId,
+          commentId: comment.id,
+          metadata: JSON.stringify({
+            content: trimmedContent.substring(0, 120),
+          }),
+        },
+      });
+    } catch (actErr) {
+      console.warn('Failed to record comment activity:', actErr);
+    }
+
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {
     console.error('Error creating comment:', error);

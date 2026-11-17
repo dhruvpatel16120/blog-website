@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card } from '@/components/ui';
-import { Button } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input } from '@/components/ui';
+import toast from 'react-hot-toast';
 import { 
   EnvelopeIcon,
   CheckCircleIcon,
@@ -13,686 +13,650 @@ import {
   ExclamationTriangleIcon,
   ArchiveBoxIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
-  ArrowUturnLeftIcon,
   TrashIcon,
-  EyeIcon
+  EyeIcon,
+  PaperAirplaneIcon,
+  ArrowPathIcon,
+  XMarkIcon,
+  ChatBubbleLeftEllipsisIcon,
+  TagIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 const CONTACT_STATUS = {
-  PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300', icon: ClockIcon },
-  RESPONDED: { label: 'Responded', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', icon: CheckCircleIcon },
-  SPAM: { label: 'Spam', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', icon: ExclamationTriangleIcon },
-  ARCHIVED: { label: 'Archived', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', icon: ArchiveBoxIcon },
-  IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', icon: ClockIcon },
-  CLOSED: { label: 'Closed', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', icon: ArchiveBoxIcon }
+  PENDING: { label: 'Pending', badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' },
+  IN_PROGRESS: { label: 'In Progress', badgeClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20' },
+  RESPONDED: { label: 'Responded', badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' },
+  CLOSED: { label: 'Closed', badgeClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20' },
+  SPAM: { label: 'Spam', badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20' },
+  ARCHIVED: { label: 'Archived', badgeClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20' }
 };
 
-const PRIORITY_COLORS = {
-  LOW: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  MEDIUM: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  HIGH: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  URGENT: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+const PRIORITY_BADGES = {
+  LOW: 'text-slate-500 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+  MEDIUM: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/50',
+  HIGH: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/50',
+  URGENT: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50'
 };
 
 export default function ContactsPage() {
   const { data: session, status } = useSession();
-  const loading = status === 'loading';
-  const adminSession = session?.user;
   const router = useRouter();
+  const [, startTransition] = useTransition();
+
   const [contacts, setContacts] = useState([]);
   const [summary, setSummary] = useState({ total: 0, pending: 0, responded: 0, spam: 0, archived: 0, highPriority: 0 });
-  const [loadingContacts, setLoadingContacts] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [showResponseModal, setShowResponseModal] = useState(false);
-  const [responseText, setResponseText] = useState('');
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replying, setReplying] = useState(false);
+  const [queueMetrics, setQueueMetrics] = useState(null);
+
   const [filters, setFilters] = useState({
     status: '',
     category: '',
     priority: '',
     search: '',
-    dateFrom: '',
-    dateTo: '',
-    showSpam: false
   });
+
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
-    total: 0
+    limit: 15,
+    total: 0,
+    totalPages: 1,
   });
-  const [successMessage, setSuccessMessage] = useState(null);
 
+  // Authentication check
   useEffect(() => {
     if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.type !== 'admin')) {
       router.push('/admin/login');
     }
   }, [session?.user?.type, status, router]);
 
+  // Fetch contacts list
   const fetchContacts = useCallback(async () => {
     try {
-      setLoadingContacts(true);
-      const queryParams = new URLSearchParams({
+      setLoading(true);
+      const query = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        ...filters
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.category ? { category: filters.category } : {}),
+        ...(filters.priority ? { priority: filters.priority } : {}),
+        ...(filters.search ? { search: filters.search } : {}),
       });
 
-      const response = await fetch(`/api/admin/contacts?${queryParams}`);
-      if (response.ok) {
-        const data = await response.json();
-        setContacts(data.contacts);
-        setPagination(prev => ({ ...prev, total: data.total }));
+      const res = await fetch(`/api/admin/contacts?${query}`);
+      if (res.ok) {
+        const data = await res.json();
+        setContacts(data.contacts || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: data.total || 0,
+          totalPages: data.totalPages || 1,
+        }));
         if (data.summary) setSummary(data.summary);
       }
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
+    } catch (err) {
+      console.error('Failed to load contacts:', err);
+      toast.error('Failed to fetch contact inquiries');
     } finally {
-      setLoadingContacts(false);
+      setLoading(false);
     }
-  }, [filters, pagination.limit, pagination.page]);
+  }, [filters, pagination.page, pagination.limit]);
 
-  useEffect(() => {
-    if (adminSession) {
-      fetchContacts();
-    }
-  }, [adminSession, fetchContacts]);
-
-  // Check for success message in URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-    if (success) {
-      setSuccessMessage(success);
-      // Remove success message from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // Auto-hide success message after 5 seconds
-      setTimeout(() => setSuccessMessage(null), 5000);
+  // Fetch email queue metrics for system design showcase
+  const fetchQueueMetrics = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/email-queue?limit=1');
+      if (res.ok) {
+        const data = await res.json();
+        setQueueMetrics(data.metrics);
+      }
+    } catch {
+      // ignore
     }
   }, []);
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
+  useEffect(() => {
+    if (session?.user?.type === 'admin') {
+      fetchContacts();
+      fetchQueueMetrics();
+    }
+  }, [session?.user?.type, fetchContacts, fetchQueueMetrics]);
 
-  const clearFilters = () => {
-    setFilters({
-      status: '',
-      category: '',
-      priority: '',
-      search: '',
-      dateFrom: '',
-      dateTo: '',
-      showSpam: false
-    });
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  const onSort = (key) => {
-    setFilters(prev => ({ ...prev, sortBy: key, order: prev.order === 'asc' && prev.sortBy === key ? 'desc' : 'asc' }));
-  };
-
-  const updateContactStatus = async (contactId, status) => {
+  // Update status
+  const handleUpdateStatus = async (contactId, newStatus) => {
     try {
-      const response = await fetch(`/api/admin/contacts/${contactId}`, {
+      // Optimistic update
+      setContacts((prev) =>
+        prev.map((c) => (c.id === contactId ? { ...c, status: newStatus } : c))
+      );
+
+      const res = await fetch(`/api/admin/contacts/${contactId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
       });
 
-      if (response.ok) {
-        setContacts(prev => 
-          prev.map(contact => 
-            contact.id === contactId ? { ...contact, status } : contact
-          )
-        );
+      if (!res.ok) {
+        throw new Error('Failed to update status');
       }
-    } catch (error) {
-      console.error('Error updating contact status:', error);
+
+      toast.success(`Marked as ${newStatus}`);
+      fetchContacts();
+    } catch (err) {
+      toast.error(err.message || 'Error updating status');
+      fetchContacts();
     }
   };
 
-  const sendResponse = async () => {
-    if (!selectedContact || !responseText.trim()) return;
+  // Delete inquiry
+  const handleDeleteContact = async (contactId) => {
+    if (!confirm('Are you sure you want to permanently delete this contact inquiry?')) return;
 
     try {
-      const response = await fetch(`/api/admin/contacts/${selectedContact.id}/respond`, {
+      setContacts((prev) => prev.filter((c) => c.id !== contactId));
+      const res = await fetch(`/api/admin/contacts/${contactId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      toast.success('Inquiry removed');
+      fetchContacts();
+    } catch (err) {
+      toast.error(err.message || 'Error deleting');
+      fetchContacts();
+    }
+  };
+
+  // Send reply through Email Queue
+  const handleSendReply = async () => {
+    if (!selectedContact || !replyText.trim()) {
+      toast.error('Please enter a response message');
+      return;
+    }
+
+    try {
+      setReplying(true);
+      const res = await fetch(`/api/admin/contacts/${selectedContact.id}/respond`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          response: responseText,
-          adminId: adminSession.id
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          response: replyText.trim(),
+          subject: `Re: ${selectedContact.subject || 'Your Inquiry to TechBlog'}`,
         }),
       });
 
-      if (response.ok) {
-        setContacts(prev => 
-          prev.map(contact => 
-            contact.id === selectedContact.id 
-              ? { 
-                  ...contact, 
-                  status: 'RESPONDED',
-                  response: responseText,
-                  respondedAt: new Date().toISOString(),
-                  respondedBy: adminSession.fullName || adminSession.username
-                } 
-              : contact
-          )
-        );
-        setShowResponseModal(false);
-        setResponseText('');
-        setSelectedContact(null);
-      }
-    } catch (error) {
-      console.error('Error sending response:', error);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send response');
+
+      toast.success('Reply queued for automated delivery!');
+      setShowReplyModal(false);
+      setReplyText('');
+      setSelectedContact(null);
+      fetchContacts();
+      fetchQueueMetrics();
+    } catch (err) {
+      toast.error(err.message || 'Failed to send reply');
+    } finally {
+      setReplying(false);
     }
   };
 
-  // Delete confirm modal
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [confirmError, setConfirmError] = useState('');
-  const doDelete = async () => {
-    if (!confirmDeleteId) return;
-    setConfirmError('');
-    try {
-      const res = await fetch(`/api/admin/contacts/${confirmDeleteId}`, { method: 'DELETE' });
-      const payload = await res.json().catch(()=>({}));
-      if (!res.ok) throw new Error(payload.error || 'Failed to delete');
-      setContacts(prev => prev.filter(c => c.id !== confirmDeleteId));
-      setConfirmDeleteId(null);
-    } catch (e) {
-      setConfirmError(e.message);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  const getStatusConfig = (status) => {
-    return CONTACT_STATUS[status] || CONTACT_STATUS.PENDING;
-  };
-
-  if (loading) {
+  if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (session?.user?.type !== 'admin') {
-    return null;
-  }
+  if (session?.user?.type !== 'admin') return null;
 
   return (
-    <AdminLayout title="Contact Management" adminSession={adminSession}>
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <div className="flex items-center gap-2">
-            <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <p className="text-green-800 dark:text-green-200">{successMessage}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <AdminLayout title="Contacts Management">
+      <div className="space-y-6">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contacts Management</h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Manage and respond to user inquiries
+            <h1 className="text-2xl font-black tracking-tight text-[var(--foreground)]">
+              Contact Inquiries &amp; Messages
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] mt-0.5">
+              Manage incoming inquiries, trigger asynchronous email replies, and review queue telemetry.
             </p>
           </div>
-        </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-4">
-          {[
-            { label: 'Total Contacts', value: summary.total, icon: EnvelopeIcon, color: 'bg-gray-900 dark:bg-black', textColor: 'text-white' },
-            { label: 'Pending', value: summary.pending, icon: ClockIcon, color: 'bg-yellow-900 dark:bg-yellow-800', textColor: 'text-white' },
-            { label: 'Responded', value: summary.responded, icon: CheckCircleIcon, color: 'bg-green-900 dark:bg-green-800', textColor: 'text-white' },
-            { label: 'Spam', value: summary.spam, icon: ExclamationTriangleIcon, color: 'bg-red-900 dark:bg-red-800', textColor: 'text-white' },
-            { label: 'Archived', value: summary.archived, icon: ArchiveBoxIcon, color: 'bg-gray-700 dark:bg-gray-600', textColor: 'text-white' },
-            { label: 'High Priority', value: summary.highPriority, icon: ExclamationTriangleIcon, color: 'bg-orange-900 dark:bg-orange-800', textColor: 'text-white' },
-          ].map((card, idx) => (
-            <div key={idx} className={`p-4 rounded-lg border ${card.color} border-gray-700 dark:border-gray-600 shadow-lg`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`text-sm ${card.textColor} opacity-80`}>{card.label}</p>
-                  <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
-                </div>
-                <card.icon className={`h-8 w-8 ${card.textColor} opacity-80`} />
+          <div className="flex items-center gap-2.5">
+            {queueMetrics && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--muted-foreground)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Queue: <strong>{queueMetrics.pending}</strong> pending / <strong>{queueMetrics.sent}</strong> delivered</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Filters
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Status
-              </label>
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="RESPONDED">Responded</option>
-                <option value="CLOSED">Closed</option>
-                <option value="SPAM">Spam</option>
-                <option value="ARCHIVED">Archived</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category
-              </label>
-              <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">All Categories</option>
-                <option value="General Inquiry">General Inquiry</option>
-                <option value="Technical Support">Technical Support</option>
-                <option value="Business Partnership">Business Partnership</option>
-                <option value="Content Submission">Content Submission</option>
-                <option value="Bug Report">Bug Report</option>
-                <option value="Feature Request">Feature Request</option>
-                <option value="Advertising">Advertising</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Priority
-              </label>
-              <select
-                value={filters.priority}
-                onChange={(e) => handleFilterChange('priority', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">All Priorities</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Search
-              </label>
-              <input
-                type="text"
-                placeholder="Search by name, email, or subject..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Date From
-              </label>
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Date To
-              </label>
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort</label>
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={filters.sortBy || 'createdAt'}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="createdAt">Created</option>
-                  <option value="respondedAt">Responded</option>
-                  <option value="status">Status</option>
-                  <option value="priority">Priority</option>
-                  <option value="category">Category</option>
-                  <option value="name">Name</option>
-                  <option value="email">Email</option>
-                  <option value="spamScore">Spam Score</option>
-                </select>
-                <select
-                  value={filters.order || 'desc'}
-                  onChange={(e) => handleFilterChange('order', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="desc">Desc</option>
-                  <option value="asc">Asc</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-end">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={filters.showSpam}
-                  onChange={(e) => handleFilterChange('showSpam', e.target.checked)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Show Spam</span>
-              </label>
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                onClick={clearFilters}
-                variant="outline"
-                className="w-full"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Contacts List */}
-      <Card>
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Contact Messages ({pagination.total} total)
-            </h3>
-              <Button
-              onClick={fetchContacts}
+            )}
+            <Button
+              onClick={() => {
+                fetchContacts();
+                fetchQueueMetrics();
+              }}
               variant="outline"
-              disabled={loadingContacts}
+              size="sm"
+              className="gap-1.5 cursor-pointer text-xs"
             >
-              <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
-              Refresh
+              <ArrowPathIcon className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </Button>
           </div>
+        </div>
 
-          {loadingContacts ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        {/* Summary Stat Cards (Theme-Aware) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          {[
+            { label: 'Total Inquiries', count: summary.total, icon: EnvelopeIcon, color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
+            { label: 'Pending Action', count: summary.pending, icon: ClockIcon, color: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
+            { label: 'Responded', count: summary.responded, icon: CheckCircleIcon, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' },
+            { label: 'High Priority', count: summary.highPriority, icon: ExclamationTriangleIcon, color: 'text-rose-600 dark:text-rose-400 bg-rose-500/10' },
+            { label: 'Spam Blocked', count: summary.spam, icon: ExclamationTriangleIcon, color: 'text-red-600 dark:text-red-400 bg-red-500/10' },
+            { label: 'Archived', count: summary.archived, icon: ArchiveBoxIcon, color: 'text-purple-600 dark:text-purple-400 bg-purple-500/10' },
+          ].map((item, idx) => (
+            <Card key={idx} className="border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-xs p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold text-[var(--muted-foreground)]">{item.label}</p>
+                  <p className="text-xl font-bold text-[var(--foreground)] mt-0.5">{item.count || 0}</p>
+                </div>
+                <div className={`p-2 rounded-xl ${item.color}`}>
+                  <item.icon className="w-4 h-4" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Filter Controls */}
+        <Card className="border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-xs">
+          <CardContent className="p-4 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Search */}
+              <div className="relative">
+                <MagnifyingGlassIcon className="w-4 h-4 text-[var(--muted-foreground)] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  placeholder="Search sender, email, subject..."
+                  value={filters.search}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    startTransition(() => {
+                      setFilters((prev) => ({ ...prev, search: val }));
+                      setPagination((prev) => ({ ...prev, page: 1 }));
+                    });
+                  }}
+                  className="pl-9 bg-[var(--background)] border-[var(--input)] text-xs text-[var(--foreground)] h-9"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <select
+                  value={filters.status}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev) => ({ ...prev, status: val }));
+                    setPagination((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  className="w-full h-9 rounded-lg border border-[var(--input)] bg-[var(--background)] px-3 text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="RESPONDED">Responded</option>
+                  <option value="CLOSED">Closed</option>
+                  <option value="SPAM">Spam</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </div>
+
+              {/* Priority Filter */}
+              <div>
+                <select
+                  value={filters.priority}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev) => ({ ...prev, priority: val }));
+                    setPagination((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  className="w-full h-9 rounded-lg border border-[var(--input)] bg-[var(--background)] px-3 text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">All Priorities</option>
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="URGENT">Urgent</option>
+                </select>
+              </div>
+
+              {/* Category Filter */}
+              <div>
+                <select
+                  value={filters.category}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev) => ({ ...prev, category: val }));
+                    setPagination((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  className="w-full h-9 rounded-lg border border-[var(--input)] bg-[var(--background)] px-3 text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">All Categories</option>
+                  <option value="General Inquiry">General Inquiry</option>
+                  <option value="Technical Support">Technical Support</option>
+                  <option value="Collaboration & Partnership">Collaboration</option>
+                  <option value="Content & Guest Posts">Content Submission</option>
+                  <option value="Bug Report & Feedback">Bug Report</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
-          ) : contacts.length > 0 ? (
-            <div className="space-y-4">
-              {contacts.map((contact) => {
-                const statusConfig = getStatusConfig(contact.status);
-                const StatusIcon = statusConfig.icon;
+          </CardContent>
+        </Card>
 
-                return (
-                  <div
-                    key={contact.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusConfig.color}`}>
-                            <StatusIcon className="h-3 w-3" />
-                            {statusConfig.label}
-                          </div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {formatDate(contact.createdAt)}
-                          </span>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {contact.name}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {contact.email}
-                            </p>
-                            {contact.company && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {contact.company}
-                              </p>
-                            )}
-                            {contact.phone && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {contact.phone}
-                              </p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              Subject
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {contact.subject || 'No subject'}
-                            </p>
-                            <div className="flex gap-2 mt-1">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[contact.priority] || PRIORITY_COLORS.MEDIUM}`}>
-                                {contact.priority}
-                              </span>
-                              {contact.category && (
-                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                                  {contact.category}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              Message
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                              {contact.message}
-                            </p>
-                            {contact.source && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                Source: {contact.source}
-                              </p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              Details
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {formatDate(contact.createdAt)}
-                            </p>
-                            {contact.spamScore && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Spam: {contact.spamScore}%
-                              </p>
-                            )}
-                            {contact.isSpam && (
-                              <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 mt-1">
-                                SPAM
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {contact.response && (
-                          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                              Response:
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {contact.response}
-                            </p>
-                            {contact.respondedBy && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                Responded by {contact.respondedBy} on {formatDate(contact.respondedAt)}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          onClick={() => router.push(`/admin/contacts/${contact.id}/reply`)}
-                          variant="outline"
-                          size="sm"
-                          disabled={contact.status === 'RESPONDED'}
-                        >
-                          <ArrowUturnLeftIcon className="h-4 w-4 mr-1" />
-                          Reply
-                        </Button>
-                        <Button
-                          onClick={() => setConfirmDeleteId(contact.id)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <select
-                        value={contact.status}
-                        onChange={(e) => updateContactStatus(contact.id, e.target.value)}
-                        className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        {/* Contacts Table */}
+        <Card className="border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[var(--muted)]/50 border-b border-[var(--border)] text-[var(--muted-foreground)] font-semibold uppercase tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">Sender</th>
+                  <th className="py-3 px-4">Subject &amp; Message</th>
+                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-[var(--muted-foreground)]">
+                      <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      <span>Loading inquiries...</span>
+                    </td>
+                  </tr>
+                ) : contacts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-[var(--muted-foreground)] space-y-2">
+                      <EnvelopeIcon className="w-8 h-8 mx-auto text-[var(--muted-foreground)]/50" />
+                      <p className="font-semibold text-sm text-[var(--foreground)]">No contact inquiries found</p>
+                      <p className="text-xs">Try adjusting your filters or search keywords.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  contacts.map((contact) => {
+                    const statusConfig = CONTACT_STATUS[contact.status] || CONTACT_STATUS.PENDING;
+                    return (
+                      <tr
+                        key={contact.id}
+                        className="hover:bg-[var(--muted)]/30 transition-colors group"
                       >
-                        <option value="PENDING">Mark as Pending</option>
-                        <option value="RESPONDED">Mark as Responded</option>
-                        <option value="SPAM">Mark as Spam</option>
-                        <option value="ARCHIVED">Archive</option>
-                      </select>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <EnvelopeIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">
-                No contact messages found matching your criteria
-              </p>
-            </div>
-          )}
+                        {/* Sender */}
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-[var(--foreground)]">{contact.name}</div>
+                          <div className="text-[11px] text-[var(--muted-foreground)] truncate max-w-[160px]">{contact.email}</div>
+                          {contact.priority && contact.priority !== 'MEDIUM' && (
+                            <span className={`inline-block mt-1 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase border ${PRIORITY_BADGES[contact.priority] || ''}`}>
+                              {contact.priority}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Subject & Message Snippet */}
+                        <td className="py-3 px-4 max-w-xs sm:max-w-sm">
+                          <div className="font-semibold text-[var(--foreground)] truncate">
+                            {contact.subject || 'General Inquiry'}
+                          </div>
+                          <p className="text-[11px] text-[var(--muted-foreground)] line-clamp-1 mt-0.5">
+                            {contact.message}
+                          </p>
+                          {contact.response && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
+                              <CheckCircleIcon className="w-3 h-3" />
+                              <span>Responded</span>
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]">
+                            <TagIcon className="w-2.5 h-2.5" />
+                            <span>{contact.category || 'General'}</span>
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 px-4">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusConfig.badgeClass}`}>
+                            {statusConfig.label}
+                          </span>
+                        </td>
+
+                        {/* Date */}
+                        <td className="py-3 px-4 text-[11px] text-[var(--muted-foreground)] whitespace-nowrap">
+                          {new Date(contact.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setSelectedContact(contact);
+                                setShowReplyModal(false);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-[var(--muted)] text-[var(--muted-foreground)] hover:text-indigo-600 transition-colors"
+                              title="View details"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedContact(contact);
+                                setShowReplyModal(true);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-[var(--muted-foreground)] hover:text-indigo-600 transition-colors"
+                              title="Reply via Email Queue"
+                            >
+                              <PaperAirplaneIcon className="w-4 h-4 text-indigo-500" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteContact(contact.id)}
+                              className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-[var(--muted-foreground)] hover:text-rose-600 transition-colors"
+                              title="Delete inquiry"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination */}
-          {pagination.total > pagination.limit && (
-            <div className="flex justify-between items-center mt-6">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} results
-              </div>
-              <div className="flex space-x-2">
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)]">
+              <span>
+                Showing page <strong>{pagination.page}</strong> of <strong>{pagination.totalPages}</strong> ({pagination.total} total)
+              </span>
+              <div className="flex items-center gap-1.5">
                 <Button
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
+                  onClick={() => setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                  disabled={pagination.page <= 1}
                   variant="outline"
                   size="sm"
+                  className="cursor-pointer gap-1 px-2.5 h-8 text-xs"
                 >
-                  Previous
+                  <ChevronLeftIcon className="w-3.5 h-3.5" />
+                  <span>Prev</span>
                 </Button>
                 <Button
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page * pagination.limit >= pagination.total}
+                  onClick={() => setPagination((prev) => ({ ...prev, page: Math.min(pagination.totalPages, prev.page + 1) }))}
+                  disabled={pagination.page >= pagination.totalPages}
                   variant="outline"
                   size="sm"
+                  className="cursor-pointer gap-1 px-2.5 h-8 text-xs"
                 >
-                  Next
+                  <span>Next</span>
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
           )}
-        </div>
-      </Card>
+        </Card>
+      </div>
 
-      {/* Response Modal */}
-      {showResponseModal && selectedContact && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Reply to {selectedContact.name}
-            </h3>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                <strong>From:</strong> {selectedContact.email}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                <strong>Subject:</strong> {selectedContact.subject || 'No subject'}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                <strong>Message:</strong> {selectedContact.message}
-              </p>
+      {/* View Message Modal */}
+      {selectedContact && !showReplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <div>
+                <h3 className="font-bold text-base text-[var(--foreground)]">{selectedContact.subject || 'Inquiry Details'}</h3>
+                <p className="text-xs text-[var(--muted-foreground)]">From {selectedContact.name} ({selectedContact.email})</p>
+              </div>
+              <button
+                onClick={() => setSelectedContact(null)}
+                className="p-1 rounded-lg hover:bg-[var(--muted)] text-[var(--muted-foreground)]"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
             </div>
-            <textarea
-              value={responseText}
-              onChange={(e) => setResponseText(e.target.value)}
-              placeholder="Type your response..."
-              className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-            />
-            <div className="flex justify-end gap-2 mt-4">
-              <Button
-                onClick={() => {
-                  setShowResponseModal(false);
-                  setResponseText('');
-                  setSelectedContact(null);
-                }}
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={sendResponse}
-                disabled={!responseText.trim()}
-              >
-                Send Response
-              </Button>
+
+            <div className="p-4 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] text-xs leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
+              {selectedContact.message}
+            </div>
+
+            {selectedContact.response && (
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 space-y-1">
+                <span className="font-bold block">Sent Response:</span>
+                <p className="italic">{selectedContact.response}</p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={selectedContact.status}
+                  onChange={(e) => handleUpdateStatus(selectedContact.id, e.target.value)}
+                  className="text-xs rounded-lg border border-[var(--input)] bg-[var(--background)] px-2.5 py-1.5 text-[var(--foreground)]"
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="RESPONDED">Responded</option>
+                  <option value="CLOSED">Closed</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setShowReplyModal(true)}
+                  variant="primary"
+                  size="sm"
+                  className="gap-1.5 text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                >
+                  <PaperAirplaneIcon className="w-3.5 h-3.5" />
+                  <span>Reply</span>
+                </Button>
+                <Button
+                  onClick={() => setSelectedContact(null)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       )}
-      {/* Delete Confirmation Modal */}
-      {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Contact</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">Only contacts marked as SPAM or ARCHIVED can be deleted. This action cannot be undone.</p>
-            {confirmError && <p className="text-sm text-red-600 mt-2">{confirmError}</p>}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={()=>{ setConfirmDeleteId(null); setConfirmError(''); }}>Cancel</Button>
-              <Button onClick={doDelete} className="bg-red-600 hover:bg-red-700">Delete</Button>
+
+      {/* Reply Modal via Email Queue */}
+      {selectedContact && showReplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <div>
+                <h3 className="font-bold text-base text-[var(--foreground)] flex items-center gap-2">
+                  <ChatBubbleLeftEllipsisIcon className="w-5 h-5 text-indigo-500" />
+                  <span>Reply to {selectedContact.name}</span>
+                </h3>
+                <p className="text-xs text-[var(--muted-foreground)]">Recipient: {selectedContact.email}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowReplyModal(false);
+                  setSelectedContact(null);
+                }}
+                className="p-1 rounded-lg hover:bg-[var(--muted)] text-[var(--muted-foreground)]"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label htmlFor="replyText" className="block text-xs font-semibold text-[var(--foreground)]">
+                Email Message Body
+              </label>
+              <textarea
+                id="replyText"
+                rows={5}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your response here. It will be dispatched through the resilient email queue..."
+                className="w-full rounded-xl border border-[var(--input)] bg-[var(--background)] p-3 text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)]">
+              <span>Dispatched asynchronously via Email Queue.</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setShowReplyModal(false)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendReply}
+                  disabled={replying || !replyText.trim()}
+                  variant="primary"
+                  size="sm"
+                  className="gap-1.5 text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold"
+                >
+                  {replying ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Queueing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <PaperAirplaneIcon className="w-3.5 h-3.5" />
+                      <span>Dispatch Reply</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

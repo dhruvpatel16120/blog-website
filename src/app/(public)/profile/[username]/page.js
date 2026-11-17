@@ -16,6 +16,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ShieldCheckIcon,
   ArrowLeftIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
 
 export default function UserPublicProfilePage() {
@@ -27,6 +28,7 @@ export default function UserPublicProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [activeTab, setActiveTab] = useState("articles");
 
   useEffect(() => {
     if (!username) return;
@@ -205,46 +207,111 @@ export default function UserPublicProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Published Articles */}
-      <div className="space-y-4">
-        <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2">
-          <DocumentTextIcon className="w-5 h-5 text-[var(--primary)]" />
-          <span>Articles by {profile.fullName || profile.username} ({publishedPosts.length})</span>
-        </h2>
+      {/* Showcase Tabs */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 border-b border-[var(--border)] pb-2">
+          <button
+            onClick={() => setActiveTab("articles")}
+            className={`flex items-center gap-2 pb-2 px-1 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+              activeTab === "articles"
+                ? "border-[var(--primary)] text-[var(--primary)]"
+                : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            <DocumentTextIcon className="w-4 h-4" />
+            <span>Articles ({publishedPosts.length})</span>
+          </button>
 
-        {publishedPosts.length === 0 ? (
-          <Card className="border-[var(--border)] bg-[var(--card)] p-8 text-center space-y-2">
-            <p className="text-sm font-semibold text-[var(--foreground)]">No articles published yet</p>
-            <p className="text-xs text-[var(--muted-foreground)]">This author hasn&apos;t published any articles yet.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {publishedPosts.map((post) => (
-              <Card key={post.id} className="border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/50 transition-all shadow-xs flex flex-col justify-between">
-                <CardContent className="p-5 space-y-2.5">
-                  {post.categories?.[0]?.category && (
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)]">
-                      {post.categories[0].category.name}
-                    </span>
-                  )}
-                  <Link href={`/blog/${post.slug}`}>
-                    <h3 className="text-base font-bold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors line-clamp-2">
-                      {post.title}
-                    </h3>
-                  </Link>
-                  {post.excerpt && (
-                    <p className="text-xs text-[var(--muted-foreground)] line-clamp-2">
-                      {post.excerpt}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] pt-2 border-t border-[var(--border)]">
-                    <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : "Recent"}</span>
-                    {post.readTime && <span>{post.readTime} min read</span>}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {profile.privacy?.showLikedPosts !== false && (
+            <button
+              onClick={() => setActiveTab("liked")}
+              className={`flex items-center gap-2 pb-2 px-1 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                activeTab === "liked"
+                  ? "border-rose-500 text-rose-500"
+                  : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <HeartIcon className="w-4 h-4" />
+              <span>Liked Articles ({profile.likedPosts?.length || profile.stats?.likeCount || 0})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Tab 1: Articles */}
+        {activeTab === "articles" && (
+          publishedPosts.length === 0 ? (
+            <Card className="border-[var(--border)] bg-[var(--card)] p-8 text-center space-y-2">
+              <p className="text-sm font-semibold text-[var(--foreground)]">No articles published yet</p>
+              <p className="text-xs text-[var(--muted-foreground)]">This author hasn&apos;t published any articles yet.</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {publishedPosts.map((post) => (
+                <Card key={post.id} className="border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/50 transition-all shadow-xs flex flex-col justify-between">
+                  <CardContent className="p-5 space-y-2.5">
+                    {post.categories?.[0]?.category && (
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)]">
+                        {post.categories[0].category.name}
+                      </span>
+                    )}
+                    <Link href={`/blog/${post.slug}`}>
+                      <h3 className="text-base font-bold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                    </Link>
+                    {post.excerpt && (
+                      <p className="text-xs text-[var(--muted-foreground)] line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] pt-2 border-t border-[var(--border)]">
+                      <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recent"}</span>
+                      {post.readTime && <span>{post.readTime} min read</span>}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Tab 2: Liked Articles */}
+        {activeTab === "liked" && (
+          !profile.likedPosts || profile.likedPosts.length === 0 ? (
+            <Card className="border-[var(--border)] bg-[var(--card)] p-8 text-center space-y-2">
+              <HeartIcon className="w-8 h-8 text-[var(--muted-foreground)]/50 mx-auto" />
+              <p className="text-sm font-semibold text-[var(--foreground)]">No liked articles to showcase</p>
+              <p className="text-xs text-[var(--muted-foreground)]">This user hasn&apos;t liked any articles yet.</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profile.likedPosts.map((post) => (
+                <Card key={post.id} className="border-[var(--border)] bg-[var(--card)] hover:border-rose-500/50 transition-all shadow-xs flex flex-col justify-between">
+                  <CardContent className="p-5 space-y-2.5">
+                    {post.categories?.[0]?.category && (
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-500">
+                        {post.categories[0].category.name}
+                      </span>
+                    )}
+                    <Link href={`/blog/${post.slug}`}>
+                      <h3 className="text-base font-bold text-[var(--foreground)] hover:text-rose-500 transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                    </Link>
+                    {post.excerpt && (
+                      <p className="text-xs text-[var(--muted-foreground)] line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)] pt-2 border-t border-[var(--border)]">
+                      <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recent"}</span>
+                      {post.readTime && <span>{post.readTime} min read</span>}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>

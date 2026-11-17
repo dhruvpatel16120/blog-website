@@ -61,6 +61,33 @@ export async function GET(request, { params }) {
     if (user) {
       const privacy = getPrivacy(user.id);
 
+      let likedPosts = [];
+      if (privacy.showLikedPosts) {
+        const userLikes = await prisma.like.findMany({
+          where: { userId: user.id },
+          take: 20,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            post: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                excerpt: true,
+                readTime: true,
+                publishedAt: true,
+                categories: {
+                  select: {
+                    category: { select: { name: true, slug: true } },
+                  },
+                },
+              },
+            },
+          },
+        });
+        likedPosts = userLikes.filter((l) => l.post !== null).map((l) => l.post);
+      }
+
       return NextResponse.json({
         user: {
           id: user.id,
@@ -84,6 +111,7 @@ export async function GET(request, { params }) {
             likeCount: privacy.showLikedPosts ? user._count.likes : null,
           },
           posts: user.posts,
+          likedPosts,
         },
       });
     }

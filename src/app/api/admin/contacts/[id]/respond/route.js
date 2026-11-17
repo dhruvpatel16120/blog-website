@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth-combined';
-import nodemailer from 'nodemailer';
+import { enqueueEmail } from '@/lib/email-queue';
 import { emailTemplates, getPlatformName, getPlatformUrl } from '@/lib/email-templates';
 
 export async function POST(request, { params }) {
@@ -11,7 +11,7 @@ export async function POST(request, { params }) {
     if (!session || session.user?.type !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = params;
+    const { id } = await params;
     const { response, subject, greeting, signature } = await request.json();
 
     if (!response) {
@@ -32,27 +32,14 @@ export async function POST(request, { params }) {
       }
     });
 
-    // Send email reply (non-blocking errors)
+    // Enqueue response email asynchronously via Email Queue
     try {
-      const host = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST;
-      const port = Number(process.env.EMAIL_SERVER_PORT || process.env.SMTP_PORT || 587);
-      const user = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER;
-      const pass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS;
-      const secure = (process.env.EMAIL_SERVER_SECURE || process.env.SMTP_SECURE) === 'true' || port === 465;
-      let transporter;
-      if (host) {
-        transporter = nodemailer.createTransport({ host, port, secure, auth: user && pass ? { user, pass } : undefined });
-      } else {
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({ host: 'smtp.ethereal.email', port: 587, secure: false, auth: { user: testAccount.user, pass: testAccount.pass } });
-      }
-
       const platformName = getPlatformName();
       const baseUrl = getPlatformUrl();
       const tmpl = emailTemplates.contactReply({
         platformName,
         platformUrl: baseUrl,
-        subject: subject || contact.subject,
+        subject: subject || contact.subject || 'Response to your inquiry',
         greeting,
         reply: response,
         signature,
@@ -60,15 +47,19 @@ export async function POST(request, { params }) {
         originalMessage: contact.message
       });
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || process.env.SMTP_FROM || `no-reply@${new URL(baseUrl).hostname}`,
+      await enqueueEmail({
         to: contact.email,
         subject: tmpl.subject,
-        html: tmpl.html,
-        text: tmpl.text
+        body: tmpl.html,
+        type: 'CONTACT_REPLY',
+        metadata: {
+          contactId: contact.id,
+          name: contact.name,
+          adminId: session.user.id,
+        },
       });
     } catch (e) {
-      console.warn('Failed to send reply email:', e?.message || e);
+      console.warn('Failed to enqueue reply email:', e?.message || e);
     }
 
     return NextResponse.json({

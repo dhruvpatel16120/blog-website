@@ -61,7 +61,21 @@ class EmailService {
     }
   }
 
-  async sendEmail(to, subject, html, text) {
+  async sendEmail(toOrOptions, subject, html, text) {
+    let to, from, subj, bodyHtml, bodyText;
+    if (typeof toOrOptions === 'object' && toOrOptions !== null) {
+      to = toOrOptions.to;
+      from = toOrOptions.from;
+      subj = toOrOptions.subject;
+      bodyHtml = toOrOptions.html;
+      bodyText = toOrOptions.text;
+    } else {
+      to = toOrOptions;
+      subj = subject;
+      bodyHtml = html;
+      bodyText = text;
+    }
+
     if (!this.transporter) {
       this.initializeTransporter();
     }
@@ -79,14 +93,14 @@ class EmailService {
 
     try {
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@techblog.com',
+        from: from || process.env.EMAIL_FROM || 'noreply@techblog.com',
         to: to.trim(),
-        subject,
-        html,
-        text,
+        subject: subj,
+        html: bodyHtml,
+        text: bodyText,
       };
 
-      console.log('📧 Sending email to:', to, 'Subject:', subject);
+      console.log('📧 Sending email to:', to, 'Subject:', subj);
       const result = await this.transporter.sendMail(mailOptions);
       console.log('✅ Email sent successfully:', result.messageId);
       return true;

@@ -27,9 +27,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  posts    Post[]
-  comments Comment[]
-  likes    Like[]
+  posts      Post[]
+  comments   Comment[]
+  likes      Like[]
+  activities UserActivity[]
   // auditLogs removed
 
   @@map("users")
@@ -95,6 +96,7 @@ model Post {
   comments   Comment[]
   likes      Like[]
   versions   PostVersion[]
+  activities UserActivity[]
   relatedPosts Post[]       @relation("RelatedPosts")
   relatedTo  Post[]         @relation("RelatedPosts")
 
@@ -188,6 +190,7 @@ model Comment {
   parent   Comment? @relation("CommentReplies", fields: [parentId], references: [id])
   replies  Comment[] @relation("CommentReplies")
   likes    Like[]
+  activities UserActivity[]
 
   @@index([postId])
   @@index([approved])
@@ -251,6 +254,68 @@ model Contact {
   @@map("contacts")
 }
 
+model UserActivity {
+  id        String       @id @default(cuid())
+  userId    String
+  type      ActivityType
+  postId    String?
+  commentId String?
+  metadata  String?      // JSON string for title, excerpt, etc.
+  createdAt DateTime     @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@map("user_activities")
+}
+
+model EmailQueue {
+  id          String           @id @default(cuid())
+  to          String
+  from        String?
+  subject     String
+  body        String
+  type        EmailQueueType   @default(CONTACT_NOTIFICATION)
+  status      EmailQueueStatus @default(PENDING)
+  attempts    Int              @default(0)
+  maxAttempts Int              @default(3)
+  lastError   String?
+  metadata    String?          // JSON metadata (contactId, name, etc.)
+  scheduledAt DateTime         @default(now())
+  sentAt      DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([status, scheduledAt])
+  @@index([createdAt])
+  @@map("email_queue")
+}
+
+enum ActivityType {
+  LIKE_POST
+  LIKE_COMMENT
+  COMMENT_POST
+  CREATE_POST
+}
+
+enum EmailQueueStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+enum EmailQueueType {
+  CONTACT_NOTIFICATION
+  CONTACT_REPLY
+  WELCOME
+  VERIFICATION
+  PASSWORD_RESET
+  SYSTEM
+}
 
 enum AdminRole {
   ADMIN

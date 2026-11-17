@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import emailService from '@/lib/email-service'
+import { enqueueEmail } from '@/lib/email-queue'
 import { headers } from 'next/headers'
 
 // Debug logging
@@ -162,92 +162,58 @@ export async function POST(request) {
       },
     })
 
-    // Send confirmation email (non-blocking)
-    let emailSent = false;
-    let emailError = null;
+    // Enqueue confirmation and admin notification emails (asynchronous & non-blocking)
+    let emailQueued = false;
     
-    try {
-      if (!isSpam) {
-        console.log('📧 Attempting to send confirmation email to:', contact.email);
-        
-        const emailResult = await emailService.sendContactAcknowledgement({
-          name: contact.name,
-          email: contact.email,
-          subject: contact.subject || 'General Inquiry',
-          message: contact.message,
-          platformName: process.env.PLATFORM_NAME || 'Our Blog Platform',
-          platformUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-          supportEmail: process.env.SUPPORT_EMAIL || 'support@techblog.com'
+    if (!isSpam) {
+      try {
+        // 1. User acknowledgement email
+        await enqueueEmail({
+          to: contact.email,
+          subject: `Thank you for contacting TechBlog: ${contact.subject || 'General Inquiry'}`,
+          body: contact.message,
+          type: 'CONTACT_NOTIFICATION',
+          metadata: {
+            isAck: true,
+            contactId: contact.id,
+            name: contact.name,
+            message: contact.message,
+          },
         });
-        
-        console.log('📧 Confirmation email result:', emailResult);
-        emailSent = emailResult;
-        
-        if (emailResult) {
-          // Update contact with email success
-          await prisma.contact.update({
-            where: { id: contact.id },
-            data: {
-              emailSent: true,
-              emailSentAt: new Date(),
-              verified: true
-            }
-          });
-          console.log('✅ Contact updated with email success');
-        }
-      }
-    } catch (emailErr) {
-      console.error('❌ Failed to send confirmation email:', emailErr);
-      emailError = emailErr.message;
-      
-      // Update contact with email error
-      await prisma.contact.update({
-        where: { id: contact.id },
-        data: {
-          emailError: emailError
-        }
-      });
-    }
 
-    // Send admin notification (non-blocking)
-    try {
-      if (!isSpam) {
-        console.log('📧 Attempting to send admin notification');
-        
-        const adminNotifyResult = await emailService.sendAdminNotification({
-          contactId: contact.id,
-          name: contact.name,
-          email: contact.email,
-          subject: contact.subject,
-          message: contact.message,
-          category: contact.category,
-          priority: contact.priority,
-          source: contact.source,
-          spamScore: finalSpamScore
+        // 2. Admin notification email
+        await enqueueEmail({
+          to: process.env.ADMIN_EMAIL || process.env.EMAIL_SERVER_USER || 'admin@techblog.com',
+          subject: `[New Contact] ${contact.subject || 'General Inquiry'} from ${contact.name}`,
+          body: contact.message,
+          type: 'CONTACT_NOTIFICATION',
+          metadata: {
+            isAdminNotification: true,
+            contactId: contact.id,
+            name: contact.name,
+            email: contact.email,
+            category: contact.category,
+            priority: contact.priority,
+            source: contact.source,
+            spamScore: finalSpamScore,
+            message: contact.message,
+          },
         });
-        
-        console.log('📧 Admin notification result:', adminNotifyResult);
-      }
-    } catch (notifyErr) {
-      console.error('❌ Failed to send admin notification:', notifyErr);
-    }
 
-    // Analytics tracking
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'contact_form_submitted', {
-        event_category: 'engagement',
-        event_label: category || 'General Inquiry',
-        value: isSpam ? 0 : 1
-      });
+        emailQueued = true;
+      } catch (queueErr) {
+        console.error('Failed to enqueue contact emails:', queueErr);
+      }
     }
 
     return NextResponse.json({ 
       success: true, 
       messageId: contact.id,
-      emailSent,
+      emailQueued,
       spamScore: finalSpamScore,
-      isSpam
-    })
+      isSpam,
+      message: 'Your message has been received. Our team will get back to you shortly!'
+    });
 
   } catch (e) {
     console.error('Error creating contact message:', e)

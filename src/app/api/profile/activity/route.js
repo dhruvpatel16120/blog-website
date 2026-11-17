@@ -12,8 +12,8 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Fetch user's comments and liked posts in parallel
-    const [comments, likes, myPosts] = await Promise.all([
+    // Fetch user's comments, liked posts, created posts, and user activities in parallel
+    const [comments, likes, myPosts, activities] = await Promise.all([
       prisma.comment.findMany({
         where: { authorId: userId },
         orderBy: { createdAt: 'desc' },
@@ -73,12 +73,35 @@ export async function GET() {
           publishedAt: true,
         },
       }),
+      prisma.userActivity.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: {
+          post: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              excerpt: true,
+            },
+          },
+          comment: {
+            select: {
+              id: true,
+              content: true,
+              approved: true,
+            },
+          },
+        },
+      }),
     ]);
 
     return NextResponse.json({
       comments,
       likes: likes.filter((l) => l.post !== null),
       posts: myPosts,
+      activities,
     });
   } catch (error) {
     console.error('Error fetching activity:', error);
