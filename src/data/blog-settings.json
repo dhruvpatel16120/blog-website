@@ -1,0 +1,8 @@
+{
+  "postsPerPage": 9,
+  "homeFeaturedCount": 6,
+  "homeTrendingCount": 6,
+  "homeLatestCount": 9,
+  "categoriesLimit": 6,
+  "tagsLimit": 5
+}

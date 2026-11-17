@@ -1,59 +1,66 @@
 "use client"
 
-import { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Input, Badge, Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
 import { useRouter } from 'next/navigation'
 import { MagnifyingGlassIcon, ClockIcon, FireIcon, TagIcon, HeartIcon } from '@heroicons/react/24/outline'
 
-const Sidebar = ({ allPosts = [], categories = [], tags = [], settings = {} }) => {
+export default function Sidebar({ allPosts = [], categories = [], tags = [], settings = {} }) {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
 
-  // Ensure allPosts is always an array
-  const postsList = Array.isArray(allPosts) ? allPosts : []
+  // Ensure allPosts is always an array (memoized)
+  const postsList = useMemo(() => (Array.isArray(allPosts) ? allPosts : []), [allPosts])
 
-  // Real data for widgets
-  const recentPosts = [...postsList]
-    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
-    .slice(0, 4)
+  // Recent posts sorted by date (memoized to avoid re-sorting on search input typing)
+  const recentPosts = useMemo(() => {
+    return [...postsList]
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+      .slice(0, 4)
+  }, [postsList])
 
   // Popular posts sorted based on LIKES
-  const popularPosts = [...postsList]
-    .sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
-    .slice(0, 4)
+  const popularPosts = useMemo(() => {
+    return [...postsList]
+      .sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
+      .slice(0, 4)
+  }, [postsList])
 
   // Limits from admin settings
   const categoriesLimit = Number(settings?.categoriesCount) || 6
   const tagsLimit = Number(settings?.tagsCount) || 12
 
-  // Category/Tag Cloud: prefer server-provided lists; fallback to derive from posts
-  const fallbackCategorySet = new Set()
-  const fallbackTagSet = new Set()
-  postsList.forEach((post) => {
-    if (post && Array.isArray(post.categories)) {
-      post.categories.forEach((c) => {
-        if (c) fallbackCategorySet.add(typeof c === 'object' ? (c.name || c.slug) : c)
-      })
+  // Category & Tag Cloud: prefer server-provided lists; fallback to derive from posts
+  const { displayCategories, displayTags } = useMemo(() => {
+    const fallbackCategorySet = new Set()
+    const fallbackTagSet = new Set()
+    postsList.forEach((post) => {
+      if (post && Array.isArray(post.categories)) {
+        post.categories.forEach((c) => {
+          if (c) fallbackCategorySet.add(typeof c === 'object' ? (c.name || c.slug) : c)
+        })
+      }
+      if (post && Array.isArray(post.tags)) {
+        post.tags.forEach((t) => {
+          if (t) fallbackTagSet.add(typeof t === 'object' ? (t.name || t.slug) : t)
+        })
+      }
+    })
+
+    const rawCategories = Array.isArray(categories) && categories.length > 0
+      ? categories
+      : Array.from(fallbackCategorySet).map((name) => ({ name: String(name), slug: String(name).toLowerCase().replace(/ /g, '-') }))
+
+    const rawTags = Array.isArray(tags) && tags.length > 0
+      ? tags
+      : Array.from(fallbackTagSet).map((name) => ({ name: String(name), slug: String(name).toLowerCase().replace(/ /g, '-') }))
+
+    return {
+      displayCategories: rawCategories.slice(0, categoriesLimit),
+      displayTags: rawTags.slice(0, tagsLimit),
     }
-    if (post && Array.isArray(post.tags)) {
-      post.tags.forEach((t) => {
-        if (t) fallbackTagSet.add(typeof t === 'object' ? (t.name || t.slug) : t)
-      })
-    }
-  })
-
-  const rawCategories = Array.isArray(categories) && categories.length > 0
-    ? categories
-    : Array.from(fallbackCategorySet).map((name) => ({ name: String(name), slug: String(name).toLowerCase().replace(/ /g, '-') }))
-
-  const rawTags = Array.isArray(tags) && tags.length > 0
-    ? tags
-    : Array.from(fallbackTagSet).map((name) => ({ name: String(name), slug: String(name).toLowerCase().replace(/ /g, '-') }))
-
-  // Slice according to admin sidebar settings
-  const displayCategories = rawCategories.slice(0, categoriesLimit)
-  const displayTags = rawTags.slice(0, tagsLimit)
+  }, [postsList, categories, tags, categoriesLimit, tagsLimit])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -80,7 +87,7 @@ const Sidebar = ({ allPosts = [], categories = [], tags = [], settings = {} }) =
             />
             <button 
               type="submit"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-[var(--muted-foreground)] hover:text-indigo-600 transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-[var(--muted-foreground)] hover:text-indigo-600 transition-colors cursor-pointer"
               aria-label="Search"
             >
               <MagnifyingGlassIcon className="w-4 h-4" />
@@ -225,5 +232,3 @@ const Sidebar = ({ allPosts = [], categories = [], tags = [], settings = {} }) =
     </aside>
   )
 }
-
-export default Sidebar

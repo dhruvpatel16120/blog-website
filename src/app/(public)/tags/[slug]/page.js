@@ -1,6 +1,7 @@
 import BlogGrid from '@/components/blog/BlogGrid'
 import { Button, Badge } from '@/components/ui'
 import { prisma } from '@/lib/db'
+import { getBlogSettings } from '@/lib/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,18 +11,31 @@ export default async function TagPage({ params, searchParams }) {
 
   const slug = p.slug
   const page = Math.max(parseInt(sp?.page || '1', 10), 1)
-  const limit = 9
+  const settings = getBlogSettings()
+  const limit = Math.max(1, Math.min(50, Number(sp?.limit) || settings.postsPerPage || 9))
 
-  const tag = await prisma.tag.findUnique({
-    where: { slug },
-    select: { id: true, name: true, slug: true, color: true, _count: { select: { posts: true } } }
-  })
+  let tag = null
+  try {
+    const tagPromise = prisma.tag.findUnique({
+      where: { slug },
+      select: { id: true, name: true, slug: true, color: true, _count: { select: { posts: true } } }
+    })
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Tag fetch timeout')), 3500)
+    )
+    tag = await Promise.race([tagPromise, timeoutPromise])
+  } catch (err) {
+    console.warn('Error fetching tag:', err.message)
+  }
 
   if (!tag) {
     return (
       <div className="max-w-4xl mx-auto py-24 text-center">
         <h1 className="text-3xl font-bold mb-2">Tag not found</h1>
-        <p className="text-gray-600 dark:text-gray-400">The tag you are looking for does not exist.</p>
+        <p className="text-gray-600 dark:text-gray-400">The tag you are looking for does not exist or is currently unavailable.</p>
+        <div className="mt-6">
+          <Button as="a" href="/tags" variant="outline">Browse All Tags</Button>
+        </div>
       </div>
     )
   }
@@ -31,22 +45,37 @@ export default async function TagPage({ params, searchParams }) {
     tags: { some: { tag: { slug } } },
   }
 
-  const [total, posts] = await Promise.all([
-    prisma.post.count({ where }),
-    prisma.post.findMany({
-      where,
-      orderBy: { publishedAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true, slug: true, title: true, excerpt: true, content: true, coverImage: true,
-        readTime: true, publishedAt: true,
-        categories: { include: { category: { select: { name: true } } } },
-        tags: { include: { tag: { select: { name: true } } } },
-        author: { select: { fullName: true, username: true } }
-      }
-    })
-  ])
+  let total = 0
+  let posts = []
+
+  try {
+    const queryPromise = Promise.all([
+      prisma.post.count({ where }),
+      prisma.post.findMany({
+        where,
+        orderBy: { publishedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, slug: true, title: true, excerpt: true, coverImage: true,
+          readTime: true, publishedAt: true,
+          categories: { include: { category: { select: { name: true } } } },
+          tags: { include: { tag: { select: { name: true } } } },
+          author: { select: { fullName: true, username: true } }
+        }
+      })
+    ])
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Tag posts fetch timeout')), 4000)
+    )
+
+    const [t, p] = await Promise.race([queryPromise, timeoutPromise])
+    total = t
+    posts = p
+  } catch (err) {
+    console.warn('Tag posts query timeout or error:', err.message)
+  }
 
   const totalPages = Math.max(Math.ceil(total / limit), 1)
 
@@ -55,7 +84,6 @@ export default async function TagPage({ params, searchParams }) {
     slug: p.slug,
     title: p.title,
     excerpt: p.excerpt,
-    content: p.content,
     coverImage: p.coverImage,
     readTime: p.readTime,
     date: p.publishedAt,
@@ -106,8 +134,11 @@ export default async function TagPage({ params, searchParams }) {
     <div className="max-w-6xl mx-auto px-4">
       <div className="mb-8">
         <Badge className="mb-3">Tag</Badge>
-        <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>#{tag.name}</h1>
-        <p className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>{total} post{total !== 1 ? 's' : ''}</p>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="w-4 h-4 rounded-full" style={{ backgroundColor: tag.color || '#3b82f6' }} />
+          <h1 className="text-4xl font-bold" style={{ color: 'var(--foreground)' }}>#{tag.name}</h1>
+        </div>
+        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{total} post{total !== 1 ? 's' : ''} tagged</p>
       </div>
 
       <BlogGrid posts={normalized} />
@@ -144,5 +175,3 @@ export default async function TagPage({ params, searchParams }) {
     </div>
   )
 }
-
-

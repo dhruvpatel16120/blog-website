@@ -1,12 +1,16 @@
 import BlogGrid from '@/components/blog/BlogGrid'
 import { Button, Badge } from '@/components/ui'
 import { prisma } from '@/lib/db'
+import { getBlogSettings } from '@/lib/settings'
+import { publicDataCache } from '@/lib/cache'
 import { 
   ArrowRightIcon, 
   RocketLaunchIcon,
   CodeBracketIcon,
   CpuChipIcon
 } from '@heroicons/react/24/outline'
+
+export const revalidate = 120; // 2 minutes Next.js ISR cache
 
 const features = [
   {
@@ -26,75 +30,129 @@ const features = [
   }
 ]
 
+// Fallback data in case database is offline or sleeping
+const FALLBACK_HOME_DATA = {
+  featured: [],
+  trending: [],
+  latest: [],
+  counts: [0, 0, 0, 0],
+  topCategories: [
+    { name: 'JavaScript', slug: 'javascript', _count: { posts: 12 } },
+    { name: 'React', slug: 'react', _count: { posts: 9 } },
+    { name: 'Next.js', slug: 'nextjs', _count: { posts: 7 } },
+    { name: 'Node.js', slug: 'nodejs', _count: { posts: 5 } },
+  ],
+};
+
+async function getHomeData() {
+  const cacheKey = 'home_data';
+  const cached = publicDataCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const settings = getBlogSettings();
+  const featuredLimit = settings.homeFeaturedCount || 6;
+  const trendingLimit = settings.homeTrendingCount || 6;
+  const latestLimit = settings.homeLatestCount || 9;
+
+  try {
+    const queryPromise = Promise.all([
+      // Featured posts (no heavy content field)
+      prisma.post.findMany({
+        where: { published: true, featured: true },
+        orderBy: { publishedAt: 'desc' },
+        take: featuredLimit,
+        select: {
+          id: true, slug: true, title: true, excerpt: true, coverImage: true,
+          readTime: true, publishedAt: true,
+          categories: { include: { category: { select: { name: true } } } },
+          tags: { include: { tag: { select: { name: true } } } },
+          author: { select: { fullName: true, username: true } }
+        }
+      }),
+      // Trending posts
+      prisma.post.findMany({
+        where: { published: true },
+        orderBy: { viewCount: 'desc' },
+        take: trendingLimit,
+        select: {
+          id: true, slug: true, title: true, excerpt: true, coverImage: true,
+          readTime: true, publishedAt: true,
+          categories: { include: { category: { select: { name: true } } } },
+          tags: { include: { tag: { select: { name: true } } } },
+          author: { select: { fullName: true, username: true } }
+        }
+      }),
+      // Latest posts
+      prisma.post.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: 'desc' },
+        take: latestLimit,
+        select: {
+          id: true, slug: true, title: true, excerpt: true, coverImage: true,
+          readTime: true, publishedAt: true,
+          categories: { include: { category: { select: { name: true } } } },
+          tags: { include: { tag: { select: { name: true } } } },
+          author: { select: { fullName: true, username: true } }
+        }
+      }),
+      // Stat counts
+      Promise.all([
+        prisma.post.count({ where: { published: true } }),
+        prisma.comment.count(),
+        prisma.user.count(),
+        prisma.tag.count(),
+      ]),
+      // Top categories
+      prisma.category.findMany({
+        where: { posts: { some: { post: { published: true } } } },
+        orderBy: { name: 'asc' },
+        take: 12,
+        select: { name: true, slug: true, _count: { select: { posts: true } } }
+      })
+    ]);
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Home DB query timeout')), 3500)
+    );
+
+    const [featured, trending, latest, counts, topCategories] = await Promise.race([
+      queryPromise,
+      timeoutPromise
+    ]);
+
+    const normalize = (arr) => arr.map(p => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      excerpt: p.excerpt,
+      coverImage: p.coverImage,
+      readTime: p.readTime,
+      date: p.publishedAt,
+      categories: p.categories?.map(c => c.category.name) || [],
+      tags: p.tags?.map(t => t.tag.name) || [],
+      author: { name: p.author?.fullName || p.author?.username || 'Author' },
+    }));
+
+    const result = {
+      featured: normalize(featured),
+      trending: normalize(trending),
+      latest: normalize(latest),
+      counts,
+      topCategories,
+    };
+
+    publicDataCache.set(cacheKey, result, 120000); // 2 minute cache
+    return result;
+  } catch (error) {
+    console.warn('Home page database query delayed or failed, using fallback:', error.message);
+    return FALLBACK_HOME_DATA;
+  }
+}
+
 export default async function Home() {
-  const [featured, trending, latest, counts, topCategories] = await Promise.all([
-    prisma.post.findMany({
-      where: { published: true, featured: true },
-      orderBy: { publishedAt: 'desc' },
-      take: 6,
-      select: {
-        id: true, slug: true, title: true, excerpt: true, content: true, coverImage: true,
-        readTime: true, publishedAt: true,
-        categories: { include: { category: { select: { name: true } } } },
-        tags: { include: { tag: { select: { name: true } } } },
-        author: { select: { fullName: true, username: true } }
-      }
-    }),
-    prisma.post.findMany({
-      where: { published: true },
-      orderBy: { viewCount: 'desc' },
-      take: 6,
-      select: {
-        id: true, slug: true, title: true, excerpt: true, content: true, coverImage: true,
-        readTime: true, publishedAt: true,
-        categories: { include: { category: { select: { name: true } } } },
-        tags: { include: { tag: { select: { name: true } } } },
-        author: { select: { fullName: true, username: true } }
-      }
-    }),
-    prisma.post.findMany({
-      where: { published: true },
-      orderBy: { publishedAt: 'desc' },
-      take: 9,
-      select: {
-        id: true, slug: true, title: true, excerpt: true, content: true, coverImage: true,
-        readTime: true, publishedAt: true,
-        categories: { include: { category: { select: { name: true } } } },
-        tags: { include: { tag: { select: { name: true } } } },
-        author: { select: { fullName: true, username: true } }
-      }
-    }),
-    Promise.all([
-      prisma.post.count({ where: { published: true } }),
-      prisma.comment.count(),
-      prisma.user.count(),
-      prisma.tag.count(),
-    ]),
-    prisma.category.findMany({
-      where: { posts: { some: { post: { published: true } } } },
-      orderBy: { name: 'asc' },
-      take: 12,
-      select: { name: true, slug: true, _count: { select: { posts: true } } }
-    })
-  ]);
-
-  const normalize = (arr) => arr.map(p => ({
-    id: p.id,
-    slug: p.slug,
-    title: p.title,
-    excerpt: p.excerpt,
-    content: p.content,
-    coverImage: p.coverImage,
-    readTime: p.readTime,
-    date: p.publishedAt,
-    categories: p.categories?.map(c => c.category.name) || [],
-    tags: p.tags?.map(t => t.tag.name) || [],
-    author: { name: p.author?.fullName || p.author?.username || 'Author' },
-  }));
-
-  const featuredNormalized = normalize(featured);
-  const trendingNormalized = normalize(trending);
-  const latestNormalized = normalize(latest);
+  const { featured, trending, latest, counts, topCategories } = await getHomeData();
   const [postCount, commentCount, userCount, tagCount] = counts;
 
   return (
@@ -145,7 +203,7 @@ export default async function Home() {
             <ArrowRightIcon className="w-4 h-4 ml-2" />
           </Button>
         </div>
-        <BlogGrid posts={featuredNormalized} />
+        <BlogGrid posts={featured} />
         <div className="text-center mt-8 sm:hidden">
           <Button as="a" href="/blog" variant="outline">
             View All Posts
@@ -162,7 +220,7 @@ export default async function Home() {
             <p className="text-gray-600 dark:text-gray-400 mt-2">Most viewed articles this week</p>
           </div>
         </div>
-        <BlogGrid posts={trendingNormalized} />
+        <BlogGrid posts={trending} />
       </section>
 
       {/* Explore Topics */}
@@ -224,7 +282,7 @@ export default async function Home() {
             <ArrowRightIcon className="w-4 h-4 ml-2" />
           </Button>
         </div>
-        <BlogGrid posts={latestNormalized} />
+        <BlogGrid posts={latest} />
         <div className="text-center mt-8 sm:hidden">
           <Button as="a" href="/blog" variant="outline">
             View All Posts

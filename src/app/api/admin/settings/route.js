@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth-combined';
-import { getSidebarSettings, setSidebarSettings } from '@/lib/settings';
-import { publicDataCache } from '@/lib/cache';
+import { fetchBlogSettings, updateBlogSettings } from '@/lib/settings';
 
 export async function GET() {
   try {
@@ -11,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const settings = getSidebarSettings();
+    const settings = await fetchBlogSettings();
     return NextResponse.json(settings);
   } catch (error) {
     console.error('Error fetching admin settings:', error);
@@ -27,18 +26,10 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { categoriesCount, tagsCount } = body;
-
-    const updated = setSidebarSettings({
-      categoriesCount: Number(categoriesCount),
-      tagsCount: Number(tagsCount),
-    });
-
-    // Invalidate sidebar cache so public pages immediately reflect updated numbers
-    publicDataCache.delete('sidebar_data');
+    const updated = await updateBlogSettings(body);
 
     return NextResponse.json({
-      message: 'Sidebar display settings saved successfully',
+      message: 'Blog settings saved successfully',
       settings: updated,
     });
   } catch (error) {

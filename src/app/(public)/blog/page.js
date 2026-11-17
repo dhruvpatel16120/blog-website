@@ -2,6 +2,8 @@ import React from 'react';
 import BlogGrid from '@/components/blog/BlogGrid';
 import { Button } from '@/components/ui';
 import { prisma } from '@/lib/db';
+import { getBlogSettings } from '@/lib/settings';
+import { publicDataCache } from '@/lib/cache';
 import { 
   MagnifyingGlassIcon, 
   FunnelIcon, 
@@ -13,10 +15,47 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+async function getFilterMeta() {
+  const cacheKey = 'blog_filter_meta';
+  const cached = publicDataCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const metaPromise = Promise.all([
+      prisma.category.findMany({
+        select: { name: true, _count: { select: { posts: true } } },
+        where: { posts: { some: { post: { published: true } } } },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.tag.findMany({
+        select: { name: true, _count: { select: { posts: true } } },
+        where: { posts: { some: { post: { published: true } } } },
+        orderBy: { name: 'asc' }
+      })
+    ]);
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Filter meta timeout')), 3000)
+    );
+
+    const [categories, tags] = await Promise.race([metaPromise, timeoutPromise]);
+    const res = { categories, tags };
+    publicDataCache.set(cacheKey, res, 300000); // 5 minutes TTL
+    return res;
+  } catch (err) {
+    console.warn('Could not load blog filter meta, using fallback:', err.message);
+    return { categories: [], tags: [] };
+  }
+}
+
 export default async function BlogPage({ searchParams }) {
   const sp = await searchParams;
-  const page = parseInt(sp?.page || '1', 10);
-  const limit = 9;
+  const page = Math.max(1, parseInt(sp?.page || '1', 10));
+  
+  // Dynamic page size from admin settings
+  const settings = getBlogSettings();
+  const limit = Math.max(1, Math.min(50, Number(sp?.limit) || settings.postsPerPage || 9));
+
   const sort = (sp?.sort || 'newest').toString();
   const search = sp?.search || '';
   const category = sp?.category || '';
@@ -46,7 +85,6 @@ export default async function BlogPage({ searchParams }) {
     where.OR = [
       { title: { contains: search, mode: 'insensitive' } },
       { excerpt: { contains: search, mode: 'insensitive' } },
-      { content: { contains: search, mode: 'insensitive' } },
       { author: { is: { fullName: { contains: search, mode: 'insensitive' } } } },
       { author: { is: { username: { contains: search, mode: 'insensitive' } } } },
     ];
@@ -72,81 +110,83 @@ export default async function BlogPage({ searchParams }) {
     };
   }
 
-  // Get total count and posts
-  const [total, prismaPosts] = await Promise.all([
-    prisma.post.count({ where }),
-    prisma.post.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true, 
-        slug: true, 
-        title: true, 
-        excerpt: true, 
-        content: true, 
-        coverImage: true, 
-        readTime: true, 
-        publishedAt: true, 
-        viewCount: true,
-        categories: { 
-          include: { 
-            category: { 
-              select: { name: true } 
+  // Fast query execution with timeout guard (excluding heavy `content` field)
+  let total = 0;
+  let prismaPosts = [];
+
+  try {
+    const queryPromise = Promise.all([
+      prisma.post.count({ where }),
+      prisma.post.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, 
+          slug: true, 
+          title: true, 
+          excerpt: true, 
+          coverImage: true, 
+          readTime: true, 
+          publishedAt: true, 
+          viewCount: true,
+          categories: { 
+            include: { 
+              category: { 
+                select: { name: true } 
+              } 
             } 
-          } 
-        },
-        tags: { 
-          include: { 
-            tag: { 
-              select: { name: true } 
+          },
+          tags: { 
+            include: { 
+              tag: { 
+                select: { name: true } 
+              } 
             } 
-          } 
-        },
-        author: { 
-          select: { 
-            fullName: true, 
-            username: true 
-          } 
-        },
-        _count: { 
-          select: { 
-            comments: true 
-          } 
+          },
+          author: { 
+            select: { 
+              fullName: true, 
+              username: true 
+            } 
+          },
+          _count: { 
+            select: { 
+              comments: true 
+            } 
+          }
         }
-      }
-    })
-  ]);
+      })
+    ]);
 
-  // Get categories and tags for filters
-  const [categories, tags] = await Promise.all([
-    prisma.category.findMany({
-      select: { name: true, _count: { select: { posts: true } } },
-      where: { posts: { some: { post: { published: true } } } },
-      orderBy: { name: 'asc' }
-    }),
-    prisma.tag.findMany({
-      select: { name: true, _count: { select: { posts: true } } },
-      where: { posts: { some: { post: { published: true } } } },
-      orderBy: { name: 'asc' }
-    })
-  ]);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Blog post query timeout')), 4000)
+    );
 
-  const totalPages = Math.ceil(total / limit);
+    const [t, p] = await Promise.race([queryPromise, timeoutPromise]);
+    total = t;
+    prismaPosts = p;
+  } catch (err) {
+    console.warn('Blog posts query delayed or failed:', err.message);
+  }
+
+  // Load cached filter options
+  const { categories, tags } = await getFilterMeta();
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
   const posts = prismaPosts.map(p => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
     excerpt: p.excerpt,
-    content: p.content,
     coverImage: p.coverImage,
     readTime: p.readTime,
     date: p.publishedAt,
     categories: p.categories?.map(c => c.category.name) || [],
     tags: p.tags?.map(t => t.tag.name) || [],
     author: { name: p.author?.fullName || p.author?.username || 'Author' },
-    commentCount: p._count.comments,
+    commentCount: p._count?.comments || 0,
   }));
 
   // Generate pagination range
@@ -182,7 +222,6 @@ export default async function BlogPage({ searchParams }) {
   const buildUrl = (newParams) => {
     const params = new URLSearchParams();
 
-    // Start from current, known keys only, coerced to strings
     const current = {
       page: page ? String(page) : '',
       sort,
@@ -336,6 +375,7 @@ export default async function BlogPage({ searchParams }) {
                 href={buildUrl({ page: 1 })}
                 disabled={page <= 1}
                 className="px-2"
+                aria-label="First page"
               >
                 <ChevronDoubleLeftIcon className="h-4 w-4" />
               </Button>
@@ -348,6 +388,7 @@ export default async function BlogPage({ searchParams }) {
                 href={buildUrl({ page: page - 1 })}
                 disabled={page <= 1}
                 className="px-2"
+                aria-label="Previous page"
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </Button>
@@ -378,6 +419,7 @@ export default async function BlogPage({ searchParams }) {
                 href={buildUrl({ page: page + 1 })}
                 disabled={page >= totalPages}
                 className="px-2"
+                aria-label="Next page"
               >
                 <ChevronRightIcon className="h-4 w-4" />
               </Button>
@@ -390,6 +432,7 @@ export default async function BlogPage({ searchParams }) {
                 href={buildUrl({ page: totalPages })}
                 disabled={page >= totalPages}
                 className="px-2"
+                aria-label="Last page"
               >
                 <ChevronDoubleRightIcon className="h-4 w-4" />
               </Button>
@@ -403,7 +446,7 @@ export default async function BlogPage({ searchParams }) {
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
             <FunnelIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text_WHITE mb-2">No posts found</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No posts found</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               {search || category || tag 
                 ? "Try adjusting your search criteria or filters."

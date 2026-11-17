@@ -294,6 +294,20 @@ model EmailQueue {
   @@map("email_queue")
 }
 
+model BlogSetting {
+  id                 String   @id @default("default")
+  postsPerPage       Int      @default(9)
+  homeFeaturedCount  Int      @default(6)
+  homeTrendingCount  Int      @default(6)
+  homeLatestCount    Int      @default(9)
+  categoriesLimit    Int      @default(6)
+  tagsLimit          Int      @default(12)
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+
+  @@map("blog_settings")
+}
+
 enum ActivityType {
   LIKE_POST
   LIKE_COMMENT

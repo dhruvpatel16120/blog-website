@@ -2,6 +2,7 @@ import Link from 'next/link'
 import BlogGrid from '@/components/blog/BlogGrid'
 import { Button, Badge } from '@/components/ui'
 import { prisma } from '@/lib/db'
+import { getBlogSettings } from '@/lib/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,8 @@ export default async function CategoryPage({ params, searchParams }) {
 
   const slug = p.slug
   const page = Math.max(parseInt(sp?.page || '1', 10), 1)
-  const limit = 9
+  const settings = getBlogSettings()
+  const limit = Math.max(1, Math.min(50, Number(sp?.limit) || settings.postsPerPage || 9))
   const sort = (sp?.sort || 'newest').toString()
   const search = sp?.search ? String(sp.search) : ''
 
@@ -31,16 +33,25 @@ export default async function CategoryPage({ params, searchParams }) {
   })()
 
   // Load category info
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    select: { id: true, name: true, slug: true, description: true, color: true, _count: { select: { posts: true } } }
-  })
+  let category = null
+  try {
+    const catPromise = prisma.category.findUnique({
+      where: { slug },
+      select: { id: true, name: true, slug: true, description: true, color: true, _count: { select: { posts: true } } }
+    })
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Category fetch timeout')), 3500)
+    )
+    category = await Promise.race([catPromise, timeoutPromise])
+  } catch (err) {
+    console.warn('Error fetching category:', err.message)
+  }
 
   if (!category) {
     return (
       <div className="max-w-4xl mx-auto py-24 text-center">
         <h1 className="text-3xl font-bold mb-2">Category not found</h1>
-        <p className="text-gray-600 dark:text-gray-400">The category you are looking for does not exist.</p>
+        <p className="text-gray-600 dark:text-gray-400">The category you are looking for does not exist or is currently unavailable.</p>
         <div className="mt-6">
           <Button as="a" href="/categories" variant="outline">Back to Categories</Button>
         </div>
@@ -57,28 +68,42 @@ export default async function CategoryPage({ params, searchParams }) {
           OR: [
             { title: { contains: search, mode: 'insensitive' } },
             { excerpt: { contains: search, mode: 'insensitive' } },
-            { content: { contains: search, mode: 'insensitive' } },
           ],
         }
       : {}),
   }
 
-  const [total, posts] = await Promise.all([
-    prisma.post.count({ where }),
-    prisma.post.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true, slug: true, title: true, excerpt: true, content: true, coverImage: true,
-        readTime: true, publishedAt: true,
-        categories: { include: { category: { select: { name: true } } } },
-        tags: { include: { tag: { select: { name: true } } } },
-        author: { select: { fullName: true, username: true } }
-      }
-    })
-  ])
+  let total = 0
+  let posts = []
+
+  try {
+    const queryPromise = Promise.all([
+      prisma.post.count({ where }),
+      prisma.post.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, slug: true, title: true, excerpt: true, coverImage: true,
+          readTime: true, publishedAt: true,
+          categories: { include: { category: { select: { name: true } } } },
+          tags: { include: { tag: { select: { name: true } } } },
+          author: { select: { fullName: true, username: true } }
+        }
+      })
+    ])
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Category posts fetch timeout')), 4000)
+    );
+
+    const [t, p] = await Promise.race([queryPromise, timeoutPromise]);
+    total = t;
+    posts = p;
+  } catch (err) {
+    console.warn('Category posts query timeout or error:', err.message);
+  }
 
   const totalPages = Math.max(Math.ceil(total / limit), 1)
 
@@ -87,7 +112,6 @@ export default async function CategoryPage({ params, searchParams }) {
     slug: p.slug,
     title: p.title,
     excerpt: p.excerpt,
-    content: p.content,
     coverImage: p.coverImage,
     readTime: p.readTime,
     date: p.publishedAt,
@@ -206,5 +230,3 @@ export default async function CategoryPage({ params, searchParams }) {
     </div>
   )
 }
-
-
