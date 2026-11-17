@@ -20,6 +20,8 @@ const nextConfig = {
       'picsum.photos',
       'ui-avatars.com',
       'api.dicebear.com',
+      'avatars.githubusercontent.com',
+      'github.com',
       ...(nextAuthHost ? [nextAuthHost] : []),
       ...extraDomains,
     ],

@@ -1,228 +1,170 @@
-import React from 'react'
-import Image from 'next/image'
-import { Button, Badge } from '@/components/ui'
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { 
-  UserGroupIcon, 
+  SparklesIcon, 
   LightBulbIcon, 
   HeartIcon,
   AcademicCapIcon,
   GlobeAltIcon,
-  RocketLaunchIcon
-} from '@heroicons/react/24/outline'
+  CodeBracketIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  CheckBadgeIcon,
+  StarIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowRightIcon,
+  ShieldCheckIcon
+} from '@heroicons/react/24/outline';
+import { REPO_URL, FALLBACK_REPO_DATA } from '@/lib/github';
 
-// Team data with CDN images
-const team = [
-  {
-    name: 'Aarav Shah',
-    role: 'Founder & Lead Developer',
-    bio: 'Full‑stack developer focused on product, performance, and developer experience.',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop',
-    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
-    expertise: ['React', 'Next.js', 'TypeScript']
-  },
-  {
-    name: 'Meera Patel',
-    role: 'Senior Frontend Engineer',
-    bio: 'Design‑system advocate crafting accessible, beautiful user interfaces.',
-    avatar: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=160&h=160&fit=crop&crop=faces',
-    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
-    expertise: ['UI/UX', 'Accessibility', 'Tailwind CSS']
-  },
-  {
-    name: 'Vihaan Kumar',
-    role: 'Backend Engineer',
-    bio: 'Builds reliable APIs and data pipelines with a security‑first mindset.',
-    avatar: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=400&auto=format&fit=crop',
-    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
-    expertise: ['Node.js', 'Prisma', 'PostgreSQL']
-  },
-  {
-    name: 'Anaya Desai',
-    role: 'DevOps & Cloud',
-    bio: 'Automates everything. Cloud infra, CI/CD, and observability.',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=400&auto=format&fit=crop',
-    social: { twitter: 'https://twitter.com/', github: 'https://github.com/', linkedin: 'https://linkedin.com/' },
-    expertise: ['Docker', 'AWS', 'Kubernetes']
-  }
-]
-
-// Mock values/mission data
+// Core editorial values
 const values = [
   {
     icon: LightBulbIcon,
-    title: 'Innovation',
-    description: 'We stay at the forefront of technology, exploring new tools and methodologies to deliver cutting-edge solutions.'
+    title: 'Production-Tested Insights',
+    description: 'We test architectures and libraries in real applications before writing about them. No hype cycles—only solutions that resolve actual bottlenecks.'
   },
   {
-    icon: HeartIcon,
-    title: 'Community',
-    description: 'We believe in the power of knowledge sharing and building a supportive developer community.'
+    icon: CodeBracketIcon,
+    title: 'Open Source Transparency',
+    description: 'The entire TechBlog platform is open source on GitHub. Every architecture decision, schema, and UI component is inspectable and reproducible.'
   },
   {
     icon: AcademicCapIcon,
-    title: 'Education',
-    description: 'Our mission is to make complex technical concepts accessible to developers at all levels.'
+    title: 'Deep-Dive Clarity',
+    description: 'Complex distributed systems and Next.js internals do not need convoluted prose. We unpack concepts with minimal diagrams and clear explanations.'
   },
   {
     icon: GlobeAltIcon,
-    title: 'Accessibility',
-    description: 'We create content and tools that are inclusive and accessible to everyone in the tech community.'
+    title: 'Accessible Knowledge',
+    description: 'All tutorials, sample repositories, and architectural breakdowns remain free and open to software engineers across the globe.'
   }
-]
-
-// Mock stats
-const stats = [
-  { label: 'Articles Published', value: '150+' },
-  { label: 'Community Members', value: '10K+' },
-  { label: 'Years of Experience', value: '8+' },
-  { label: 'Technologies Covered', value: '25+' }
-]
+];
 
 export default function AboutPage() {
+  const [repo, setRepo] = useState(FALLBACK_REPO_DATA);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchRepoInfo() {
+      try {
+        const res = await fetch('/api/github');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted && data.success && data.repo) {
+          setRepo(data.repo);
+        }
+      } catch {
+        // Fallback already initialized
+      }
+    }
+    fetchRepoInfo();
+    return () => { isMounted = false; };
+  }, []);
+
   return (
-    <>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
       {/* Hero Section */}
-      <section className="relative overflow-hidden text-center py-16 lg:py-24 mb-16" style={{
-        background: 'linear-gradient(135deg, var(--muted) 0%, var(--accent) 100%)'
-      }}>
-        <div className="absolute inset-0 opacity-20" aria-hidden>
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-purple-600 blur-3xl" />
-        </div>
-        <div className="relative max-w-4xl mx-auto px-4">
-          <Badge className="mb-6">About Us</Badge>
-          <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight" style={{ color: 'var(--foreground)' }}>
-            Building the Future of
-            <span className="text-primary block">Web Development</span>
+      <section className="relative overflow-hidden py-16 lg:py-24 border-b border-[var(--border)] bg-gradient-to-b from-blue-50/50 via-indigo-50/20 to-transparent dark:from-indigo-950/20 dark:via-transparent dark:to-transparent">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-6">
+            <SparklesIcon className="w-4 h-4" />
+            <span>Open Source Project</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-[var(--foreground)] max-w-4xl mx-auto">
+            Practical Engineering for{' '}
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+              Modern Developers
+            </span>
           </h1>
-          <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-            We&apos;re a passionate team of developers, designers, and tech enthusiasts dedicated to sharing knowledge, 
-            exploring new technologies, and helping developers build amazing web applications.
+
+          <p className="text-base sm:text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto mt-4 leading-relaxed">
+            TechBlog is an open-source technical journal and blogging platform designed for engineers, authors, and tech teams. Built with Next.js 15, Prisma, and Tailwind CSS.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button as="a" href="/contribute" size="lg">
-              Join Our Community
-            </Button>
-            <Button as="a" href="#story" variant="outline" size="lg">
-              Read Our Story
-            </Button>
+
+          {/* Live GitHub Repository Highlights */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto mt-10">
+            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex flex-col items-center justify-center text-center">
+              <StarIcon className="w-6 h-6 text-amber-500 mb-1" />
+              <span className="text-xl font-black text-[var(--foreground)]">{repo.stargazers_count ?? 2}</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">GitHub Stars</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex flex-col items-center justify-center text-center">
+              <CodeBracketIcon className="w-6 h-6 text-indigo-500 mb-1" />
+              <span className="text-xl font-black text-[var(--foreground)]">{repo.language || 'JavaScript'}</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">Core Stack</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex flex-col items-center justify-center text-center">
+              <CheckBadgeIcon className="w-6 h-6 text-emerald-500 mb-1" />
+              <span className="text-xl font-black text-[var(--foreground)]">{repo.license?.spdx_id || 'MIT'}</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">Open Source</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex flex-col items-center justify-center text-center">
+              <UserGroupIcon className="w-6 h-6 text-blue-500 mb-1" />
+              <span className="text-xl font-black text-[var(--foreground)]">Community</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">Driven Dev</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3.5 mt-8">
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-sm shadow-blue-500/25 transition-all duration-200 cursor-pointer"
+            >
+              <span>GitHub Repository</span>
+              <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+            </a>
+            <Link
+              href="/team"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider text-[var(--foreground)] border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] transition-all duration-200 cursor-pointer"
+            >
+              Meet the Contributors
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="mb-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-              Our Mission
+      {/* Core Values Section */}
+      <section className="py-16 sm:py-20 border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-2xl sm:text-3xl font-black text-[var(--foreground)]">
+              Our Development Values
             </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-              To empower developers with the knowledge, tools, and community they need to build exceptional web experiences.
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] mt-2 leading-relaxed">
+              We cut through the noise with deep, reproducible technical content and transparent code.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {values.map((value, index) => (
-              <div key={index} className="text-center p-6 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <value.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-                  {value.title}
-                </h3>
-                <p style={{ color: 'var(--muted-foreground)' }}>
-                  {value.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="mb-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {stats.map((stat, index) => (
-              <div key={index}>
-                <div className="text-3xl font-bold mb-2 text-primary">
-                  {stat.value}
-                </div>
-                <div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="mb-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-              Meet Our Team
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-              We&apos;re a diverse team of passionate developers and tech enthusiasts committed to sharing knowledge and building amazing things.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            {values.map((v, i) => (
               <div
-                key={index}
-                className="card p-6 text-center hover:shadow-lg transition-all duration-300"
-                style={{
-                  backgroundColor: 'var(--card)',
-                  borderColor: 'var(--border)'
-                }}
+                key={i}
+                className="rounded-2xl p-6 sm:p-7 border border-[var(--border)] bg-[var(--card)] shadow-xs hover:shadow-sm transition-shadow flex items-start gap-4"
               >
-                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden ring-2 ring-primary/20">
-                  <Image
-                    src={member.avatar}
-                    alt={member.name}
-                    width={96}
-                    height={96}
-                    sizes="96px"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <v.icon className="w-6 h-6" />
                 </div>
-                
-                <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                  {member.name}
-                </h3>
-                <p className="text-sm mb-3" style={{ color: 'var(--primary)' }}>
-                  {member.role}
-                </p>
-                
-                <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>
-                  {member.bio}
-                </p>
-
-                <div className="flex flex-wrap justify-center gap-1 mb-4">
-                  {member.expertise.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-
-                <div className="flex justify-center space-x-3">
-                  {Object.entries(member.social).map(([platform, url]) => (
-                    <a
-                      key={platform}
-                      href={url}
-                      className="text-muted-foreground hover:text-foreground transition-colors underline text-sm"
-                      aria-label={platform}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span className="capitalize">{platform}</span>
-                    </a>
-                  ))}
+                <div>
+                  <h3 className="text-base font-bold text-[var(--foreground)] mb-1">
+                    {v.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
+                    {v.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -230,62 +172,103 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Story Section */}
-      <section id="story" className="mb-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
-                Our Story
+      {/* Repository & Open Source Section */}
+      <section className="py-16 sm:py-20 border-b border-[var(--border)] bg-[var(--muted)]/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <span>Open Source Ecosystem</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[var(--foreground)]">
+                Built in Public on GitHub
               </h2>
-              <div className="space-y-4" style={{ color: 'var(--muted-foreground)' }}>
+              <div className="space-y-3.5 text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
                 <p>
-                  Founded in 2020, TechBlog started as a small community of developers passionate about sharing knowledge 
-                  and exploring the latest web technologies. What began as a simple blog has grown into a comprehensive 
-                  platform for developers worldwide.
+                  TechBlog is fully open-source. Anyone can inspect our code, review database schemas, suggest architectural improvements, or fork the repository to build their own blog platform.
                 </p>
                 <p>
-                  We believe that the best way to learn is by doing and sharing. Our team writes from real-world experience, 
-                  tackling the challenges we face in our own projects and sharing the solutions we discover.
-                </p>
-                <p>
-                  Today, we&apos;re proud to serve a global community of developers, from beginners taking their first steps 
-                  in web development to experienced professionals looking to stay current with the latest trends and tools.
+                  We welcome contributions from everyone — from fixing broken links in tutorials to adding full-stack features like new authentication providers or caching layers.
                 </p>
               </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                {(repo.topics || ['nextjs', 'reactjs', 'prisma', 'tailwindcss', 'admin-panel']).map((topic) => (
+                  <span
+                    key={topic}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)]"
+                  >
+                    #{topic}
+                  </span>
+                ))}
+              </div>
             </div>
-            
-            <div className="relative">
-              <div className="w-full h-64 rounded-2xl flex items-center justify-center" style={{
-                backgroundColor: 'var(--muted)'
-              }}>
-                <RocketLaunchIcon className="w-24 h-24" style={{ color: 'var(--muted-foreground)' }} />
+
+            <div className="lg:col-span-5">
+              <div className="rounded-2xl p-6 sm:p-7 border border-[var(--border)] bg-[var(--card)] shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                    <CodeBracketIcon className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    {repo.license?.spdx_id || 'MIT'} Licensed
+                  </span>
+                </div>
+
+                <h3 className="text-base font-bold text-[var(--foreground)]">
+                  Project Repository
+                </h3>
+
+                <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                  {repo.description}
+                </p>
+
+                <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between text-xs">
+                  <span className="text-[var(--muted-foreground)] font-medium">Branch: <strong className="text-[var(--foreground)]">{repo.default_branch || 'main'}</strong></span>
+                  <a
+                    href={REPO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>View Repository</span>
+                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="text-center rounded-2xl p-8 lg:p-12" style={{
-        backgroundColor: 'var(--card)',
-        border: '1px solid var(--border)'
-      }}>
-        <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-          Join Our Community
-        </h2>
-        <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
-          Connect with fellow developers, share your knowledge, and stay updated with the latest in web development.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button as="a" href="/contribute" size="lg">
-            Start Contributing
-          </Button>
-          <Button as="a" href="/contact" variant="outline" size="lg">
-            Contact Us
-          </Button>
+      {/* Community Links & Action */}
+      <section className="py-16 sm:py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl p-8 sm:p-12 border border-[var(--border)] bg-[var(--card)] shadow-xs text-center space-y-4">
+            <h2 className="text-2xl sm:text-3xl font-black text-[var(--foreground)]">
+              Get Involved in TechBlog
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] max-w-xl mx-auto leading-relaxed">
+              Explore our contributor guide, read the community code of conduct, or reach out to collaborate on technical content.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+              <Link
+                href="/contribute"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-sm shadow-blue-500/25 transition-all duration-200 cursor-pointer"
+              >
+                <span>Contribution Guide</span>
+                <ArrowRightIcon className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/conduct"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider text-[var(--foreground)] border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] transition-all duration-200 cursor-pointer"
+              >
+                Code of Conduct
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
-    </>
-  )
-} 
+    </div>
+  );
+}

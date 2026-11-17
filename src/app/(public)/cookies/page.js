@@ -1,204 +1,202 @@
-import React from 'react'
-import { Badge } from '@/components/ui'
+"use client";
+
+import React from 'react';
+import Link from 'next/link';
+import { 
+  ShieldCheckIcon, 
+  CircleStackIcon, 
+  AdjustmentsHorizontalIcon, 
+  ClockIcon, 
+  EnvelopeIcon,
+  DocumentTextIcon
+} from '@heroicons/react/24/outline';
 
 export default function CookiesPage() {
   return (
-    <>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
       {/* Hero Section */}
-      <section className="text-center py-16 lg:py-24 mb-16 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="max-w-4xl mx-auto px-4">
-          <Badge className="mb-6">Legal</Badge>
-          <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight text-gray-900 dark:text-white">
-            Cookie Policy
+      <section className="relative overflow-hidden py-16 lg:py-24 border-b border-[var(--border)] bg-gradient-to-b from-blue-50/50 via-indigo-50/20 to-transparent dark:from-indigo-950/20 dark:via-transparent dark:to-transparent">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-6">
+            <ShieldCheckIcon className="w-4 h-4" />
+            <span>Transparency &amp; Privacy</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-[var(--foreground)] max-w-4xl mx-auto">
+            Cookie{' '}
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+              Policy
+            </span>
           </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-600 dark:text-gray-400">
-            How we use cookies and similar technologies on our website
+
+          <p className="text-base sm:text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto mt-4 leading-relaxed">
+            We believe in honest, minimal data collection. Here is a clear breakdown of the small text files stored in your browser and how you control them.
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
+
+          <div className="inline-flex items-center gap-2 text-xs text-[var(--muted-foreground)] mt-6 px-3.5 py-1.5 rounded-full bg-[var(--card)] border border-[var(--border)]">
+            <ClockIcon className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Last reviewed: November 2026 &bull; Version 2.0</span>
+          </div>
         </div>
       </section>
 
-      {/* Content */}
-      <section className="mb-16">
-        <div className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">What Are Cookies?</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Cookies are small text files that are placed on your computer or mobile device when you visit a website. 
-                They are widely used to make websites work more efficiently and to provide information to website owners.
-              </p>
-            </div>
+      {/* Main Content Sections */}
+      <section className="py-12 sm:py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          
+          {/* Card 1: What Are Cookies */}
+          <div className="rounded-2xl p-6 sm:p-8 border border-[var(--border)] bg-[var(--card)] shadow-xs space-y-4">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)] flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <CircleStackIcon className="w-4 h-4" />
+              </div>
+              <span>What Are Cookies?</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
+              Cookies are small data files saved to your computer or mobile device when you visit a website. They allow the site to remember your authentication session, preserve your visual theme preference (light or dark mode), and help us understand which tutorials readers find most useful.
+            </p>
+          </div>
 
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">How We Use Cookies</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                We use cookies for several purposes, including:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 text-gray-600 dark:text-gray-400">
-                <li>To provide you with a better user experience</li>
-                <li>To understand how you use our website</li>
-                <li>To remember your preferences and settings</li>
-                <li>To provide personalized content and advertisements</li>
-                <li>To ensure the security of our website</li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Types of Cookies We Use</h2>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Essential Cookies</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    These cookies are necessary for the website to function properly. They enable basic functions like page 
-                    navigation and access to secure areas of the website. The website cannot function properly without these cookies.
-                  </p>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
-                    <li>Authentication cookies to keep you logged in</li>
-                    <li>Security cookies to protect against fraud</li>
-                    <li>Session cookies to maintain your session</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Analytics Cookies</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    These cookies help us understand how visitors interact with our website by collecting and reporting 
-                    information anonymously.
-                  </p>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
-                    <li>Google Analytics cookies to track page views and user behavior</li>
-                    <li>Performance monitoring cookies</li>
-                    <li>Error tracking cookies</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Preference Cookies</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    These cookies allow the website to remember choices you make and provide enhanced, more personal features.
-                  </p>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
-                    <li>Language preference cookies</li>
-                    <li>Theme preference cookies (light/dark mode)</li>
-                    <li>Font size preference cookies</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Marketing Cookies</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    These cookies are used to track visitors across websites. The intention is to display ads that are 
-                    relevant and engaging for individual users.
-                  </p>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
-                    <li>Social media cookies for sharing content</li>
-                    <li>Advertising cookies for targeted ads</li>
-                    <li>Marketing cookies for optional communications</li>
-                  </ul>
-                </div>
+          {/* Card 2: How We Use Cookies */}
+          <div className="rounded-2xl p-6 sm:p-8 border border-[var(--border)] bg-[var(--card)] shadow-xs space-y-4">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)] flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <AdjustmentsHorizontalIcon className="w-4 h-4" />
+              </div>
+              <span>How We Use Them on TechBlog</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
+              We keep our cookie footprint lean. We only set cookies that serve a distinct functional or diagnostic purpose:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="p-3.5 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] text-xs">
+                <span className="font-bold text-[var(--foreground)] block mb-1">🔐 Auth &amp; Session</span>
+                <span className="text-[var(--muted-foreground)]">Keeps your account authenticated securely without asking for credentials on every page.</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] text-xs">
+                <span className="font-bold text-[var(--foreground)] block mb-1">🌓 Theme Persistence</span>
+                <span className="text-[var(--muted-foreground)]">Remembers your preferred color scheme (light, dark, or system default) across visits.</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] text-xs">
+                <span className="font-bold text-[var(--foreground)] block mb-1">🛡️ Anti-Abuse &amp; Security</span>
+                <span className="text-[var(--muted-foreground)]">Prevents automated spam submissions and protects contact and comment forms against CSRF.</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] text-xs">
+                <span className="font-bold text-[var(--foreground)] block mb-1">📊 Privacy-Friendly Metrics</span>
+                <span className="text-[var(--muted-foreground)]">Aggregates anonymous view counts so we know which engineering tutorials need updates.</span>
               </div>
             </div>
+          </div>
 
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Third-Party Cookies</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                We may also use third-party cookies from trusted partners:
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Google Analytics</h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    We use Google Analytics to understand how visitors interact with our website. Google Analytics uses 
-                    cookies to collect information about your use of our website, including your IP address.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Social Media</h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    We may include social media buttons that allow you to share content on platforms like Twitter, 
-                    LinkedIn, and GitHub. These platforms may set cookies when you interact with their buttons.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Card 3: Types of Cookies */}
+          <div className="rounded-2xl p-6 sm:p-8 border border-[var(--border)] bg-[var(--card)] shadow-xs space-y-5">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)]">
+              Detailed Cookie Categories
+            </h2>
 
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Managing Cookies</h2>
-              <div className="space-y-4 text-gray-600 dark:text-gray-400">
-                <p>
-                  You can control and manage cookies in several ways:
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--foreground)]">1. Essential / Strictly Necessary</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Required</span>
+                </div>
+                <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                  These cookies are mandatory for authentication tokens (NextAuth JWT session) and form security. Without them, you cannot log into your dashboard or comment on articles.
                 </p>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Browser Settings</h3>
-                  <p className="mb-2">
-                    Most web browsers allow you to control cookies through their settings preferences. However, 
-                    if you limit the ability of websites to set cookies, you may worsen your overall user experience.
-                  </p>
-                  <ul className="list-disc pl-6 space-y-1">
-                    <li>Chrome: Settings → Privacy and security → Cookies and other site data</li>
-                    <li>Firefox: Options → Privacy &amp; Security → Cookies and Site Data</li>
-                    <li>Safari: Preferences → Privacy → Manage Website Data</li>
-                    <li>Edge: Settings → Cookies and site permissions → Cookies and site data</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Cookie Consent</h3>
-                  <p>
-                    When you first visit our website, you&apos;ll see a cookie consent banner that allows you to accept 
-                    or decline non-essential cookies. You can change your preferences at any time.
-                  </p>
-                </div>
               </div>
-            </div>
 
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Cookie Duration</h2>
-              <div className="space-y-4 text-gray-600 dark:text-gray-400">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Session Cookies</h3>
-                  <p>
-                    These cookies are temporary and are deleted when you close your browser. They are used to maintain 
-                    your session while you browse our website.
-                  </p>
+              <div className="p-4 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--foreground)]">2. Functional &amp; Preferences</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">Optional</span>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Persistent Cookies</h3>
-                  <p>
-                    These cookies remain on your device for a set period or until you delete them. They are used to 
-                    remember your preferences and settings for future visits.
-                  </p>
-                </div>
+                <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                  Stores your visual interface choices such as code snippet copy history and syntax highlighter preferences.
+                </p>
               </div>
-            </div>
 
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Updates to This Policy</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                We may update this Cookie Policy from time to time to reflect changes in our practices or for other 
-                operational, legal, or regulatory reasons. We will notify you of any material changes by posting the 
-                new policy on this page and updating the &quot;Last updated&quot; date.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Contact Us</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                If you have any questions about our use of cookies, please contact us at:
-              </p>
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <p className="text-gray-600 dark:text-gray-400">
-                  <strong>Email:</strong> privacy@techblog.com<br />
-                  <strong>Address:</strong> 123 Tech Street, San Francisco, CA 94105<br />
-                  <strong>Phone:</strong> +1 (555) 123-4567
+              <div className="p-4 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--foreground)]">3. Anonymous Analytics</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Optional</span>
+                </div>
+                <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                  Tracks aggregate bounce rates and technical article popularity. We do not sell this data, and IP addresses are masked.
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Card 4: Managing Cookies */}
+          <div className="rounded-2xl p-6 sm:p-8 border border-[var(--border)] bg-[var(--card)] shadow-xs space-y-4">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)]">
+              How to Control &amp; Remove Cookies
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
+              You have full control. You can clear, reject, or block cookies at any time directly through your web browser preferences:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[var(--muted-foreground)]">
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+                <strong className="text-[var(--foreground)] block mb-0.5">Google Chrome:</strong>
+                Settings &rarr; Privacy &amp; Security &rarr; Third-party cookies
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+                <strong className="text-[var(--foreground)] block mb-0.5">Mozilla Firefox:</strong>
+                Settings &rarr; Privacy &amp; Security &rarr; Cookies and Site Data
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+                <strong className="text-[var(--foreground)] block mb-0.5">Apple Safari:</strong>
+                Preferences &rarr; Privacy &rarr; Manage Website Data
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+                <strong className="text-[var(--foreground)] block mb-0.5">Microsoft Edge:</strong>
+                Settings &rarr; Cookies and site permissions
+              </div>
+            </div>
+            <p className="text-[11px] text-[var(--muted-foreground)] italic">
+              Note: Disabling essential cookies will log you out of your account and require logging back in.
+            </p>
+          </div>
+
+          {/* Card 5: Contact Card */}
+          <div className="rounded-2xl p-6 sm:p-8 border border-[var(--border)] bg-[var(--card)] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+                <EnvelopeIcon className="w-5 h-5 text-indigo-500" />
+                <span>Questions About Our Policies?</span>
+              </h3>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                Reach out to our privacy lead with any questions or data requests.
+              </p>
+            </div>
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-sm shadow-blue-500/25 transition-all duration-200 cursor-pointer shrink-0"
+            >
+              Contact Support
+            </Link>
+          </div>
+
+          {/* Quick Legal Links Footer */}
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[var(--muted-foreground)] pt-4">
+            <Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              Privacy Policy &rarr;
+            </Link>
+            <span>&bull;</span>
+            <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              Terms of Service &rarr;
+            </Link>
+            <span>&bull;</span>
+            <Link href="/guidelines" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              Community Guidelines &rarr;
+            </Link>
+          </div>
+
         </div>
       </section>
-    </>
-  )
+    </div>
+  );
 }
