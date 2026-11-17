@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateAvatarUrl } from '@/lib/utils';
+import { getPrivacy } from '@/lib/privacy';
 
 export async function GET(request, { params }) {
   try {
@@ -17,6 +18,7 @@ export async function GET(request, { params }) {
       select: {
         id: true,
         username: true,
+        email: true,
         fullName: true,
         avatar: true,
         bio: true,
@@ -57,22 +59,29 @@ export async function GET(request, { params }) {
     });
 
     if (user) {
+      const privacy = getPrivacy(user.id);
+
       return NextResponse.json({
         user: {
           id: user.id,
           username: user.username,
           fullName: user.fullName,
           avatar: user.avatar || generateAvatarUrl(user.fullName, user.username),
+          email: privacy.showEmail ? user.email : null,
           bio: user.bio,
           website: user.website,
           location: user.location,
           createdAt: user.createdAt,
           role: user.role,
           type: 'user',
+          privacy: {
+            showEmail: privacy.showEmail,
+            showLikedPosts: privacy.showLikedPosts,
+          },
           stats: {
             postCount: user._count.posts,
             commentCount: user._count.comments,
-            likeCount: user._count.likes,
+            likeCount: privacy.showLikedPosts ? user._count.likes : null,
           },
           posts: user.posts,
         },
@@ -85,6 +94,7 @@ export async function GET(request, { params }) {
       select: {
         id: true,
         username: true,
+        email: true,
         fullName: true,
         avatar: true,
         role: true,
@@ -94,22 +104,28 @@ export async function GET(request, { params }) {
 
     if (admin) {
       const postCount = await prisma.post.count({ where: { published: true } });
+      const privacy = getPrivacy(admin.id);
       return NextResponse.json({
         user: {
           id: admin.id,
           username: admin.username,
           fullName: admin.fullName,
           avatar: admin.avatar || generateAvatarUrl(admin.fullName, admin.username),
+          email: privacy.showEmail ? admin.email : null,
           bio: 'Platform Administrator & Technical Lead',
           website: '',
           location: 'Global',
           createdAt: admin.createdAt,
           role: admin.role,
           type: 'admin',
+          privacy: {
+            showEmail: privacy.showEmail,
+            showLikedPosts: privacy.showLikedPosts,
+          },
           stats: {
             postCount,
             commentCount: 0,
-            likeCount: 0,
+            likeCount: null,
           },
           posts: [],
         },

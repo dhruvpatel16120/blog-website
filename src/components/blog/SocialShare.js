@@ -28,7 +28,7 @@ export default function SocialShare({ title, slug, excerpt = '' }) {
 
   // Social media sharing URLs with enhanced parameters
   const shareLinks = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}&via=TechBlog&hashtags=tech,blog`,
+    twitter: `https://x.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}&via=TechBlog&hashtags=tech,blog`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&title=${encodedTitle}&summary=${encodedExcerpt}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedTitle}`,
     whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
@@ -60,14 +60,14 @@ export default function SocialShare({ title, slug, excerpt = '' }) {
       </h3>
       
       <div className="flex flex-wrap gap-3">
-        {/* Twitter */}
+        {/* X */}
         <button
           onClick={() => handleShare('twitter')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          aria-label="Share on Twitter"
+          className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2"
+          aria-label="Share on X"
         >
           <ChatBubbleLeftRightIcon className="h-5 w-5" />
-          <span className="hidden sm:inline">Twitter</span>
+          <span className="hidden sm:inline">X</span>
         </button>
 
         {/* LinkedIn */}

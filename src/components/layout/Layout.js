@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
-const Layout = ({ children, showSidebar = true, sidebarPosts = [], sidebarCategories = [], sidebarTags = [] }) => {
+const Layout = ({ children, showSidebar = true, sidebarPosts = [], sidebarCategories = [], sidebarTags = [], sidebarSettings = {} }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const Layout = ({ children, showSidebar = true, sidebarPosts = [], sidebarCatego
             {/* Sidebar */}
             {showSidebar && (
               <div className="lg:col-span-4 xl:col-span-3">
-                <Sidebar allPosts={sidebarPosts} categories={sidebarCategories} tags={sidebarTags} />
+                <Sidebar allPosts={sidebarPosts} categories={sidebarCategories} tags={sidebarTags} settings={sidebarSettings} />
               </div>
             )}
           </div>

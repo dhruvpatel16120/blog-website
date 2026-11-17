@@ -21,9 +21,14 @@ import toast from "react-hot-toast";
 export default function CurrentUserProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [publishedPosts, setPublishedPosts] = useState([]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const isAuthenticated = status === "authenticated" && session?.user?.id;
 
@@ -62,7 +67,7 @@ export default function CurrentUserProfilePage() {
     fetchProfileAndPosts();
   }, [isAuthenticated]);
 
-  if (status === "loading" || (isAuthenticated && loading && !profile)) {
+  if (!isMounted || status === "loading" || (isAuthenticated && loading && !profile)) {
     return (
       <div className="max-w-5xl mx-auto py-16 px-4 flex flex-col items-center justify-center min-h-[50vh]">
         <div className="w-10 h-10 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -151,10 +156,15 @@ export default function CurrentUserProfilePage() {
 
             {/* Metadata Pills */}
             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-[var(--muted-foreground)] pt-1">
-              <div className="flex items-center gap-1.5">
-                <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                <span>{profile?.email}</span>
-              </div>
+              {profile?.email && (
+                <div className="flex items-center gap-1.5">
+                  <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                  <span>{profile.email}</span>
+                  {profile.showEmail === false && (
+                    <span className="text-[10px] text-amber-500 font-medium">(Hidden from public)</span>
+                  )}
+                </div>
+              )}
 
               {profile?.location && (
                 <div className="flex items-center gap-1.5">
@@ -180,8 +190,8 @@ export default function CurrentUserProfilePage() {
 
               <div className="flex items-center gap-1.5">
                 <CalendarIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                <span>
-                  Member since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "Recently"}
+                <span suppressHydrationWarning>
+                  Member since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: "short", year: "numeric" }) : "Recently"}
                 </span>
               </div>
             </div>

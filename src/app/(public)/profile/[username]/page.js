@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, Button } from "@/components/ui";
 import {
+  EnvelopeIcon,
   GlobeAltIcon,
   MapPinIcon,
   CalendarIcon,
@@ -149,6 +150,13 @@ export default function UserPublicProfilePage() {
             )}
 
             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-[var(--muted-foreground)] pt-1">
+              {profile.email && (
+                <div className="flex items-center gap-1.5">
+                  <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                  <span>{profile.email}</span>
+                </div>
+              )}
+
               {profile.location && (
                 <div className="flex items-center gap-1.5">
                   <MapPinIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
@@ -173,8 +181,8 @@ export default function UserPublicProfilePage() {
 
               <div className="flex items-center gap-1.5">
                 <CalendarIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                <span>
-                  Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "Recently"}
+                <span suppressHydrationWarning>
+                  Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: "short", year: "numeric" }) : "Recently"}
                 </span>
               </div>
             </div>

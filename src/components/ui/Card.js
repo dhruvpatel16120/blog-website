@@ -61,7 +61,7 @@ const CardContent = forwardRef(({ className, children, ...props }, ref) => {
   return (
     <div
       ref={ref}
-      className={cn('card-content', className)}
+      className={cn('card-content pt-5 sm:pt-6', className)}
       {...props}
     >
       {children}

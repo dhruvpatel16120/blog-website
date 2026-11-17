@@ -250,8 +250,8 @@ export default async function Home() {
           <Button as="a" href="/contribute" size="lg" className="bg-primary hover:bg-blue-700 text-primary-foreground">
             Join Our Community
           </Button>
-          <Button as="a" href="https://twitter.com/techblog" target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="border" style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
-            Follow Us on Twitter
+          <Button as="a" href="https://x.com/techblog" target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="border" style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
+            Follow Us on X
           </Button>
         </div>
       </section>

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { authOptions } from '@/lib/nextauth-combined';
 import { userProfileCache } from '@/lib/cache';
 import { generateAvatarUrl } from '@/lib/utils';
+import { getPrivacy } from '@/lib/privacy';
 
 export async function GET() {
   try {
@@ -50,6 +51,8 @@ export async function GET() {
         return NextResponse.json({ error: 'Admin account not found' }, { status: 404 });
       }
 
+      const privacy = getPrivacy(userId);
+
       const responsePayload = {
         ...admin,
         avatar: admin.avatar || generateAvatarUrl(admin.fullName, admin.username),
@@ -57,6 +60,8 @@ export async function GET() {
         website: '',
         location: 'Global',
         type: 'admin',
+        showEmail: privacy.showEmail,
+        showLikedPosts: privacy.showLikedPosts,
         stats: {
           postCount: totalPosts,
           userCount: totalUsers,
@@ -97,10 +102,14 @@ export async function GET() {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
+    const privacy = getPrivacy(userId);
+
     const responsePayload = {
       ...user,
       avatar: user.avatar || generateAvatarUrl(user.fullName, user.username),
       type: 'user',
+      showEmail: privacy.showEmail,
+      showLikedPosts: privacy.showLikedPosts,
       stats: {
         postCount,
         commentCount,

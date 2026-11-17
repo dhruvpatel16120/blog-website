@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 import { authOptions } from '@/lib/nextauth-combined';
 import { userProfileCache } from '@/lib/cache';
+import { setPrivacy, getPrivacy } from '@/lib/privacy';
 
 export async function PATCH(request) {
   try {
@@ -41,6 +42,16 @@ export async function PATCH(request) {
         data.username = cleanUsername;
       }
 
+      // Update privacy preferences if provided
+      if (typeof body.showEmail === 'boolean' || typeof body.showLikedPosts === 'boolean') {
+        setPrivacy(userId, {
+          showEmail: body.showEmail,
+          showLikedPosts: body.showLikedPosts,
+        });
+      }
+
+      const privacy = getPrivacy(userId);
+
       const admin = await prisma.admin.update({
         where: { id: userId },
         data,
@@ -60,7 +71,7 @@ export async function PATCH(request) {
 
       userProfileCache.delete(userId);
       return NextResponse.json({
-        user: { ...admin, type: 'admin' },
+        user: { ...admin, type: 'admin', showEmail: privacy.showEmail, showLikedPosts: privacy.showLikedPosts },
         message: 'Admin profile updated successfully',
       });
     }
@@ -84,6 +95,16 @@ export async function PATCH(request) {
     if (typeof body.website === 'string') data.website = body.website.trim();
     if (typeof body.location === 'string') data.location = body.location.trim();
 
+    // Update privacy preferences if provided
+    if (typeof body.showEmail === 'boolean' || typeof body.showLikedPosts === 'boolean') {
+      setPrivacy(userId, {
+        showEmail: body.showEmail,
+        showLikedPosts: body.showLikedPosts,
+      });
+    }
+
+    const privacy = getPrivacy(userId);
+
     const user = await prisma.user.update({
       where: { id: userId },
       data,
@@ -106,7 +127,12 @@ export async function PATCH(request) {
     userProfileCache.delete(userId);
 
     return NextResponse.json({
-      user: { ...user, type: 'user' },
+      user: {
+        ...user,
+        type: 'user',
+        showEmail: privacy.showEmail,
+        showLikedPosts: privacy.showLikedPosts,
+      },
       message: 'Profile updated successfully',
     });
   } catch (e) {

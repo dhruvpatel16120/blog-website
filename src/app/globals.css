@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -173,7 +175,7 @@ body {
 }
 
 .card-content {
-  @apply p-6 pt-0;
+  @apply p-6 pt-5;
 }
 
 .card-footer {
@@ -214,13 +216,18 @@ body {
 }
 
 /* Text utilities */
-.prose h1, h1 { color: var(--foreground); }
-.prose h2, h2 { color: var(--foreground); }
-.prose h3, h3 { color: var(--foreground); }
-.prose h4, h4 { color: var(--foreground); }
-.prose h5, h5 { color: var(--foreground); }
-.prose h6, h6 { color: var(--foreground); }
-.prose p { color: var(--muted-foreground); }
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--foreground);
+  }
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: var(--foreground);
+}
+.prose p {
+  color: var(--muted-foreground);
+}
 
 .text-foreground {
   color: var(--foreground);
