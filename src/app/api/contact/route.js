@@ -3,9 +3,6 @@ import { prisma } from '@/lib/db'
 import { enqueueEmail } from '@/lib/email-queue'
 import { headers } from 'next/headers'
 
-// Debug logging
-console.log('Contact API loaded, email service:', !!emailService);
-
 export const dynamic = 'force-dynamic'
 
 // Spam detection patterns
@@ -177,6 +174,7 @@ export async function POST(request) {
             isAck: true,
             contactId: contact.id,
             name: contact.name,
+            subject: contact.subject,
             message: contact.message,
           },
         });

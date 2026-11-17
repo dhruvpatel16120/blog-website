@@ -156,3 +156,49 @@ export async function GET(request) {
     );
   }
 }
+
+export async function PATCH(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.type !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { ids, status } = await request.json();
+    if (!Array.isArray(ids) || ids.length === 0 || !status) {
+      return NextResponse.json({ error: 'ids array and status are required' }, { status: 400 });
+    }
+
+    const result = await prisma.contact.updateMany({
+      where: { id: { in: ids } },
+      data: { status }
+    });
+
+    return NextResponse.json({ success: true, count: result.count });
+  } catch (error) {
+    console.error('Error batch updating contacts:', error);
+    return NextResponse.json({ error: 'Failed to update contacts' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.type !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { ids } = await request.json();
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'ids array is required' }, { status: 400 });
+    }
+
+    const result = await prisma.contact.deleteMany({
+      where: { id: { in: ids } }
+    });
+
+    return NextResponse.json({ success: true, count: result.count });
+  } catch (error) {
+    console.error('Error batch deleting contacts:', error);
+    return NextResponse.json({ error: 'Failed to delete contacts' }, { status: 500 });
+  }
+}
+

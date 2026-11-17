@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
-import { emailTemplates, getPlatformName, getPlatformUrl } from './email-templates';
-import { prisma } from './db';
+import { emailTemplates, getPlatformName, getPlatformUrl, renderBaseEmail } from './email-templates.js';
+import { prisma } from './db.js';
 import crypto from 'crypto';
 
 class EmailService {
@@ -444,64 +444,88 @@ export default emailService;
 
 // Comment notification email
 export async function sendCommentNotificationEmail(comment, post, recipient) {
-  const subject = `New comment on "${post.title}"`;
-  
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">New Comment Notification</h2>
-      <p>A new comment has been posted on your blog post.</p>
-      
-      <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <h3 style="margin-top: 0;">Post: ${post.title}</h3>
-        <p><strong>Comment by:</strong> ${comment.author.fullName || comment.author.username}</p>
-        <p><strong>Comment:</strong></p>
-        <p style="background: white; padding: 10px; border-left: 3px solid #007bff; margin: 10px 0;">
-          ${comment.content}
-        </p>
-        <p><small>Posted on: ${new Date(comment.createdAt).toLocaleString()}</small></p>
+  const platform = getPlatformName();
+  const url = getPlatformUrl();
+  const subject = `💬 New comment on "${post.title}" — ${platform}`;
+  const authorName = comment.author?.fullName || comment.author?.username || 'A reader';
+
+  const contentHtml = `
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 0 0 20px 0;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+        Article Title
       </div>
-      
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/blog/${post.slug}" 
-           style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
-          View Post
-        </a>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">
+        ${post.title}
       </div>
-      
-      <p style="color: #666; font-size: 14px;">
-        You can manage comments in your admin panel.
-      </p>
+
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+        Comment by ${authorName}
+      </div>
+      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #2563eb; border-radius: 8px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;">
+${comment.content}
+      </div>
+      <div style="margin-top: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #94a3b8;">
+        Posted on ${new Date(comment.createdAt || Date.now()).toLocaleString()}
+      </div>
     </div>
   `;
+
+  const html = renderBaseEmail({
+    platformName: platform,
+    platformUrl: url,
+    preheader: `New comment by ${authorName} on "${post.title}"`,
+    heroBadge: '💬 NEW COMMENT',
+    heroBadgeColor: '#2563eb',
+    heroBadgeBg: '#eff6ff',
+    heroBadgeBorder: '#bfdbfe',
+    title: 'New Discussion Comment',
+    subtitle: `${authorName} joined the discussion on your article.`,
+    contentHtml,
+    ctaText: 'View Comment on Article',
+    ctaUrl: `${url}/blog/${post.slug}`,
+  });
 
   return await emailService.sendEmail(recipient.email, subject, html);
 }
 
 // Comment approval notification
 export async function sendCommentApprovalEmail(comment, post, author) {
-  const subject = `Your comment has been approved`;
-  
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">Comment Approved</h2>
-      <p>Your comment has been approved and is now visible on the blog.</p>
-      
-      <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <h3 style="margin-top: 0;">Post: ${post.title}</h3>
-        <p><strong>Your comment:</strong></p>
-        <p style="background: white; padding: 10px; border-left: 3px solid #28a745; margin: 10px 0;">
-          ${comment.content}
-        </p>
+  const platform = getPlatformName();
+  const url = getPlatformUrl();
+  const subject = `✅ Your comment has been approved — ${platform}`;
+
+  const contentHtml = `
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 0 0 20px 0;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+        Article Title
       </div>
-      
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/blog/${post.slug}" 
-           style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
-          View Post
-        </a>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">
+        ${post.title}
+      </div>
+
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+        Approved Comment
+      </div>
+      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #10b981; border-radius: 8px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;">
+${comment.content}
       </div>
     </div>
   `;
+
+  const html = renderBaseEmail({
+    platformName: platform,
+    platformUrl: url,
+    preheader: `Your comment on "${post.title}" is now published and visible to everyone.`,
+    heroBadge: '✓ APPROVED & PUBLISHED',
+    heroBadgeColor: '#059669',
+    heroBadgeBg: '#ecfdf5',
+    heroBadgeBorder: '#a7f3d0',
+    title: 'Your Comment is Live!',
+    subtitle: `Your comment on "${post.title}" was approved and is now published.`,
+    contentHtml,
+    ctaText: 'View Live Discussion',
+    ctaUrl: `${url}/blog/${post.slug}`,
+  });
 
   return await emailService.sendEmail(author.email, subject, html);
 }

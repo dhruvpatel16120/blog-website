@@ -1,5 +1,5 @@
-import { prisma } from './db';
-import emailService from './email-service';
+import { prisma } from './db.js';
+import emailService from './email-service.js';
 
 /**
  * Asynchronous, Resilient Email Queue Architecture
@@ -122,7 +122,7 @@ export async function processEmailQueue(batchSize = 10) {
             sent = await emailService.sendContactAcknowledgement({
               name: meta.name || 'User',
               email: job.to,
-              subject: job.subject,
+              subject: meta.subject || job.subject,
               message: meta.message || job.body,
               platformName: process.env.PLATFORM_NAME || 'TechBlog',
               platformUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
@@ -133,7 +133,7 @@ export async function processEmailQueue(batchSize = 10) {
               contactId: meta.contactId,
               name: meta.name,
               email: meta.email,
-              subject: job.subject,
+              subject: meta.subject || job.subject,
               message: meta.message || job.body,
               category: meta.category,
               priority: meta.priority,

@@ -1,912 +1,789 @@
-// Email templates for the blog platform
-
-export const emailTemplates = {
-  // Email verification template
-  verificationEmail: (data) => ({
-    subject: `Verify Your Email - ${data.platformName || 'Blog Platform'}`,
-    html: `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify Your Email</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #007bff; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-          .button { display: inline-block; background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-          .button:hover { background: #0056b3; }
-          .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
-          .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>📧 Verify Your Email</h1>
-            <p>${data.platformName || 'Blog Platform'}</p>
-          </div>
-          
-          <div class="content">
-            <h2>Hello ${data.fullName},</h2>
-            
-            <p>Thank you for signing up for <strong>${data.platformName || 'our blog platform'}</strong>! To complete your registration, please verify your email address.</p>
-            
-            <div style="text-align: center;">
-              <a href="${data.verificationUrl}" class="button">Verify Email Address</a>
-            </div>
-            
-            <div class="warning">
-              <p><strong>Important:</strong></p>
-              <ul>
-                <li>This verification link will expire in 24 hours</li>
-                <li>If you didn't create this account, please ignore this email</li>
-                <li>For security reasons, never share this link with anyone</li>
-              </ul>
-            </div>
-            
-            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #007bff;">${data.verificationUrl}</p>
-            
-            <p>Once verified, you'll be able to access all features of our platform.</p>
-            
-            <p>Best regards,<br><strong>The ${data.platformName || 'Blog'} Team</strong></p>
-          </div>
-          
-          <div class="footer">
-            <p>This is an automated message. Please do not reply to this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-    text: `
-Verify Your Email - ${data.platformName || 'Blog Platform'}
-
-Hello ${data.fullName},
-
-Thank you for signing up for ${data.platformName || 'our blog platform'}! To complete your registration, please verify your email address.
-
-To verify your email, visit this link:
-${data.verificationUrl}
-
-Important:
-- This verification link will expire in 24 hours
-- If you didn't create this account, please ignore this email
-- For security reasons, never share this link with anyone
-
-If the link above doesn't work, you can copy and paste it into your browser.
-
-Once verified, you'll be able to access all features of our platform.
-
-Best regards,
-The ${data.platformName || 'Blog'} Team
-
----
-This is an automated message. Please do not reply to this email.
-    `
-  }),
-
-  // Contact acknowledgement template (enhanced professional design)
-  contactAcknowledgement: (data) => {
-    const platform = data.platformName || 'Our Blog';
-    const url = data.platformUrl || 'https://example.com';
-    const logoUrl = process.env.BRAND_LOGO_URL || '';
-    const brandPrimary = process.env.BRAND_PRIMARY_COLOR || '#2563eb';
-    const brandPrimaryDark = process.env.BRAND_PRIMARY_DARK || '#1e40af';
-    const brandSecondary = process.env.BRAND_SECONDARY_COLOR || '#10b981';
-    const preheader = `Thanks ${data.name?.split(' ')[0] || ''}, we received your message and will reply soon.`;
-    const safe = (s) => String(s || '').replace(/[<>&]/g, (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-
-    const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${platform} – Message received</title>
-    <style>
-      body{margin:0;padding:0;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.6}
-      a{color:${brandPrimary};text-decoration:none}
-      .container{width:100%;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);padding:32px 16px}
-      .table{max-width:680px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)}
-      .header{padding:32px 24px;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;text-align:center}
-      .brand{font-weight:800;font-size:24px;margin:0;letter-spacing:-0.025em}
-      .brand-subtitle{font-size:14px;opacity:0.9;margin:8px 0 0 0;font-weight:400}
-      .content{padding:32px 24px}
-      .h1{font-size:24px;line-height:1.3;margin:0 0 16px 0;color:#111827;font-weight:700}
-      .muted{color:#6b7280;font-size:15px}
-      .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0}
-      .box-header{font-weight:600;color:#374151;margin-bottom:12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em}
-      .cta{display:inline-block;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;border-radius:12px;padding:16px 24px;font-weight:600;text-decoration:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);transition:all 0.2s}
-      .cta:hover{transform:translateY(-1px);box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
-      .footer{padding:24px;color:#9ca3af;text-align:center;font-size:13px;background:#f9fafb;border-top:1px solid #e5e7eb}
-      .preheader{display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all}
-      .success-icon{font-size:48px;margin-bottom:16px}
-      .message-preview{background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;font-family:monospace;font-size:13px;line-height:1.5;color:#374151}
-      .stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
-      .stat{text-align:center;padding:16px;background:#f3f4f6;border-radius:8px}
-      .stat-value{font-size:20px;font-weight:700;color:${brandPrimary}}
-      .stat-label{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em}
-    </style>
-  </head>
-  <body>
-    <span class="preheader">${safe(preheader)}</span>
-    <div class="container">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="table">
-        <tr>
-          <td class="header">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${platform}" height="32" style="margin-bottom:8px"/>` : ''}
-            <h1 class="brand">${platform}</h1>
-            <p class="brand-subtitle">Professional Blog & Tech Community</p>
-          </td>
-        </tr>
-        <tr>
-          <td class="content">
-            <div style="text-align:center;margin-bottom:24px">
-              <div class="success-icon">✅</div>
-              <h2 class="h1">Message Received Successfully!</h2>
-              <p class="muted">Hi ${safe(data.name?.split(' ')[0] || 'there')}, thank you for reaching out to us. We've received your message and our team will get back to you as soon as possible.</p>
-            </div>
-            
-            <div class="box">
-              <div class="box-header">Your Message Details</div>
-              <div style="margin-bottom:16px">
-                <strong>Subject:</strong> ${safe(data.subject || 'General inquiry')}
-              </div>
-              <div>
-                <strong>Message:</strong>
-                <div class="message-preview">${safe(data.message)}</div>
-              </div>
-            </div>
-
-            <div class="stats">
-              <div class="stat">
-                <div class="stat-value">24-48h</div>
-                <div class="stat-label">Response Time</div>
-              </div>
-              <div class="stat">
-                <div class="stat-value">100%</div>
-                <div class="stat-label">Response Rate</div>
-              </div>
-            </div>
-
-            <div style="text-align:center;margin:32px 0">
-              <p style="margin-bottom:20px;color:#374151">While you wait, explore our latest content:</p>
-              <a class="cta" href="${url}">Visit ${platform}</a>
-            </div>
-
-            ${data.supportEmail ? `
-            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:24px 0">
-              <p style="margin:0;color:#0c4a6e;font-size:14px">
-                <strong>Need immediate assistance?</strong> You can also reach us directly at 
-                <a href="mailto:${data.supportEmail}" style="color:#0369a1;font-weight:600">${data.supportEmail}</a>
-              </p>
-            </div>
-            ` : ''}
-          </td>
-        </tr>
-        <tr>
-          <td class="footer">
-            <p style="margin:0 0 8px">This is an automated confirmation from ${platform}</p>
-            <p style="margin:0;font-size:12px">If you didn't submit this request, please ignore this email</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </body>
-</html>`;
-
-    const text = `Message Received - ${platform}
-
-Hi ${data.name?.split(' ')[0] || 'there'},
-
-Thank you for reaching out to us! We've received your message and our team will get back to you within 24-48 hours.
-
-Your Message Details:
-Subject: ${data.subject || 'General inquiry'}
-Message: ${data.message}
-
-While you wait, visit us at: ${url}
-
-${data.supportEmail ? `For immediate assistance, contact: ${data.supportEmail}` : ''}
-
----
-This is an automated confirmation from ${platform}
-If you didn't submit this request, please ignore this email`;
-
-    return { subject: `✅ Message Received — ${platform}`, html, text };
-  },
-
-  // Contact reply template (enhanced professional design)
-  contactReply: (data) => {
-    const platform = data.platformName || 'Our Blog';
-    const url = data.platformUrl || 'https://example.com';
-    const logoUrl = process.env.BRAND_LOGO_URL || '';
-    const brandPrimary = process.env.BRAND_PRIMARY_COLOR || '#2563eb';
-    const brandPrimaryDark = process.env.BRAND_PRIMARY_DARK || '#1e40af';
-    const brandSecondary = process.env.BRAND_SECONDARY_COLOR || '#10b981';
-    const preheader = `A response from ${platform} regarding: ${data.subject || 'your inquiry'}`;
-    const safe = (s) => String(s || '').replace(/[<>&]/g, (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-
-    const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${platform} – Our Response</title>
-    <style>
-      body{margin:0;padding:0;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.6}
-      a{color:${brandPrimary};text-decoration:none}
-      .container{width:100%;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);padding:32px 16px}
-      .table{max-width:680px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)}
-      .header{padding:32px 24px;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;text-align:center}
-      .brand{font-weight:800;font-size:24px;margin:0;letter-spacing:-0.025em}
-      .brand-subtitle{font-size:14px;opacity:0.9;margin:8px 0 0 0;font-weight:400}
-      .content{padding:32px 24px}
-      .h1{font-size:24px;line-height:1.3;margin:0 0 16px 0;color:#111827;font-weight:700}
-      .muted{color:#6b7280;font-size:15px}
-      .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0}
-      .box-header{font-weight:600;color:#374151;margin-bottom:12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em}
-      .reply{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:16px 0;font-family:inherit;line-height:1.6;color:#374151}
-      .cta{display:inline-block;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;border-radius:12px;padding:16px 24px;font-weight:600;text-decoration:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);transition:all 0.2s}
-      .cta:hover{transform:translateY(-1px);box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
-      .footer{padding:24px;color:#9ca3af;text-align:center;font-size:13px;background:#f9fafb;border-top:1px solid #e5e7eb}
-      .preheader{display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all}
-      .response-icon{font-size:48px;margin-bottom:16px}
-      .original-message{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;font-family:monospace;font-size:13px;line-height:1.5;color:#475569}
-    </style>
-  </head>
-  <body>
-    <span class="preheader">${safe(preheader)}</span>
-    <div class="container">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="table">
-        <tr>
-          <td class="header">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${platform}" height="32" style="margin-bottom:8px"/>` : ''}
-            <h1 class="brand">${platform}</h1>
-            <p class="brand-subtitle">Professional Blog & Tech Community</p>
-          </td>
-        </tr>
-        <tr>
-          <td class="content">
-            <div style="text-align:center;margin-bottom:24px">
-              <div class="response-icon">💬</div>
-              <h2 class="h1">Response to Your Inquiry</h2>
-              <p class="muted">Hi there! We've reviewed your message and here's our response.</p>
-            </div>
-            
-            ${data.greeting ? `<p style="font-size:16px;color:#374151;margin-bottom:16px">${safe(data.greeting)}</p>` : ''}
-            
-            <div class="reply">
-              <div style="white-space:pre-wrap">${safe(data.reply)}</div>
-            </div>
-            
-            ${data.signature ? `<p style="margin:16px 0 0;color:#6b7280;font-style:italic">${safe(data.signature)}</p>` : ''}
-
-            <div class="box">
-              <div class="box-header">Your Original Message</div>
-              <div style="margin-bottom:16px">
-                <strong>Subject:</strong> ${safe(data.originalSubject || 'General inquiry')}
-              </div>
-              <div class="original-message">${safe(data.originalMessage || '')}</div>
-            </div>
-
-            <div style="text-align:center;margin:32px 0">
-              <p style="margin-bottom:20px;color:#374151">Have more questions? Visit our platform:</p>
-              <a class="cta" href="${url}">Visit ${platform}</a>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="footer">
-            <p style="margin:0 0 8px">This response was sent by the ${platform} team</p>
-            <p style="margin:0;font-size:12px">You can reply to this email for follow-up questions</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </body>
-</html>`;
-
-    const text = `Response to Your Inquiry - ${platform}
-
-Hi there! We've reviewed your message and here's our response.
-
-${data.greeting ? `${data.greeting}\n\n` : ''}${data.reply}
-
-${data.signature ? `\n${data.signature}\n` : ''}
----
-Your Original Message:
-Subject: ${data.originalSubject || 'General inquiry'}
-Message: ${data.originalMessage || ''}
-
-Have more questions? Visit us at: ${url}
-
----
-This response was sent by the ${platform} team
-You can reply to this email for follow-up questions`;
-
-    return { subject: `Re: ${data.subject || 'your inquiry'} — ${platform}`, html, text };
-  },
-
-  // Admin notification template for new contacts
-  adminContactNotification: (data) => {
-    const platform = data.platformName || 'Our Blog';
-    const url = data.platformUrl || 'https://example.com';
-    const logoUrl = process.env.BRAND_LOGO_URL || '';
-    const brandPrimary = process.env.BRAND_PRIMARY_COLOR || '#2563eb';
-    const brandPrimaryDark = process.env.BRAND_PRIMARY_DARK || '#1e40af';
-    const brandWarning = process.env.BRAND_WARNING_COLOR || '#f59e0b';
-    const preheader = `New contact form submission from ${data.name} - ${data.subject || 'General inquiry'}`;
-    const safe = (s) => String(s || '').replace(/[<>&]/g, (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-
-    const getPriorityColor = (priority) => {
-      const colors = {
-        'LOW': '#6b7280',
-        'MEDIUM': '#3b82f6',
-        'HIGH': '#f59e0b',
-        'URGENT': '#ef4444'
-      };
-      return colors[priority] || colors.MEDIUM;
-    };
-
-    const getPriorityLabel = (priority) => {
-      const labels = {
-        'LOW': 'Low Priority',
-        'MEDIUM': 'Medium Priority',
-        'HIGH': 'High Priority',
-        'URGENT': 'URGENT'
-      };
-      return labels[priority] || 'Medium Priority';
-    };
-
-    const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>New Contact Form Submission - ${platform}</title>
-    <style>
-      body{margin:0;padding:0;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.6}
-      a{color:${brandPrimary};text-decoration:none}
-      .container{width:100%;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);padding:32px 16px}
-      .table{max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)}
-      .header{padding:32px 24px;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;text-align:center}
-      .brand{font-weight:800;font-size:24px;margin:0;letter-spacing:-0.025em}
-      .brand-subtitle{font-size:14px;opacity:0.9;margin:8px 0 0 0;font-weight:400}
-      .content{padding:32px 24px}
-      .h1{font-size:24px;line-height:1.3;margin:0 0 16px 0;color:#111827;font-weight:700}
-      .muted{color:#6b7280;font-size:15px}
-      .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0}
-      .box-header{font-weight:600;color:#374151;margin-bottom:16px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em}
-      .priority-badge{display:inline-block;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:0.05em}
-      .spam-warning{background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin:16px 0}
-      .cta{display:inline-block;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;border-radius:12px;padding:16px 24px;font-weight:600;text-decoration:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);transition:all 0.2s}
-      .cta:hover{transform:translateY(-1px);box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
-      .footer{padding:24px;color:#9ca3af;text-align:center;font-size:13px;background:#f9fafb;border-top:1px solid #e5e7eb}
-      .preheader{display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all}
-      .notification-icon{font-size:48px;margin-bottom:16px}
-      .contact-details{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
-      .detail-item{background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}
-      .detail-label{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
-      .detail-value{font-size:14px;color:#111827;font-weight:600}
-      .message-content{background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;font-family:monospace;font-size:13px;line-height:1.5;color:#374151;white-space:pre-wrap}
-    </style>
-  </head>
-  <body>
-    <span class="preheader">${safe(preheader)}</span>
-    <div class="container">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="table">
-        <tr>
-          <td class="header">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${platform}" height="32" style="margin-bottom:8px"/>` : ''}
-            <h1 class="brand">${platform}</h1>
-            <p class="brand-subtitle">Admin Notification</p>
-          </td>
-        </tr>
-        <tr>
-          <td class="content">
-            <div style="text-align:center;margin-bottom:24px">
-              <div class="notification-icon">📧</div>
-              <h2 class="h1">New Contact Form Submission</h2>
-              <p class="muted">A new contact form has been submitted and requires your attention.</p>
-            </div>
-            
-            <div class="box">
-              <div class="box-header">Contact Information</div>
-              <div class="contact-details">
-                <div class="detail-item">
-                  <div class="detail-label">Name</div>
-                  <div class="detail-value">${safe(data.name)}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">Email</div>
-                  <div class="detail-value">${safe(data.email)}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">Category</div>
-                  <div class="detail-value">${safe(data.category || 'General')}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">Priority</div>
-                  <div class="detail-value">
-                    <span class="priority-badge" style="background:${getPriorityColor(data.priority)}">
-                      ${getPriorityLabel(data.priority)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="box">
-              <div class="box-header">Message Details</div>
-              <div style="margin-bottom:16px">
-                <strong>Subject:</strong> ${safe(data.subject || 'General inquiry')}
-              </div>
-              ${data.source ? `<div style="margin-bottom:16px"><strong>Source:</strong> ${safe(data.source)}</div>` : ''}
-              <div class="message-content">${safe(data.message)}</div>
-            </div>
-
-            ${data.spamScore > 50 ? `
-            <div class="spam-warning">
-              <p style="margin:0;color:#92400e;font-size:14px">
-                <strong>⚠️ Spam Warning:</strong> This message has a spam score of ${data.spamScore}%. Please review carefully before responding.
-              </p>
-            </div>
-            ` : ''}
-
-            <div style="text-align:center;margin:32px 0">
-              <p style="margin-bottom:20px;color:#374151">Manage this contact in your admin panel:</p>
-              <a class="cta" href="${url}/admin/contacts">View in Admin Panel</a>
-            </div>
-
-            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:24px 0">
-              <p style="margin:0;color:#0c4a6e;font-size:14px">
-                <strong>Quick Actions:</strong> You can mark as spam, archive, or respond directly from the admin panel.
-              </p>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="footer">
-            <p style="margin:0 0 8px">This is an automated notification from ${platform}</p>
-            <p style="margin:0;font-size:12px">Contact ID: ${data.contactId}</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </body>
-</html>`;
-
-    const text = `New Contact Form Submission - ${platform}
-
-A new contact form has been submitted and requires your attention.
-
-Contact Information:
-- Name: ${data.name}
-- Email: ${data.email}
-- Category: ${data.category || 'General'}
-- Priority: ${getPriorityLabel(data.priority)}
-- Source: ${data.source || 'Unknown'}
-
-Message Details:
-Subject: ${data.subject || 'General inquiry'}
-Message: ${data.message}
-
-${data.spamScore > 50 ? `⚠️ Spam Warning: This message has a spam score of ${data.spamScore}%. Please review carefully.\n` : ''}
-Manage this contact in your admin panel: ${url}/admin/contacts
-
----
-This is an automated notification from ${platform}
-Contact ID: ${data.contactId}`;
-
-    return { subject: `📧 New Contact: ${data.subject || 'General inquiry'} - ${platform}`, html, text };
-  },
-
-  // Contact reminder template
-  contactReminder: (data) => {
-    const platform = data.platformName || 'Our Blog';
-    const url = data.platformUrl || 'https://example.com';
-    const logoUrl = process.env.BRAND_LOGO_URL || '';
-    const brandPrimary = process.env.BRAND_PRIMARY_COLOR || '#2563eb';
-    const brandPrimaryDark = process.env.BRAND_PRIMARY_DARK || '#1e40af';
-    const preheader = `Friendly reminder about your inquiry to ${platform}`;
-    const safe = (s) => String(s || '').replace(/[<>&]/g, (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-
-    const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${platform} – Reminder</title>
-    <style>
-      body{margin:0;padding:0;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.6}
-      a{color:${brandPrimary};text-decoration:none}
-      .container{width:100%;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);padding:32px 16px}
-      .table{max-width:680px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)}
-      .header{padding:32px 24px;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;text-align:center}
-      .brand{font-weight:800;font-size:24px;margin:0;letter-spacing:-0.025em}
-      .brand-subtitle{font-size:14px;opacity:0.9;margin:8px 0 0 0;font-weight:400}
-      .content{padding:32px 24px}
-      .h1{font-size:24px;line-height:1.3;margin:0 0 16px 0;color:#111827;font-weight:700}
-      .muted{color:#6b7280;font-size:15px}
-      .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0}
-      .box-header{font-weight:600;color:#374151;margin-bottom:12px;font-size:14px;text-transform:uppercase;letter-spacing:0.05em}
-      .cta{display:inline-block;background:linear-gradient(135deg,${brandPrimary} 0%,${brandPrimaryDark} 100%);color:#fff;border-radius:12px;padding:16px 24px;font-weight:600;text-decoration:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);transition:all 0.2s}
-      .cta:hover{transform:translateY(-1px);box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
-      .footer{padding:24px;color:#9ca3af;text-align:center;font-size:13px;background:#f9fafb;border-top:1px solid #e5e7eb}
-      .preheader{display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all}
-      .reminder-icon{font-size:48px;margin-bottom:16px}
-      .message-preview{background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;font-family:monospace;font-size:13px;line-height:1.5;color:#374151}
-    </style>
-  </head>
-  <body>
-    <span class="preheader">${safe(preheader)}</span>
-    <div class="container">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="table">
-        <tr>
-          <td class="header">
-            ${logoUrl ? `<img src="${logoUrl}" alt="${platform}" height="32" style="margin-bottom:8px"/>` : ''}
-            <h1 class="brand">${platform}</h1>
-            <p class="brand-subtitle">Professional Blog & Tech Community</p>
-          </td>
-        </tr>
-        <tr>
-          <td class="content">
-            <div style="text-align:center;margin-bottom:24px">
-              <div class="reminder-icon">⏰</div>
-              <h2 class="h1">Friendly Reminder</h2>
-              <p class="muted">Hi ${safe(data.name?.split(' ')[0] || 'there')}, we haven't forgotten about your inquiry!</p>
-            </div>
-            
-            <div class="box">
-              <div class="box-header">Your Inquiry Details</div>
-              <div style="margin-bottom:16px">
-                <strong>Subject:</strong> ${safe(data.subject || 'General inquiry')}
-              </div>
-              <div>
-                <strong>Submitted:</strong> ${data.daysSinceSubmission} day${data.daysSinceSubmission !== 1 ? 's' : ''} ago
-              </div>
-              <div class="message-preview">${safe(data.message)}</div>
-            </div>
-
-            <p style="margin:24px 0;color:#374151;font-size:16px">
-              We're still working on your request and will get back to you as soon as possible. 
-              Thank you for your patience!
-            </p>
-
-            <div style="text-align:center;margin:32px 0">
-              <p style="margin-bottom:20px;color:#374151">While you wait, explore our latest content:</p>
-              <a class="cta" href="${url}">Visit ${platform}</a>
-            </div>
-
-            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:24px 0">
-              <p style="margin:0;color:#0c4a6e;font-size:14px">
-                <strong>Need immediate assistance?</strong> You can also reach us directly at our support email.
-              </p>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="footer">
-            <p style="margin:0 0 8px">This is a friendly reminder from ${platform}</p>
-            <p style="margin:0;font-size:12px">If you no longer need assistance, please let us know</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </body>
-</html>`;
-
-    const text = `Friendly Reminder - ${platform}
-
-Hi ${data.name?.split(' ')[0] || 'there'},
-
-We haven't forgotten about your inquiry! We're still working on your request and will get back to you as soon as possible.
-
-Your Inquiry Details:
-Subject: ${data.subject || 'General inquiry'}
-Submitted: ${data.daysSinceSubmission} day${data.daysSinceSubmission !== 1 ? 's' : ''} ago
-Message: ${data.message}
-
-Thank you for your patience! While you wait, visit us at: ${url}
-
----
-This is a friendly reminder from ${platform}
-If you no longer need assistance, please let us know`;
-
-    return { subject: `⏰ Reminder: ${data.subject || 'your inquiry'} — ${platform}`, html, text };
-  },
-  // User invitation template
-  userInvitation: (data) => ({
-    subject: `Welcome to ${data.platformName || 'Our Blog Platform'} - Set Your Password`,
-    html: `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to ${data.platformName || 'Our Blog Platform'}</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-          .button { display: inline-block; background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-          .button:hover { background: #0056b3; }
-          .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
-          .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff; }
-          .role-badge { display: inline-block; background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🎉 Welcome to ${data.platformName || 'Our Blog Platform'}!</h1>
-            <p>You've been invited to join our community</p>
-          </div>
-          
-          <div class="content">
-            <h2>Hello ${data.fullName},</h2>
-            
-            <p>Great news! You've been invited to join <strong>${data.platformName || 'our blog platform'}</strong> as a <span class="role-badge">${data.role}</span>.</p>
-            
-            <div class="info-box">
-              <h3>Your Account Details:</h3>
-              <p><strong>Username:</strong> ${data.username}</p>
-              <p><strong>Email:</strong> ${data.email}</p>
-              <p><strong>Role:</strong> ${data.role}</p>
-            </div>
-            
-            ${data.customMessage ? `<div class="info-box"><h3>Personal Message:</h3><p><em>"${data.customMessage}"</em></p></div>` : ''}
-            
-            <p>To get started, please set your password by clicking the button below:</p>
-            
-            <div style="text-align: center;">
-              <a href="${data.resetUrl}" class="button">Set Your Password</a>
-            </div>
-            
-            <p><strong>Important:</strong> This link will expire in 24 hours for security reasons.</p>
-            
-            <div class="info-box">
-              <h3>What you can do as a ${data.role}:</h3>
-              ${data.role === 'USER' ? '<p>• Read and comment on blog posts<br>• Like and interact with content<br>• Update your profile</p>' : ''}
-
-              ${data.role === 'ADMIN' ? '<p>• Full administrative access<br>• Manage the entire platform</p>' : ''}
-            </div>
-            
-            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
-            
-            <p>We're excited to have you on board!</p>
-            
-            <p>Best regards,<br><strong>The ${data.platformName || 'Blog'} Team</strong></p>
-          </div>
-          
-          <div class="footer">
-            <p>This is an automated message. Please do not reply to this email.</p>
-            <p>If you didn't request this invitation, please ignore this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-    text: `
-Welcome to ${data.platformName || 'Our Blog Platform'}!
-
-Hello ${data.fullName},
-
-Great news! You've been invited to join ${data.platformName || 'our blog platform'} as a ${data.role}.
-
-Your Account Details:
-- Username: ${data.username}
-- Email: ${data.email}
-- Role: ${data.role}
-
-${data.customMessage ? `Personal Message: "${data.customMessage}"\n` : ''}To get started, please set your password by visiting this link:
-${data.resetUrl}
-
-Important: This link will expire in 24 hours for security reasons.
-
-What you can do as a ${data.role}:
-${data.role === 'USER' ? '- Read and comment on blog posts\n- Like and interact with content\n- Update your profile' : ''}
-
-${data.role === 'ADMIN' ? '- Full administrative access\n- Manage the entire platform' : ''}
-
-If you have any questions or need assistance, please contact our support team.
-
-We're excited to have you on board!
-
-Best regards,
-The ${data.platformName || 'Blog'} Team
-
----
-This is an automated message. Please do not reply to this email.
-If you didn't request this invitation, please ignore this email.
-    `
-  }),
-
-  // Password reset template
-  passwordReset: (data) => ({
-    subject: `Reset Your Password - ${data.platformName || 'Blog Platform'}`,
-    html: `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Reset Your Password</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #dc3545; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-          .button { display: inline-block; background: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-          .button:hover { background: #c82333; }
-          .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
-          .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🔐 Reset Your Password</h1>
-            <p>${data.platformName || 'Blog Platform'}</p>
-          </div>
-          
-          <div class="content">
-            <h2>Hello ${data.fullName},</h2>
-            
-            <p>We received a request to reset your password for your account on <strong>${data.platformName || 'our blog platform'}</strong>.</p>
-            
-            <div style="text-align: center;">
-              <a href="${data.resetUrl}" class="button">Reset Password</a>
-            </div>
-            
-            <div class="warning">
-              <p><strong>Security Notice:</strong></p>
-              <ul>
-                <li>This link will expire in 24 hours</li>
-                <li>If you didn't request this reset, please ignore this email</li>
-                <li>Never share this link with anyone</li>
-              </ul>
-            </div>
-            
-            <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #007bff;">${data.resetUrl}</p>
-            
-            <p>If you have any questions, please contact our support team.</p>
-            
-            <p>Best regards,<br><strong>The ${data.platformName || 'Blog'} Team</strong></p>
-          </div>
-          
-          <div class="footer">
-            <p>This is an automated message. Please do not reply to this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-    text: `
-Reset Your Password - ${data.platformName || 'Blog Platform'}
-
-Hello ${data.fullName},
-
-We received a request to reset your password for your account on ${data.platformName || 'our blog platform'}.
-
-To reset your password, visit this link:
-${data.resetUrl}
-
-Security Notice:
-- This link will expire in 24 hours
-- If you didn't request this reset, please ignore this email
-- Never share this link with anyone
-
-If the link above doesn't work, you can copy and paste it into your browser.
-
-If you have any questions, please contact our support team.
-
-Best regards,
-The ${data.platformName || 'Blog'} Team
-
----
-This is an automated message. Please do not reply to this email.
-    `
-  }),
-
-  // Welcome email template
-  welcomeEmail: (data) => ({
-    subject: `Welcome to ${data.platformName || 'Our Blog Platform'}!`,
-    html: `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome!</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-          .button { display: inline-block; background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-          .button:hover { background: #218838; }
-          .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🎊 Welcome Aboard!</h1>
-            <p>Your account is now active</p>
-          </div>
-          
-          <div class="content">
-            <h2>Hello ${data.fullName},</h2>
-            
-            <p>Welcome to <strong>${data.platformName || 'our blog platform'}</strong>! Your account has been successfully created and is now active.</p>
-            
-            <p>You can now:</p>
-            <ul>
-              <li>Log in to your account</li>
-              <li>Read and comment on blog posts</li>
-              <li>Update your profile</li>
-              <li>Explore our community</li>
-            </ul>
-            
-            <div style="text-align: center;">
-              <a href="${data.loginUrl}" class="button">Get Started</a>
-            </div>
-            
-            <p>If you have any questions or need help getting started, please don't hesitate to reach out to our support team.</p>
-            
-            <p>We're excited to have you as part of our community!</p>
-            
-            <p>Best regards,<br><strong>The ${data.platformName || 'Blog'} Team</strong></p>
-          </div>
-          
-          <div class="footer">
-            <p>This is an automated message. Please do not reply to this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `,
-    text: `
-Welcome to ${data.platformName || 'Our Blog Platform'}!
-
-Hello ${data.fullName},
-
-Welcome to ${data.platformName || 'our blog platform'}! Your account has been successfully created and is now active.
-
-You can now:
-- Log in to your account
-- Read and comment on blog posts
-- Update your profile
-- Explore our community
-
-Get started by visiting: ${data.loginUrl}
-
-If you have any questions or need help getting started, please don't hesitate to reach out to our support team.
-
-We're excited to have you as part of our community!
-
-Best regards,
-The ${data.platformName || 'Blog'} Team
-
----
-This is an automated message. Please do not reply to this email.
-    `
-  })
-};
+// Email templates for the TechBlog platform
+// Designed to match the TechBlog branding: vibrant blue-to-purple gradient, modern typography, and rock-solid email client compatibility.
 
 // Helper function to get platform name from environment
 export const getPlatformName = () => {
-  return process.env.PLATFORM_NAME || 'Our Blog Platform';
+  return process.env.PLATFORM_NAME || 'TechBlog';
 };
 
 // Helper function to get platform URL from environment
 export const getPlatformUrl = () => {
-  return process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const url = process.env.NEXTAUTH_URL || process.env.PLATFORM_URL || 'http://localhost:3000';
+  return url.replace(/\/+$/, '');
+};
+
+// HTML escape helper
+const escapeHtml = (str) => {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+/**
+ * Base email layout wrapper that renders responsive, client-compatible emails matching TechBlog theme.
+ */
+export function renderBaseEmail({
+  platformName = getPlatformName(),
+  platformUrl = getPlatformUrl(),
+  preheader = '',
+  heroBadge = '',
+  heroBadgeColor = '#2563eb',
+  heroBadgeBg = '#eff6ff',
+  heroBadgeBorder = '#bfdbfe',
+  title = '',
+  subtitle = '',
+  contentHtml = '',
+  ctaText = '',
+  ctaUrl = '',
+  footerNote = '',
+  supportEmail = process.env.SUPPORT_EMAIL || process.env.EMAIL_FROM || 'support@techblog.com',
+}) {
+  const safePreheader = escapeHtml(preheader);
+  const safeTitle = escapeHtml(title);
+  const safeSubtitle = escapeHtml(subtitle);
+
+  return `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>${safeTitle ? `${safeTitle} — ` : ''}${escapeHtml(platformName)}</title>
+  <style>
+    /* Reset & Base Styles */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; min-width: 100%; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    
+    /* Interactive */
+    .cta-button:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 50%, #6d28d9 100%) !important;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .email-container { width: 100% !important; margin: 0 !important; border-radius: 0 !important; }
+      .email-content { padding: 24px 20px !important; }
+      .stat-cell { display: block !important; width: 100% !important; margin-bottom: 12px !important; }
+      .stat-spacer { display: none !important; }
+      .h1-title { font-size: 22px !important; line-height: 28px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; -webkit-font-smoothing: antialiased;">
+  <!-- Preheader text (shows in inbox snippet, hidden in email view) -->
+  ${safePreheader ? `
+  <div style="display: none; font-size: 1px; color: #ffffff; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
+    ${safePreheader}
+    ${'&#847;&zwnj;&nbsp;'.repeat(40)}
+  </div>` : ''}
+
+  <!-- Outer Canvas Table -->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f1f5f9; min-height: 100vh;">
+    <tr>
+      <td align="center" style="padding: 32px 16px;">
+        
+        <!-- Main Card Container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);">
+          
+          <!-- Top Gradient Accent Bar (matches blog header line) -->
+          <tr>
+            <td style="height: 4px; background-color: #2563eb; background: linear-gradient(90deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%); line-height: 4px; font-size: 4px;">&nbsp;</td>
+          </tr>
+
+          <!-- Brand Header -->
+          <tr>
+            <td align="center" style="padding: 32px 32px 24px 32px; background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                <tr>
+                  <!-- TB Gradient Logo Mark -->
+                  <td style="vertical-align: middle; padding-right: 12px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="width: 44px; height: 44px; background-color: #2563eb; background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%); border-radius: 12px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);">
+                          <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; line-height: 44px; display: block;">TB</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <!-- Brand Name & Tagline -->
+                  <td style="vertical-align: middle; text-align: left;">
+                    <a href="${platformUrl}" target="_blank" style="text-decoration: none; display: block;">
+                      <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.03em; line-height: 1.15; display: block;">${escapeHtml(platformName)}</span>
+                      <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-top: 3px;">Tech News &amp; Tutorials</span>
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Email Content Area -->
+          <tr>
+            <td class="email-content" style="padding: 36px 36px 28px 36px; background-color: #ffffff;">
+              
+              <!-- Hero Section: Badge, Title & Subtitle -->
+              ${heroBadge || title ? `
+              <div style="text-align: center; margin-bottom: 28px;">
+                ${heroBadge ? `
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 16px auto;">
+                  <tr>
+                    <td align="center" style="background-color: ${heroBadgeBg}; border: 1px solid ${heroBadgeBorder}; border-radius: 9999px; padding: 6px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: ${heroBadgeColor}; letter-spacing: 0.03em;">
+                      ${heroBadge}
+                    </td>
+                  </tr>
+                </table>
+                ` : ''}
+
+                ${title ? `
+                <h1 class="h1-title" style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; line-height: 1.3;">
+                  ${safeTitle}
+                </h1>
+                ` : ''}
+
+                ${subtitle ? `
+                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #64748b; line-height: 1.6;">
+                  ${safeSubtitle}
+                </p>
+                ` : ''}
+              </div>
+              ` : ''}
+
+              <!-- Body Injection -->
+              ${contentHtml}
+
+              <!-- Call To Action Button (if provided) -->
+              ${ctaText && ctaUrl ? `
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 32px auto 16px auto;">
+                <tr>
+                  <td align="center" style="border-radius: 12px; background-color: #2563eb; background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%); box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
+                    <a href="${ctaUrl}" target="_blank" class="cta-button" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 12px; letter-spacing: 0.02em;">
+                      ${escapeHtml(ctaText)} &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+            </td>
+          </tr>
+
+          <!-- Footer Area -->
+          <tr>
+            <td style="padding: 28px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; border-radius: 0 0 16px 16px;">
+              <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 700; color: #334155;">
+                ${escapeHtml(platformName)} &bull; Modern Tech Platform
+              </p>
+              <p style="margin: 0 0 14px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b;">
+                <a href="${platformUrl}" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600; margin: 0 8px;">Home</a> &bull;
+                <a href="${platformUrl}/blog" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600; margin: 0 8px;">Articles</a> &bull;
+                <a href="${platformUrl}/categories" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600; margin: 0 8px;">Categories</a> &bull;
+                <a href="${platformUrl}/contact" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600; margin: 0 8px;">Contact</a>
+              </p>
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+                ${footerNote ? escapeHtml(footerNote) : `This email was sent by ${escapeHtml(platformName)}. For assistance, reply directly or reach us at <a href="mailto:${supportEmail}" style="color: #6366f1; text-decoration: none;">${escapeHtml(supportEmail)}</a>.`}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export const emailTemplates = {
+  // 1. Contact Acknowledgement Template (User confirmation on form submission)
+  contactAcknowledgement: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const supportEmail = data.supportEmail || process.env.SUPPORT_EMAIL || process.env.EMAIL_FROM || 'support@techblog.com';
+    const firstName = data.name?.split(' ')[0] || 'there';
+    const cleanSubject = data.subject || 'General Inquiry';
+
+    const contentHtml = `
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; margin: 0 0 24px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">
+          Message Subject
+        </div>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">
+          ${escapeHtml(cleanSubject)}
+        </div>
+
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">
+          Your Submitted Message
+        </div>
+        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #2563eb; border-radius: 8px; padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-wrap;">
+${escapeHtml(data.message)}
+        </div>
+      </div>
+
+      <!-- Email-safe 2-Column Metrics Table -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+        <tr>
+          <td width="48%" class="stat-cell" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center; vertical-align: middle;">
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 800; color: #2563eb;">&lt; 24 Hours</div>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">Target Response Time</div>
+          </td>
+          <td width="4%" class="stat-spacer"></td>
+          <td width="48%" class="stat-cell" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center; vertical-align: middle;">
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 800; color: #10b981;">Queued &amp; Logged</div>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">Ticket Status</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Helpful Reassurance Card -->
+      <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin: 0 0 8px 0;">
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #1e40af; line-height: 1.5;">
+          <strong>Have additional details to add?</strong> Simply reply directly to this email or reach us at <a href="mailto:${escapeHtml(supportEmail)}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${escapeHtml(supportEmail)}</a>.
+        </p>
+      </div>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `Thanks ${firstName}, we received your message and our team will get back to you shortly.`,
+      heroBadge: '✓ MESSAGE RECEIVED',
+      heroBadgeColor: '#059669',
+      heroBadgeBg: '#ecfdf5',
+      heroBadgeBorder: '#a7f3d0',
+      title: 'Message Received Successfully!',
+      subtitle: `Hi ${firstName}, thanks for reaching out. We have safely logged your inquiry in our queue.`,
+      contentHtml,
+      ctaText: 'Explore TechBlog Articles',
+      ctaUrl: `${url}/blog`,
+      supportEmail,
+    });
+
+    const text = `Message Received — ${platform}
+
+Hi ${firstName},
+
+Thank you for reaching out to us! We have received your inquiry and our team is already reviewing it.
+
+Your Message Details:
+Subject: ${cleanSubject}
+Message:
+${data.message}
+
+Turnaround: Under 24 hours.
+While you wait, explore our latest tutorials and articles: ${url}/blog
+
+If you need immediate assistance or have more details to add, reply directly to this email.
+
+Best regards,
+The ${platform} Team
+---
+${url}`;
+
+    return { subject: `✅ Message Received — ${platform}`, html, text };
+  },
+
+  // 2. Contact Reply Template (Response from admin to user)
+  contactReply: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const cleanSubject = data.subject || 'your inquiry';
+    const supportEmail = process.env.SUPPORT_EMAIL || 'support@techblog.com';
+
+    const contentHtml = `
+      <!-- Admin Reply Box -->
+      <div style="background-color: #ffffff; border: 1px solid #c7d2fe; border-left: 4px solid #4f46e5; border-radius: 12px; padding: 22px; margin: 0 0 24px 0; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.05);">
+        ${data.greeting ? `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 14px;">
+          ${escapeHtml(data.greeting)}
+        </div>
+        ` : ''}
+
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14.5px; line-height: 1.65; color: #334155; white-space: pre-wrap;">
+${escapeHtml(data.reply)}
+        </div>
+
+        ${data.signature ? `
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid #e0e7ff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; color: #4338ca;">
+          ${escapeHtml(data.signature)}
+        </div>
+        ` : ''}
+      </div>
+
+      <!-- Original Message Reference -->
+      ${data.originalMessage ? `
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 0 0 20px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+          Original Inquiry: ${escapeHtml(data.originalSubject || cleanSubject)}
+        </div>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 1.55; color: #64748b; white-space: pre-wrap;">
+${escapeHtml(data.originalMessage)}
+        </div>
+      </div>
+      ` : ''}
+
+      <div style="text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; margin-top: 20px;">
+        Have additional questions? Simply reply directly to this email to continue the thread.
+      </div>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `Response from ${platform} team regarding: ${cleanSubject}`,
+      heroBadge: '💬 TEAM RESPONSE',
+      heroBadgeColor: '#4f46e5',
+      heroBadgeBg: '#eef2ff',
+      heroBadgeBorder: '#c7d2fe',
+      title: 'Response to Your Inquiry',
+      subtitle: `Our team has reviewed your message regarding "${cleanSubject}".`,
+      contentHtml,
+      ctaText: 'Visit TechBlog',
+      ctaUrl: url,
+      supportEmail,
+    });
+
+    const text = `Response to Your Inquiry — ${platform}
+
+Regarding: ${cleanSubject}
+
+${data.greeting ? `${data.greeting}\n\n` : ''}${data.reply}
+${data.signature ? `\n— ${data.signature}\n` : ''}
+
+---
+Your Original Message:
+${data.originalSubject ? `Subject: ${data.originalSubject}\n` : ''}${data.originalMessage || ''}
+
+You can reply directly to this email if you have any follow-up questions.
+Visit us at: ${url}`;
+
+    return { subject: `Re: ${cleanSubject} — ${platform}`, html, text };
+  },
+
+  // 3. Admin Notification Template (New inquiry alert for admins)
+  adminContactNotification: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const safeSubject = data.subject || 'General Inquiry';
+
+    // Priority color mapping matching blog badge styles
+    const priority = (data.priority || 'MEDIUM').toUpperCase();
+    const priorityConfig = {
+      URGENT: { color: '#e11d48', bg: '#fff1f2', border: '#fecdd3', label: 'URGENT' },
+      HIGH: { color: '#ea580c', bg: '#fff7ed', border: '#fed7aa', label: 'HIGH' },
+      MEDIUM: { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', label: 'MEDIUM' },
+      LOW: { color: '#64748b', bg: '#f1f5f9', border: '#e2e8f0', label: 'LOW' },
+    }[priority] || { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', label: priority };
+
+    const contentHtml = `
+      <!-- Contact Info Card -->
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 0 0 20px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td style="padding-bottom: 12px; vertical-align: top;">
+              <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Sender Name</span>
+              <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #0f172a;">${escapeHtml(data.name)}</span>
+            </td>
+            <td style="padding-bottom: 12px; vertical-align: top;">
+              <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Email Address</span>
+              <a href="mailto:${escapeHtml(data.email)}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #2563eb; text-decoration: none;">${escapeHtml(data.email)}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top: 6px; vertical-align: top;">
+              <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Category</span>
+              <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; color: #334155;">${escapeHtml(data.category || 'General Inquiry')}</span>
+            </td>
+            <td style="padding-top: 6px; vertical-align: top;">
+              <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Priority</span>
+              <span style="display: inline-block; padding: 2px 10px; border-radius: 9999px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; background-color: ${priorityConfig.bg}; color: ${priorityConfig.color}; border: 1px solid ${priorityConfig.border};">
+                ${priorityConfig.label}
+              </span>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Message Content Box -->
+      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 12px; padding: 18px 20px; margin: 0 0 20px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">
+          Subject: ${escapeHtml(safeSubject)}
+        </div>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; white-space: pre-wrap;">
+${escapeHtml(data.message)}
+        </div>
+      </div>
+
+      ${data.spamScore && data.spamScore > 30 ? `
+      <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #92400e;">
+        <strong>⚠️ Automated Spam Score:</strong> ${data.spamScore}% (Automated heuristic screening)
+      </div>
+      ` : ''}
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `[New Contact] ${safeSubject} from ${data.name}`,
+      heroBadge: '📬 ADMIN ALERT',
+      heroBadgeColor: '#4338ca',
+      heroBadgeBg: '#eef2ff',
+      heroBadgeBorder: '#c7d2fe',
+      title: 'New Contact Form Submission',
+      subtitle: `Received a new message from ${escapeHtml(data.name)} awaiting review.`,
+      contentHtml,
+      ctaText: 'Open in Admin Dashboard',
+      ctaUrl: `${url}/admin/contacts`,
+    });
+
+    const text = `New Contact Form Submission — ${platform}
+
+From: ${data.name} (${data.email})
+Category: ${data.category || 'General Inquiry'}
+Priority: ${priority}
+Subject: ${safeSubject}
+
+Message:
+${data.message}
+
+Manage in dashboard: ${url}/admin/contacts`;
+
+    return { subject: `📬 [Contact] ${safeSubject} — ${data.name}`, html, text };
+  },
+
+  // 4. Contact Reminder Template
+  contactReminder: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const firstName = data.name?.split(' ')[0] || 'there';
+
+    const contentHtml = `
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 0 0 20px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+          Original Inquiry: ${escapeHtml(data.subject || 'General Inquiry')}
+        </div>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-wrap;">
+${escapeHtml(data.message)}
+        </div>
+      </div>
+
+      <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1e40af; line-height: 1.55;">
+        Our team is actively researching your inquiry. Thank you for your patience while we gather the best information for you!
+      </div>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `Update regarding your message to ${platform}`,
+      heroBadge: '⏰ STILL ON IT',
+      heroBadgeColor: '#d97706',
+      heroBadgeBg: '#fffbeb',
+      heroBadgeBorder: '#fde68a',
+      title: "We Haven't Forgotten You!",
+      subtitle: `Hi ${firstName}, we are still working on your inquiry submitted ${data.daysSinceSubmission || 1} day(s) ago.`,
+      contentHtml,
+      ctaText: 'Visit TechBlog',
+      ctaUrl: url,
+    });
+
+    const text = `Update on Your Inquiry — ${platform}
+
+Hi ${firstName},
+
+We haven't forgotten about your inquiry! Our team is still reviewing your message regarding:
+"${data.subject || 'General Inquiry'}"
+
+Thank you for your patience while we gather the information for you.
+
+Best regards,
+The ${platform} Team
+${url}`;
+
+    return { subject: `⏰ Update on Your Inquiry: ${data.subject || 'General Inquiry'} — ${platform}`, html, text };
+  },
+
+  // 5. Email Verification Template
+  verificationEmail: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const fullName = data.fullName || 'there';
+
+    const contentHtml = `
+      <p style="margin: 0 0 18px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #334155; line-height: 1.6;">
+        Welcome to <strong>${escapeHtml(platform)}</strong>! To finalize your registration and protect your account security, please verify your email address.
+      </p>
+
+      <!-- Security Callout Box -->
+      <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 16px 18px; margin: 24px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">
+          Security Notice:
+        </div>
+        <ul style="margin: 0; padding-left: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #78350f; line-height: 1.6;">
+          <li>This link is valid for <strong>24 hours</strong></li>
+          <li>If you didn't create an account, you can safely ignore this email</li>
+          <li>Never share this verification link with anyone</li>
+        </ul>
+      </div>
+
+      <!-- Fallback plain URL -->
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; line-height: 1.5;">
+        Button not working? Copy and paste this link into your browser:
+        <div style="margin-top: 6px; word-break: break-all; color: #2563eb; font-weight: 600;">
+          ${escapeHtml(data.verificationUrl)}
+        </div>
+      </div>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `Verify your email to complete your ${platform} account setup.`,
+      heroBadge: '✉️ EMAIL VERIFICATION',
+      heroBadgeColor: '#2563eb',
+      heroBadgeBg: '#eff6ff',
+      heroBadgeBorder: '#bfdbfe',
+      title: 'Verify Your Email Address',
+      subtitle: `Hello ${escapeHtml(fullName)}, let's activate your TechBlog account.`,
+      contentHtml,
+      ctaText: 'Verify Email Address',
+      ctaUrl: data.verificationUrl,
+    });
+
+    const text = `Verify Your Email Address — ${platform}
+
+Hello ${fullName},
+
+Thank you for signing up for ${platform}! To complete your registration, please verify your email address by visiting:
+${data.verificationUrl}
+
+Security Notice:
+- This link will expire in 24 hours.
+- If you didn't create this account, you can ignore this email.
+
+Best regards,
+The ${platform} Team
+${url}`;
+
+    return { subject: `Verify Your Email — ${platform}`, html, text };
+  },
+
+  // 6. Password Reset Template
+  passwordReset: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const fullName = data.fullName || 'there';
+
+    const contentHtml = `
+      <p style="margin: 0 0 18px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #334155; line-height: 1.6;">
+        We received a request to reset the password for your <strong>${escapeHtml(platform)}</strong> account. Click the button below to choose a new password.
+      </p>
+
+      <!-- Security Callout Box -->
+      <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-left: 4px solid #e11d48; border-radius: 10px; padding: 16px 18px; margin: 24px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 700; color: #9f1239; margin-bottom: 6px;">
+          Security Alert:
+        </div>
+        <ul style="margin: 0; padding-left: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #881337; line-height: 1.6;">
+          <li>This reset link will expire in <strong>24 hours</strong></li>
+          <li>If you didn't request a password reset, no action is needed — your account remains secure</li>
+          <li>Our staff will never ask for your password or reset link</li>
+        </ul>
+      </div>
+
+      <!-- Fallback plain URL -->
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; line-height: 1.5;">
+        If the button above does not work, copy and paste this link into your browser:
+        <div style="margin-top: 6px; word-break: break-all; color: #2563eb; font-weight: 600;">
+          ${escapeHtml(data.resetUrl)}
+        </div>
+      </div>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `Reset your ${platform} password safely.`,
+      heroBadge: '🔐 SECURITY REQUEST',
+      heroBadgeColor: '#e11d48',
+      heroBadgeBg: '#fff1f2',
+      heroBadgeBorder: '#fecdd3',
+      title: 'Reset Your Password',
+      subtitle: `Hello ${escapeHtml(fullName)}, let's get you safely back into your account.`,
+      contentHtml,
+      ctaText: 'Reset My Password',
+      ctaUrl: data.resetUrl,
+    });
+
+    const text = `Reset Your Password — ${platform}
+
+Hello ${fullName},
+
+We received a request to reset your password for ${platform}.
+To reset your password, visit this link:
+${data.resetUrl}
+
+Notice:
+- This link expires in 24 hours.
+- If you didn't request this, you can safely ignore this email.
+
+Best regards,
+The ${platform} Team
+${url}`;
+
+    return { subject: `Reset Your Password — ${platform}`, html, text };
+  },
+
+  // 7. User Invitation Template
+  userInvitation: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const fullName = data.fullName || 'there';
+    const role = data.role || 'USER';
+
+    const contentHtml = `
+      <p style="margin: 0 0 18px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #334155; line-height: 1.6;">
+        You've been invited to join <strong>${escapeHtml(platform)}</strong> as an official team member with role:
+        <span style="display: inline-block; padding: 2px 10px; border-radius: 9999px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; background-color: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; margin-left: 4px;">${escapeHtml(role)}</span>
+      </p>
+
+      <!-- Account Details Box -->
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">
+          Assigned Account Credentials:
+        </div>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #64748b;" width="35%">Username:</td>
+            <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; font-weight: 700; color: #0f172a;">${escapeHtml(data.username)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #64748b;">Email:</td>
+            <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; font-weight: 700; color: #0f172a;">${escapeHtml(data.email)}</td>
+          </tr>
+        </table>
+      </div>
+
+      ${data.customMessage ? `
+      <div style="background-color: #ffffff; border: 1px solid #e0e7ff; border-left: 4px solid #6366f1; border-radius: 10px; padding: 16px 18px; margin: 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #3730a3; font-style: italic;">
+        &ldquo;${escapeHtml(data.customMessage)}&rdquo;
+      </div>
+      ` : ''}
+
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5; margin: 16px 0;">
+        Click below to set your password and access your new account:
+      </div>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `You've been invited to join ${platform}!`,
+      heroBadge: '🎉 INVITATION',
+      heroBadgeColor: '#7c3aed',
+      heroBadgeBg: '#f5f3ff',
+      heroBadgeBorder: '#ddd6fe',
+      title: 'Welcome to the Team!',
+      subtitle: `Hello ${escapeHtml(fullName)}, your invitation to join ${platform} is ready.`,
+      contentHtml,
+      ctaText: 'Set Password & Get Started',
+      ctaUrl: data.resetUrl,
+    });
+
+    const text = `Welcome to ${platform} — You're Invited!
+
+Hello ${fullName},
+
+You have been invited to join ${platform} as a ${role}.
+Username: ${data.username}
+Email: ${data.email}
+
+${data.customMessage ? `Personal Note: "${data.customMessage}"\n` : ''}
+To set your password and activate your account, visit:
+${data.resetUrl}
+
+This link is valid for 24 hours.
+
+Best regards,
+The ${platform} Team
+${url}`;
+
+    return { subject: `Welcome to ${platform} — Set Your Password`, html, text };
+  },
+
+  // 8. Welcome Email Template
+  welcomeEmail: (data) => {
+    const platform = data.platformName || getPlatformName();
+    const url = data.platformUrl || getPlatformUrl();
+    const fullName = data.fullName || 'there';
+
+    const contentHtml = `
+      <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #334155; line-height: 1.6;">
+        Your account on <strong>${escapeHtml(platform)}</strong> has been activated. Here is what you can explore right now:
+      </p>
+
+      <!-- Highlights List -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+        <tr>
+          <td style="padding: 10px 14px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td width="32" style="font-size: 20px; vertical-align: top;">📚</td>
+                <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #1e293b; line-height: 1.5;">
+                  <strong>In-depth Tech Guides:</strong> Full-stack tutorials, system architecture, and modern best practices.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td style="height: 8px;"></td></tr>
+        <tr>
+          <td style="padding: 10px 14px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td width="32" style="font-size: 20px; vertical-align: top;">💬</td>
+                <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #1e293b; line-height: 1.5;">
+                  <strong>Engage in Community:</strong> Leave comments, start discussions, and exchange ideas with developers.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    const html = renderBaseEmail({
+      platformName: platform,
+      platformUrl: url,
+      preheader: `Welcome to ${platform}! Your account is active.`,
+      heroBadge: '🚀 WELCOME ABOARD',
+      heroBadgeColor: '#059669',
+      heroBadgeBg: '#ecfdf5',
+      heroBadgeBorder: '#a7f3d0',
+      title: 'Your Account is Active!',
+      subtitle: `Hi ${escapeHtml(fullName)}, we are thrilled to have you in our tech community.`,
+      contentHtml,
+      ctaText: 'Start Reading Articles',
+      ctaUrl: data.loginUrl || `${url}/blog`,
+    });
+
+    const text = `Welcome to ${platform}!
+
+Hello ${fullName},
+
+Your account has been created and is active.
+Explore our articles and discussions at: ${url}/blog
+
+Best regards,
+The ${platform} Team
+${url}`;
+
+    return { subject: `Welcome to ${platform}! 🚀`, html, text };
+  },
 };
