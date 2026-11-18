@@ -161,7 +161,7 @@ export default async function BlogPage({ searchParams }) {
     ]);
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Blog post query timeout')), 4000)
+      setTimeout(() => reject(new Error('Blog post query timeout')), 8000)
     );
 
     const [t, p] = await Promise.race([queryPromise, timeoutPromise]);

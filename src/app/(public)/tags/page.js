@@ -45,7 +45,7 @@ export default async function TagsIndexPage({ searchParams }) {
       });
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Tags query timeout')), 3500)
+        setTimeout(() => reject(new Error('Tags query timeout')), 8000)
       );
 
       tags = await Promise.race([queryPromise, timeoutPromise]);

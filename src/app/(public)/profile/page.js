@@ -161,7 +161,9 @@ export default function CurrentUserProfilePage() {
                   <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
                   <span>{profile.email}</span>
                   {profile.showEmail === false && (
-                    <span className="text-[10px] text-amber-500 font-medium">(Hidden from public)</span>
+                    <span className="text-[10px] text-amber-500 font-medium bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                      Hidden from public
+                    </span>
                   )}
                 </div>
               )}
@@ -209,6 +211,9 @@ export default function CurrentUserProfilePage() {
               <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
                 <div className="text-lg font-bold text-[var(--foreground)]">{profile?.stats?.likeCount ?? 0}</div>
                 <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Likes Given</div>
+                {profile?.showLikedPosts === false && (
+                  <span className="text-[9px] text-amber-500 block font-medium mt-0.5">Hidden from public</span>
+                )}
               </div>
             </div>
           </div>

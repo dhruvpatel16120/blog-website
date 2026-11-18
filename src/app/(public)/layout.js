@@ -42,9 +42,9 @@ async function fetchSidebarFromDatabase() {
   const tagsLimit = settings.tagsCount || 12;
 
   try {
-    // 3-second timeout promise to prevent sleeping databases from blocking render
+    // 8-second timeout promise to allow serverless cold starts without blocking render
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Sidebar database query timed out (3s limit)')), 3000)
+      setTimeout(() => reject(new Error('Sidebar database query timed out (8s limit)')), 8000)
     );
 
     const queryPromise = Promise.all([

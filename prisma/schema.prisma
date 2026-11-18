@@ -31,6 +31,7 @@ model User {
   comments   Comment[]
   likes      Like[]
   activities UserActivity[]
+  privacy    UserPrivacy?
   // auditLogs removed
 
   @@map("users")
@@ -52,6 +53,7 @@ model Admin {
   lockedUntil   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  privacy       UserPrivacy?
 
   // auditLogs removed
 
@@ -306,6 +308,21 @@ model BlogSetting {
   createdAt          DateTime @default(now())
 
   @@map("blog_settings")
+}
+
+model UserPrivacy {
+  id             String   @id @default(cuid())
+  userId         String?  @unique
+  adminId        String?  @unique
+  showEmail      Boolean  @default(true)
+  showLikedPosts Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin          Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("user_privacy")
 }
 
 enum ActivityType {

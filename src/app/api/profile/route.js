@@ -43,14 +43,35 @@ export async function PATCH(request) {
       }
 
       // Update privacy preferences if provided
+      let privacy = getPrivacy(userId);
       if (typeof body.showEmail === 'boolean' || typeof body.showLikedPosts === 'boolean') {
-        setPrivacy(userId, {
+        const matchingUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: session.user.email },
+              { username: session.user.username },
+            ],
+          },
+          select: { id: true },
+        });
+
+        const aliases = [
+          session.user.email,
+          session.user.username,
+          matchingUser?.id,
+        ].filter(Boolean);
+
+        await setPrivacy(userId, {
           showEmail: body.showEmail,
           showLikedPosts: body.showLikedPosts,
-        });
-      }
+        }, aliases);
 
-      const privacy = getPrivacy(userId);
+        if (matchingUser?.id) {
+          userProfileCache.delete(matchingUser.id);
+        }
+
+        privacy = getPrivacy(userId, aliases);
+      }
 
       const admin = await prisma.admin.update({
         where: { id: userId },
@@ -96,14 +117,35 @@ export async function PATCH(request) {
     if (typeof body.location === 'string') data.location = body.location.trim();
 
     // Update privacy preferences if provided
+    let privacy = getPrivacy(userId);
     if (typeof body.showEmail === 'boolean' || typeof body.showLikedPosts === 'boolean') {
-      setPrivacy(userId, {
+      const matchingAdmin = await prisma.admin.findFirst({
+        where: {
+          OR: [
+            { email: session.user.email },
+            { username: session.user.username },
+          ],
+        },
+        select: { id: true },
+      });
+
+      const aliases = [
+        session.user.email,
+        session.user.username,
+        matchingAdmin?.id,
+      ].filter(Boolean);
+
+      await setPrivacy(userId, {
         showEmail: body.showEmail,
         showLikedPosts: body.showLikedPosts,
-      });
-    }
+      }, aliases);
 
-    const privacy = getPrivacy(userId);
+      if (matchingAdmin?.id) {
+        userProfileCache.delete(matchingAdmin.id);
+      }
+
+      privacy = getPrivacy(userId, aliases);
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },

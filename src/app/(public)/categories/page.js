@@ -62,7 +62,7 @@ async function getCategoriesOverview() {
     })();
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Categories query timeout')), 3500)
+      setTimeout(() => reject(new Error('Categories query timeout')), 8000)
     );
 
     const result = await Promise.race([queryPromise, timeoutPromise]);

@@ -152,7 +152,7 @@ export default function UserPublicProfilePage() {
             )}
 
             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-[var(--muted-foreground)] pt-1">
-              {profile.email && (
+              {profile.email && profile.privacy?.showEmail !== false && (
                 <div className="flex items-center gap-1.5">
                   <EnvelopeIcon className="w-4 h-4 text-[var(--primary)] shrink-0" />
                   <span>{profile.email}</span>
@@ -189,7 +189,7 @@ export default function UserPublicProfilePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[var(--border)] max-w-md">
+            <div className={`grid ${profile.privacy?.showLikedPosts !== false ? 'grid-cols-3' : 'grid-cols-2'} gap-3 pt-4 border-t border-[var(--border)] max-w-md`}>
               <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
                 <div className="text-lg font-bold text-[var(--foreground)]">{profile.stats?.postCount ?? 0}</div>
                 <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Articles</div>
@@ -198,10 +198,12 @@ export default function UserPublicProfilePage() {
                 <div className="text-lg font-bold text-[var(--foreground)]">{profile.stats?.commentCount ?? 0}</div>
                 <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Comments</div>
               </div>
-              <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
-                <div className="text-lg font-bold text-[var(--foreground)]">{profile.stats?.likeCount ?? 0}</div>
-                <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Likes</div>
-              </div>
+              {profile.privacy?.showLikedPosts !== false && (
+                <div className="p-2.5 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] text-center">
+                  <div className="text-lg font-bold text-[var(--foreground)]">{profile.stats?.likeCount ?? 0}</div>
+                  <div className="text-[10px] uppercase font-semibold text-[var(--muted-foreground)] tracking-wider">Likes</div>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -276,7 +278,7 @@ export default function UserPublicProfilePage() {
         )}
 
         {/* Tab 2: Liked Articles */}
-        {activeTab === "liked" && (
+        {activeTab === "liked" && profile.privacy?.showLikedPosts !== false && (
           !profile.likedPosts || profile.likedPosts.length === 0 ? (
             <Card className="border-[var(--border)] bg-[var(--card)] p-8 text-center space-y-2">
               <HeartIcon className="w-8 h-8 text-[var(--muted-foreground)]/50 mx-auto" />

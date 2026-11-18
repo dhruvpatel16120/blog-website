@@ -114,7 +114,7 @@ async function getHomeData() {
     ]);
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Home DB query timeout')), 3500)
+      setTimeout(() => reject(new Error('Home DB query timeout')), 8000)
     );
 
     const [featured, trending, latest, counts, topCategories] = await Promise.race([

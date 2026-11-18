@@ -40,6 +40,9 @@ export async function GET() {
             isActive: true,
             createdAt: true,
             updatedAt: true,
+            privacy: {
+              select: { showEmail: true, showLikedPosts: true },
+            },
           },
         }),
         prisma.post.count(),
@@ -51,7 +54,30 @@ export async function GET() {
         return NextResponse.json({ error: 'Admin account not found' }, { status: 404 });
       }
 
-      const privacy = getPrivacy(userId);
+      const matchingUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: admin.email },
+            { username: admin.username },
+          ],
+        },
+        select: {
+          id: true,
+          privacy: {
+            select: { showEmail: true, showLikedPosts: true },
+          },
+        },
+      });
+
+      const fallback = getPrivacy(userId, admin.username, admin.email, matchingUser?.id);
+
+      const privacy = {
+        showEmail: admin.privacy ? admin.privacy.showEmail : (matchingUser?.privacy ? matchingUser.privacy.showEmail : fallback.showEmail),
+        showLikedPosts: admin.privacy ? admin.privacy.showLikedPosts : (matchingUser?.privacy ? matchingUser.privacy.showLikedPosts : fallback.showLikedPosts),
+      };
+
+      if (fallback.showEmail === false) privacy.showEmail = false;
+      if (fallback.showLikedPosts === false) privacy.showLikedPosts = false;
 
       const responsePayload = {
         ...admin,
@@ -91,6 +117,9 @@ export async function GET() {
           updatedAt: true,
           isActive: true,
           role: true,
+          privacy: {
+            select: { showEmail: true, showLikedPosts: true },
+          },
         },
       }),
       prisma.post.count({ where: { authorId: userId } }),
@@ -102,7 +131,30 @@ export async function GET() {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
-    const privacy = getPrivacy(userId);
+    const matchingAdmin = await prisma.admin.findFirst({
+      where: {
+        OR: [
+          { email: user.email },
+          { username: user.username },
+        ],
+      },
+      select: {
+        id: true,
+        privacy: {
+          select: { showEmail: true, showLikedPosts: true },
+        },
+      },
+    });
+
+    const fallback = getPrivacy(userId, user.username, user.email, matchingAdmin?.id);
+
+    const privacy = {
+      showEmail: user.privacy ? user.privacy.showEmail : (matchingAdmin?.privacy ? matchingAdmin.privacy.showEmail : fallback.showEmail),
+      showLikedPosts: user.privacy ? user.privacy.showLikedPosts : (matchingAdmin?.privacy ? matchingAdmin.privacy.showLikedPosts : fallback.showLikedPosts),
+    };
+
+    if (fallback.showEmail === false) privacy.showEmail = false;
+    if (fallback.showLikedPosts === false) privacy.showLikedPosts = false;
 
     const responsePayload = {
       ...user,
