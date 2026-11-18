@@ -39,10 +39,10 @@
     "gray-matter": "^4.0.3",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.539.0",
-    "next": "15.4.5",
-    "next-auth": "^4.24.11",
+    "next": "^15.5.29",
+    "next-auth": "^4.24.15",
     "next-seo": "^6.8.0",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^10.6.0",
     "prisma": "^6.14.0",
     "prismjs": "^1.30.0",
     "react": "19.1.0",
@@ -53,13 +53,20 @@
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.1",
     "tailwind-merge": "^3.3.1",
-    "zod": "^4.0.16"
+    "zod": "^4.6.7"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2",
+    "effect": "^3.20.0",
+    "tar": "^7.5.23",
+    "postcss": "^8.5.33",
+    "prismjs": "^1.30.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "15.4.5",
+    "eslint-config-next": "^15.5.29",
     "tailwindcss": "^4"
   }
 }

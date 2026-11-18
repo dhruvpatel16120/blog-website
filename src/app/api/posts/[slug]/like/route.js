@@ -3,6 +3,66 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth-combined';
 import { prisma } from '@/lib/db';
 
+async function getUserIdFromSession(session) {
+  if (!session?.user) return null;
+
+  if (session.user.type === 'admin') {
+    // Check if admin already has a corresponding user record
+    let user = null;
+    if (session.user.email) {
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+      });
+    }
+
+    if (!user && session.user.username) {
+      user = await prisma.user.findUnique({
+        where: { username: session.user.username },
+        select: { id: true },
+      });
+    }
+
+    if (!user) {
+      // Create user record for the admin so likes and activities can link to users table
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email || `${session.user.username}@admin.local`,
+          username: session.user.username,
+          fullName: session.user.fullName || session.user.username,
+          avatar: session.user.avatar,
+          password: 'admin-user-placeholder',
+          role: 'ADMIN',
+          isActive: true,
+          emailVerified: new Date(),
+        },
+        select: { id: true },
+      });
+    }
+
+    return user.id;
+  }
+
+  // Normal user: verify user exists in the database
+  if (session.user.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+    if (user) return user.id;
+  }
+
+  if (session.user.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+    if (user) return user.id;
+  }
+
+  return null;
+}
+
 export async function GET(request, { params }) {
   try {
     const { slug } = await params;
@@ -25,14 +85,17 @@ export async function GET(request, { params }) {
     const session = await getServerSession(authOptions);
     let liked = false;
 
-    if (session?.user?.id) {
-      const existingLike = await prisma.like.findFirst({
-        where: {
-          userId: session.user.id,
-          postId: post.id,
-        },
-      });
-      liked = !!existingLike;
+    if (session?.user) {
+      const userId = await getUserIdFromSession(session);
+      if (userId) {
+        const existingLike = await prisma.like.findFirst({
+          where: {
+            userId,
+            postId: post.id,
+          },
+        });
+        liked = !!existingLike;
+      }
     }
 
     // Fetch the users who liked this post
@@ -69,14 +132,17 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Please sign in to like posts' }, { status: 401 });
     }
 
     const { slug } = await params;
     if (!slug) return NextResponse.json({ error: 'Slug required' }, { status: 400 });
 
-    const userId = session.user.id;
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: 'User account not found' }, { status: 401 });
+    }
 
     const post = await prisma.post.findUnique({
       where: { slug },

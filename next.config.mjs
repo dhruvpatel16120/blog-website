@@ -15,15 +15,18 @@ const nextAuthHost = (() => {
 
 const nextConfig = {
   images: {
-    domains: [
-      'images.unsplash.com',
-      'picsum.photos',
-      'ui-avatars.com',
-      'api.dicebear.com',
-      'avatars.githubusercontent.com',
-      'github.com',
-      ...(nextAuthHost ? [nextAuthHost] : []),
-      ...extraDomains,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'ui-avatars.com' },
+      { protocol: 'https', hostname: 'api.dicebear.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'github.com' },
+      ...(nextAuthHost ? [{ protocol: 'https', hostname: nextAuthHost }] : []),
+      ...extraDomains.map((d) => ({ protocol: 'https', hostname: d })),
     ],
   },
   experimental: {
